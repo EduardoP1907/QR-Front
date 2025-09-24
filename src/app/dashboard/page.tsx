@@ -66,12 +66,21 @@ interface AssignFormData {
   firstName: string;
   paternalSurname: string;
   maternalSurname: string;
-  contactInfo: string;
   medicalInfo: string;
-  emergencyContact: string;
   medicamentos: string;
-  enfermedadIds: number[];
-  principioActivoIds: number[];
+  patologias: Array<{
+    enfermedadId: number;
+  }>;
+  principiosActivos: Array<{
+    principioActivoId: number;
+    concentracion: string;
+    dosis: string;
+    observaciones?: string;
+  }>;
+  contactosEmergencia: Array<{
+    nombre: string;
+    telefono: string;
+  }>;
 }
 
 function DashboardContent() {
@@ -98,8 +107,35 @@ function DashboardContent() {
   // Medical data for dropdowns
   const [enfermedades, setEnfermedades] = useState<Enfermedad[]>([]);
   const [principiosActivos, setPrincipiosActivos] = useState<PrincipioActivo[]>([]);
-  const [selectedEnfermedades, setSelectedEnfermedades] = useState<number[]>([]);
-  const [selectedPrincipiosActivos, setSelectedPrincipiosActivos] = useState<number[]>([]);
+
+  // New structure for pathologies (enfermedades)
+  const [patologiasDetalle, setPatologiasDetalle] = useState<Array<{
+    enfermedadId: number;
+  }>>([]);
+
+  // New structure for active principles with concentration and dosage
+  const [principiosActivosDetalle, setPrinciosActivosDetalle] = useState<Array<{
+    principioActivoId: number;
+    concentracion: string;
+    dosis: string;
+    observaciones?: string;
+    searchTerm?: string;
+  }>>([]);
+
+  // Search states for each row (active principles)
+  const [searchStates, setSearchStates] = useState<Record<number, string>>({});
+  // Focus states for each row (active principles)
+  const [focusStates, setFocusStates] = useState<Record<number, boolean>>({});
+
+  // Search and focus states for pathologies
+  const [searchStatesPatologias, setSearchStatesPatologias] = useState<Record<number, string>>({});
+  const [focusStatesPatologias, setFocusStatesPatologias] = useState<Record<number, boolean>>({});
+
+  // Emergency contacts data
+  const [contactosEmergenciaDetalle, setContactosEmergenciaDetalle] = useState<Array<{
+    nombre: string;
+    telefono: string;
+  }>>([]);
 
   // Forms
   const createForm = useForm<PulseraFormData>();
@@ -138,7 +174,7 @@ function DashboardContent() {
           medicalDataApi.getEnfermedades(),
           medicalDataApi.getPrincipiosActivos()
         ]);
-        
+
         setEnfermedades(enfermedadesResponse.data || []);
         setPrincipiosActivos(principiosResponse.data || []);
       } catch (error) {
@@ -197,8 +233,13 @@ function DashboardContent() {
     // For assignment, we need a placeholder pulsera
     setAssigningPulsera({ id: 'new', name: 'Nueva Pulsera' } as Pulsera);
     assignForm.reset();
-    setSelectedEnfermedades([]);
-    setSelectedPrincipiosActivos([]);
+    setPatologiasDetalle([]);
+    setPrinciosActivosDetalle([]);
+    setContactosEmergenciaDetalle([]);
+    setSearchStates({});
+    setFocusStates({});
+    setSearchStatesPatologias({});
+    setFocusStatesPatologias({});
     setShowAssignModal(true);
   };
 
@@ -323,6 +364,8 @@ function DashboardContent() {
     setAssigningPulsera(pulsera);
     setShowAssignModal(true);
     assignForm.reset();
+    setPrinciosActivosDetalle([]);
+    setSearchStates({});
   };
 
   const handleEditAssignment = (pulsera: Pulsera) => {
@@ -353,12 +396,13 @@ function DashboardContent() {
         firstName: data.firstName,
         paternalSurname: data.paternalSurname,
         maternalSurname: data.maternalSurname,
-        contactInfo: data.contactInfo,
+        contactInfo: '',
         medicalInfo: data.medicalInfo,
-        emergencyContact: data.emergencyContact,
+        emergencyContact: '',
         medicamentos: data.medicamentos || '',
-        enfermedadIds: selectedEnfermedades,
-        principioActivoIds: selectedPrincipiosActivos
+        enfermedadIds: patologiasDetalle.map(p => p.enfermedadId).filter(id => id > 0),
+        principiosActivos: principiosActivosDetalle,
+        contactosEmergencia: contactosEmergenciaDetalle.filter(c => c.nombre && c.telefono)
       };
 
       if (assigningPulsera.id === 'new') {
@@ -388,12 +432,165 @@ function DashboardContent() {
       setAssigningPulsera(null);
       assignForm.reset();
       setSelectedEnfermedades([]);
-      setSelectedPrincipiosActivos([]);
+      setPrinciosActivosDetalle([]);
+      setSearchStates({});
       toast.success('Pulsera asignada exitosamente al usuario.');
     } catch (err) {
       console.error(err);
       toast.error('Error al asignar la pulsera.');
     }
+  };
+
+
+  // Functions for managing emergency contacts table
+  const addContactoEmergencia = () => {
+    setContactosEmergenciaDetalle([...contactosEmergenciaDetalle, {
+      nombre: '',
+      telefono: ''
+    }]);
+  };
+
+  const removeContactoEmergencia = (index: number) => {
+    const nuevosContactos = contactosEmergenciaDetalle.filter((_, i) => i !== index);
+    setContactosEmergenciaDetalle(nuevosContactos);
+  };
+
+  const updateContactoEmergencia = (index: number, field: string, value: string) => {
+    const nuevosContactos = [...contactosEmergenciaDetalle];
+    nuevosContactos[index] = { ...nuevosContactos[index], [field]: value };
+    setContactosEmergenciaDetalle(nuevosContactos);
+  };
+
+  // Validation for contact name (only letters, spaces, accents)
+  const isValidName = (name: string) => {
+    return /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(name);
+  };
+
+  // Validation for phone number (only numbers, +, -, spaces, parentheses)
+  const isValidPhone = (phone: string) => {
+    return /^[0-9+\-\s()]+$/.test(phone);
+  };
+
+  // Functions for managing pathologies table
+  const addPatologia = () => {
+    const newIndex = patologiasDetalle.length;
+    setPatologiasDetalle([...patologiasDetalle, {
+      enfermedadId: 0
+    }]);
+    setSearchStatesPatologias({ ...searchStatesPatologias, [newIndex]: '' });
+    setFocusStatesPatologias({ ...focusStatesPatologias, [newIndex]: false });
+  };
+
+  const removePatologia = (index: number) => {
+    const nuevosDetalles = patologiasDetalle.filter((_, i) => i !== index);
+    setPatologiasDetalle(nuevosDetalles);
+
+    // Remove search and focus states for this index and reindex
+    const newSearchStates: Record<number, string> = {};
+    const newFocusStates: Record<number, boolean> = {};
+
+    Object.keys(searchStatesPatologias).forEach((key) => {
+      const keyNum = parseInt(key);
+      if (keyNum < index) {
+        newSearchStates[keyNum] = searchStatesPatologias[keyNum];
+        newFocusStates[keyNum] = focusStatesPatologias[keyNum] || false;
+      } else if (keyNum > index) {
+        newSearchStates[keyNum - 1] = searchStatesPatologias[keyNum];
+        newFocusStates[keyNum - 1] = focusStatesPatologias[keyNum] || false;
+      }
+    });
+
+    setSearchStatesPatologias(newSearchStates);
+    setFocusStatesPatologias(newFocusStates);
+  };
+
+  const updatePatologia = (index: number, field: string, value: any) => {
+    const nuevosDetalles = [...patologiasDetalle];
+    nuevosDetalles[index] = { ...nuevosDetalles[index], [field]: value };
+    setPatologiasDetalle(nuevosDetalles);
+  };
+
+  const updateSearchStatePatologia = (index: number, searchTerm: string) => {
+    setSearchStatesPatologias({ ...searchStatesPatologias, [index]: searchTerm });
+  };
+
+  const setFocusStatePatologia = (index: number, focused: boolean) => {
+    setFocusStatesPatologias({ ...focusStatesPatologias, [index]: focused });
+  };
+
+  // Filter pathologies based on search term for specific row
+  const getFilteredPatologias = (searchTerm: string) => {
+    if (!searchTerm || searchTerm.length === 0) {
+      // Show first 15 pathologies when no search term
+      return enfermedades.slice(0, 15);
+    }
+    // Filter based on search term (minimum 1 character)
+    return enfermedades.filter(enfermedad =>
+      enfermedad.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  // Functions for managing active principles table
+  const addPrincipioActivo = () => {
+    const newIndex = principiosActivosDetalle.length;
+    setPrinciosActivosDetalle([...principiosActivosDetalle, {
+      principioActivoId: 0,
+      concentracion: '',
+      dosis: '',
+      observaciones: ''
+    }]);
+    setSearchStates({ ...searchStates, [newIndex]: '' });
+    setFocusStates({ ...focusStates, [newIndex]: false });
+  };
+
+  const removePrincipioActivo = (index: number) => {
+    const nuevosDetalles = principiosActivosDetalle.filter((_, i) => i !== index);
+    setPrinciosActivosDetalle(nuevosDetalles);
+
+    // Remove search and focus states for this index and reindex
+    const newSearchStates: Record<number, string> = {};
+    const newFocusStates: Record<number, boolean> = {};
+
+    Object.keys(searchStates).forEach((key) => {
+      const keyNum = parseInt(key);
+      if (keyNum < index) {
+        newSearchStates[keyNum] = searchStates[keyNum];
+        newFocusStates[keyNum] = focusStates[keyNum] || false;
+      } else if (keyNum > index) {
+        newSearchStates[keyNum - 1] = searchStates[keyNum];
+        newFocusStates[keyNum - 1] = focusStates[keyNum] || false;
+      }
+    });
+
+    setSearchStates(newSearchStates);
+    setFocusStates(newFocusStates);
+  };
+
+  const updatePrincipioActivo = (index: number, field: string, value: any) => {
+    const nuevosDetalles = [...principiosActivosDetalle];
+    nuevosDetalles[index] = { ...nuevosDetalles[index], [field]: value };
+    setPrinciosActivosDetalle(nuevosDetalles);
+  };
+
+  const updateSearchState = (index: number, searchTerm: string) => {
+    setSearchStates({ ...searchStates, [index]: searchTerm });
+  };
+
+  const setFocusState = (index: number, focused: boolean) => {
+    setFocusStates({ ...focusStates, [index]: focused });
+  };
+
+  // Filter active principles based on search term for specific row
+  const getFilteredPrincipiosActivos = (searchTerm: string) => {
+    if (!searchTerm || searchTerm.length === 0) {
+      // Show first 15 principles when no search term
+      return principiosActivos.slice(0, 15);
+    }
+    // Filter based on search term (minimum 1 character)
+    return principiosActivos.filter(principio =>
+      principio.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (principio.nombreComercial && principio.nombreComercial.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
   };
 
   const FormFields = ({ form }: { form: any }) => (
@@ -958,6 +1155,7 @@ function DashboardContent() {
       {showAssignModal && assigningPulsera && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="overflow-visible">
             <div className="flex items-center justify-between mb-6">
               <h4 className="text-xl font-semibold text-gray-900">
                 {assigningPulsera.portador ? 'Editar Asignación de Usuario' : 'Asignar Pulsera a Usuario'}: {assigningPulsera.name || `Pulsera #${assigningPulsera.id}`}
@@ -1082,16 +1280,92 @@ function DashboardContent() {
               <div>
                 <h5 className="text-sm font-medium text-gray-900 mb-3">Información de la Pulsera</h5>
                 <div className="space-y-4">
+                  {/* Contactos de emergencia - Nueva tabla */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Información de Contacto
-                    </label>
-                    <textarea
-                      {...assignForm.register('contactInfo')}
-                      rows={2}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
-                      placeholder="Teléfono, dirección, etc."
-                    />
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Contactos de emergencia
+                      </label>
+                      <button
+                        type="button"
+                        onClick={addContactoEmergencia}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Agregar
+                      </button>
+                    </div>
+
+                    <div className="border border-gray-300 rounded-lg overflow-visible">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Nombre
+                            </th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Teléfono
+                            </th>
+                            <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                              Acción
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {contactosEmergenciaDetalle.length > 0 ? (
+                            contactosEmergenciaDetalle.map((contacto, index) => (
+                              <tr key={index}>
+                                <td className="px-3 py-2 relative">
+                                  <input
+                                    type="text"
+                                    value={contacto.nombre}
+                                    onChange={(e) => updateContactoEmergencia(index, 'nombre', e.target.value)}
+                                    onBlur={(e) => {
+                                      if (!isValidName(e.target.value)) {
+                                        alert('El nombre debe contener solo letras y espacios');
+                                        e.target.focus();
+                                      }
+                                    }}
+                                    className="w-full px-2 py-1 border border-gray-300 rounded text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Nombre completo"
+                                  />
+                                </td>
+                                <td className="px-3 py-2">
+                                  <input
+                                    type="text"
+                                    value={contacto.telefono}
+                                    onChange={(e) => updateContactoEmergencia(index, 'telefono', e.target.value)}
+                                    onBlur={(e) => {
+                                      if (!isValidPhone(e.target.value)) {
+                                        alert('El teléfono debe contener solo números y caracteres válidos (+, -, espacios, paréntesis)');
+                                        e.target.focus();
+                                      }
+                                    }}
+                                    className="w-full px-2 py-1 border border-gray-300 rounded text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Teléfono"
+                                  />
+                                </td>
+                                <td className="px-3 py-2 text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => removeContactoEmergencia(index)}
+                                    className="text-red-600 hover:text-red-800"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={3} className="px-3 py-4 text-center text-gray-500 text-sm">
+                                No hay contactos de emergencia agregados
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
 
                   {/* Información Médica Estructurada */}
@@ -1099,84 +1373,267 @@ function DashboardContent() {
                     <h6 className="text-sm font-medium text-gray-900 mb-3">Información Médica</h6>
                     <div className="space-y-4">
                       
-                      {/* Enfermedades */}
+                      {/* Patologías - Nueva tabla */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Enfermedades
-                        </label>
-                        <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50">
-                          {enfermedades.length > 0 ? (
-                            enfermedades.map((enfermedad) => (
-                              <label key={enfermedad.id} className="flex items-center space-x-2 mb-2 cursor-pointer hover:bg-gray-100 p-1 rounded">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedEnfermedades.includes(enfermedad.id)}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setSelectedEnfermedades([...selectedEnfermedades, enfermedad.id]);
-                                    } else {
-                                      setSelectedEnfermedades(selectedEnfermedades.filter(id => id !== enfermedad.id));
-                                    }
-                                  }}
-                                  className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-                                />
-                                <span className="text-sm text-gray-700">{enfermedad.nombre}</span>
-                                {enfermedad.descripcion && (
-                                  <span className="text-xs text-gray-500">- {enfermedad.descripcion}</span>
-                                )}
-                              </label>
-                            ))
-                          ) : (
-                            <p className="text-sm text-gray-500">Cargando enfermedades...</p>
-                          )}
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="block text-sm font-medium text-gray-700">
+                            Patologías
+                          </label>
+                          <button
+                            type="button"
+                            onClick={addPatologia}
+                            className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                          >
+                            <Plus className="w-3 h-3" />
+                            Agregar
+                          </button>
                         </div>
-                        {selectedEnfermedades.length > 0 && (
-                          <p className="text-xs text-gray-600 mt-1">
-                            {selectedEnfermedades.length} enfermedad(es) seleccionada(s)
-                          </p>
+
+                        {patologiasDetalle.length > 0 && (
+                          <div className="border border-gray-300 rounded-lg overflow-visible">
+                            <table className="w-full text-sm">
+                              <thead className="bg-gray-50">
+                                <tr>
+                                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Patología
+                                  </th>
+                                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                                    Acción
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="bg-white divide-y divide-gray-200">
+                                {patologiasDetalle.map((detalle, index) => (
+                                  <tr key={index}>
+                                    <td className="px-3 py-2 relative">
+                                      <div className="relative">
+                                        <input
+                                          type="text"
+                                          value={detalle.enfermedadId ?
+                                            enfermedades.find(e => e.id === detalle.enfermedadId)?.nombre || searchStatesPatologias[index] || ''
+                                            : searchStatesPatologias[index] || ''
+                                          }
+                                          onChange={(e) => updateSearchStatePatologia(index, e.target.value)}
+                                          onFocus={() => {
+                                            setFocusStatePatologia(index, true);
+                                            if (detalle.enfermedadId) {
+                                              updatePatologia(index, 'enfermedadId', 0);
+                                              updateSearchStatePatologia(index, '');
+                                            }
+                                          }}
+                                          onBlur={() => {
+                                            // Delay hiding dropdown to allow selection
+                                            setTimeout(() => setFocusStatePatologia(index, false), 200);
+                                          }}
+                                          className="w-full px-2 py-1 text-sm text-black border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                          placeholder="Haz clic para ver lista o escribe para buscar..."
+                                        />
+
+                                        {/* Dropdown de búsqueda */}
+                                        {(focusStatesPatologias[index] || (searchStatesPatologias[index] && searchStatesPatologias[index].length > 0)) && (
+                                          <div className="absolute z-[9999] w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                            {getFilteredPatologias(searchStatesPatologias[index] || '').length > 0 ? (
+                                              getFilteredPatologias(searchStatesPatologias[index] || '').slice(0, 15).map((patologia) => (
+                                                <button
+                                                  key={patologia.id}
+                                                  type="button"
+                                                  onClick={() => {
+                                                    updatePatologia(index, 'enfermedadId', patologia.id);
+                                                    updateSearchStatePatologia(index, '');
+                                                    setFocusStatePatologia(index, false);
+                                                  }}
+                                                  className="w-full text-left px-3 py-2 hover:bg-gray-100 focus:bg-gray-100 border-b border-gray-100 last:border-b-0"
+                                                >
+                                                  <div className="text-sm font-medium text-gray-900">{patologia.nombre}</div>
+                                                </button>
+                                              ))
+                                            ) : searchStatesPatologias[index] ? (
+                                              <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                                                <div>No se encontraron patologías</div>
+                                                <div className="text-xs mt-1">que coincidan con "{searchStatesPatologias[index]}"</div>
+                                              </div>
+                                            ) : (
+                                              enfermedades.length === 0 && (
+                                                <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                                                  Cargando patologías...
+                                                </div>
+                                              )
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </td>
+                                    <td className="px-3 py-2 text-center">
+                                      <button
+                                        type="button"
+                                        onClick={() => removePatologia(index)}
+                                        className="text-red-600 hover:text-red-800"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+
+                        {patologiasDetalle.length === 0 && (
+                          <div className="text-center py-8 text-gray-500 border border-gray-300 rounded-lg bg-gray-50">
+                            <p className="text-sm">No hay patologías agregadas</p>
+                            <p className="text-xs mt-1">Haz clic en "Agregar" para añadir patologías</p>
+                          </div>
                         )}
                       </div>
 
-                      {/* Principios Activos */}
+                      {/* Principios Activos - Nueva tabla */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Principios Activos (Medicamentos)
-                        </label>
-                        <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50">
-                          {principiosActivos.length > 0 ? (
-                            principiosActivos.map((principio) => (
-                              <label key={principio.id} className="flex items-center space-x-2 mb-2 cursor-pointer hover:bg-gray-100 p-1 rounded">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedPrincipiosActivos.includes(principio.id)}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setSelectedPrincipiosActivos([...selectedPrincipiosActivos, principio.id]);
-                                    } else {
-                                      setSelectedPrincipiosActivos(selectedPrincipiosActivos.filter(id => id !== principio.id));
-                                    }
-                                  }}
-                                  className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-                                />
-                                <div className="flex flex-col">
-                                  <span className="text-sm text-gray-700">{principio.nombre}</span>
-                                  {principio.nombreComercial && (
-                                    <span className="text-xs text-gray-500">Nombre comercial: {principio.nombreComercial}</span>
-                                  )}
-                                  {principio.concentracion && (
-                                    <span className="text-xs text-gray-500">Concentración: {principio.concentracion}</span>
-                                  )}
-                                </div>
-                              </label>
-                            ))
-                          ) : (
-                            <p className="text-sm text-gray-500">Cargando principios activos...</p>
-                          )}
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="block text-sm font-medium text-gray-700">
+                            Principios Activos (Medicamentos)
+                          </label>
+                          <button
+                            type="button"
+                            onClick={addPrincipioActivo}
+                            className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700"
+                          >
+                            <Plus className="w-3 h-3" />
+                            Agregar
+                          </button>
                         </div>
-                        {selectedPrincipiosActivos.length > 0 && (
-                          <p className="text-xs text-gray-600 mt-1">
-                            {selectedPrincipiosActivos.length} principio(s) activo(s) seleccionado(s)
-                          </p>
+
+                        {principiosActivosDetalle.length > 0 && (
+                          <div className="border border-gray-300 rounded-lg overflow-visible">
+                            <table className="w-full text-sm">
+                              <thead className="bg-gray-50">
+                                <tr>
+                                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Principio Activo
+                                  </th>
+                                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Concentración
+                                  </th>
+                                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Dosis
+                                  </th>
+                                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                                    Acción
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="bg-white divide-y divide-gray-200">
+                                {principiosActivosDetalle.map((detalle, index) => (
+                                  <tr key={index}>
+                                    <td className="px-3 py-2 relative">
+                                      <div className="relative">
+                                        <input
+                                          type="text"
+                                          value={detalle.principioActivoId ?
+                                            principiosActivos.find(p => p.id === detalle.principioActivoId)?.nombre || searchStates[index] || ''
+                                            : searchStates[index] || ''
+                                          }
+                                          onChange={(e) => updateSearchState(index, e.target.value)}
+                                          onFocus={() => {
+                                            setFocusState(index, true);
+                                            if (detalle.principioActivoId) {
+                                              updatePrincipioActivo(index, 'principioActivoId', 0);
+                                              updateSearchState(index, '');
+                                            }
+                                          }}
+                                          onBlur={() => {
+                                            // Delay hiding dropdown to allow selection
+                                            setTimeout(() => setFocusState(index, false), 200);
+                                          }}
+                                          className="w-full px-2 py-1 text-sm text-black border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                          placeholder="Haz clic para ver lista o escribe para buscar..."
+                                        />
+
+                                        {/* Dropdown de búsqueda */}
+                                        {(focusStates[index] || (searchStates[index] && searchStates[index].length > 0)) && (
+                                          <div className="absolute z-[9999] w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                            {getFilteredPrincipiosActivos(searchStates[index] || '').length > 0 ? (
+                                              getFilteredPrincipiosActivos(searchStates[index] || '').slice(0, 15).map((principio) => (
+                                                <button
+                                                  key={principio.id}
+                                                  type="button"
+                                                  onClick={() => {
+                                                    updatePrincipioActivo(index, 'principioActivoId', principio.id);
+                                                    updateSearchState(index, '');
+                                                    setFocusState(index, false);
+                                                  }}
+                                                  className="w-full text-left px-3 py-2 hover:bg-gray-100 focus:bg-gray-100 border-b border-gray-100 last:border-b-0"
+                                                >
+                                                  <div className="text-sm font-medium text-gray-900">{principio.nombre}</div>
+                                                  <div className="flex flex-col mt-1">
+                                                    {principio.nombreComercial && (
+                                                      <span className="text-xs text-blue-600">
+                                                        Comercial: {principio.nombreComercial}
+                                                      </span>
+                                                    )}
+                                                    {principio.descripcion && (
+                                                      <span className="text-xs text-gray-500 truncate">
+                                                        {principio.descripcion}
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                </button>
+                                              ))
+                                            ) : searchStates[index] ? (
+                                              <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                                                <div>No se encontraron principios activos</div>
+                                                <div className="text-xs mt-1">que coincidan con "{searchStates[index]}"</div>
+                                              </div>
+                                            ) : (
+                                              principiosActivos.length === 0 && (
+                                                <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                                                  Cargando principios activos...
+                                                </div>
+                                              )
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </td>
+                                    <td className="px-3 py-2">
+                                      <input
+                                        type="text"
+                                        value={detalle.concentracion}
+                                        onChange={(e) => updatePrincipioActivo(index, 'concentracion', e.target.value)}
+                                        className="w-full px-2 py-1 text-sm text-black border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                        placeholder="ej: 500mg"
+                                      />
+                                    </td>
+                                    <td className="px-3 py-2">
+                                      <input
+                                        type="text"
+                                        value={detalle.dosis}
+                                        onChange={(e) => updatePrincipioActivo(index, 'dosis', e.target.value)}
+                                        className="w-full px-2 py-1 text-sm text-black border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                        placeholder="ej: 1 cada 8h"
+                                      />
+                                    </td>
+                                    <td className="px-3 py-2 text-center">
+                                      <button
+                                        type="button"
+                                        onClick={() => removePrincipioActivo(index)}
+                                        className="text-red-600 hover:text-red-800"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+
+                        {principiosActivosDetalle.length === 0 && (
+                          <div className="text-center py-8 text-gray-500 border border-gray-300 rounded-lg bg-gray-50">
+                            <p className="text-sm">No hay principios activos agregados</p>
+                            <p className="text-xs mt-1">Haz clic en "Agregar" para añadir medicamentos</p>
+                          </div>
                         )}
                       </div>
 
@@ -1208,17 +1665,6 @@ function DashboardContent() {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Contacto de Emergencia
-                    </label>
-                    <textarea
-                      {...assignForm.register('emergencyContact')}
-                      rows={2}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
-                      placeholder="Nombre y teléfono de contacto de emergencia"
-                    />
-                  </div>
                 </div>
               </div>
 
@@ -1245,6 +1691,7 @@ function DashboardContent() {
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}
