@@ -38,28 +38,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     // Solo acceder a localStorage en el cliente
     if (typeof window !== 'undefined') {
       const storedToken = localStorage.getItem('token');
       setToken(storedToken);
+      setInitialized(true);
     }
   }, []);
 
   useEffect(() => {
+    if (!initialized) return;
+
     if (token) {
       // Decodificar JWT para obtener información del usuario
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
+
         if (payload.exp * 1000 > Date.now()) {
+          const role = (payload.groups && payload.groups[0]) || 'contratante';
+          const userId = role === 'contratante'
+            ? payload.contratanteId
+            : payload.userId;
+
           setUser({
-            email: payload.upn,
-            firstName: payload.firstName,
-            paternalSurname: payload.paternalSurname,
-            maternalSurname: payload.maternalSurname,
-            userId: payload.contratanteId.toString(),
-            role: payload.groups[0] // El primer grupo es el rol
+            email: payload.upn || payload.email,
+            firstName: payload.firstName || 'Usuario',
+            paternalSurname: payload.paternalSurname || '',
+            maternalSurname: payload.maternalSurname || '',
+            userId: userId?.toString() || '',
+            role: role as 'contratante' | 'portador'
           });
         } else {
           // Token expirado
@@ -67,6 +77,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             localStorage.removeItem('token');
           }
           setToken(null);
+          setUser(null);
         }
       } catch (error) {
         console.error('Error decoding token:', error);
@@ -74,10 +85,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           localStorage.removeItem('token');
         }
         setToken(null);
+        setUser(null);
       }
+    } else {
+      setUser(null);
     }
     setLoading(false);
-  }, [token]);
+  }, [token, initialized]);
 
   const login = async (email: string, password: string) => {
     try {
@@ -91,13 +105,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // Decodificar el token para obtener la información del usuario
       const payload = JSON.parse(atob(token.split('.')[1]));
+      const role = (payload.groups && payload.groups[0]) || 'contratante';
+      const userId = role === 'contratante'
+        ? payload.contratanteId
+        : payload.userId;
+
       setUser({
         email: payload.upn,
         firstName: payload.firstName,
         paternalSurname: payload.paternalSurname,
         maternalSurname: payload.maternalSurname,
-        userId: payload.contratanteId.toString(),
-        role: payload.groups[0] // El primer grupo es el rol
+        userId: userId.toString(),
+        role: role as 'contratante' | 'portador'
       });
       
       return response;
@@ -118,13 +137,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // Decodificar el token para obtener la información del usuario
       const payload = JSON.parse(atob(token.split('.')[1]));
+      const role = (payload.groups && payload.groups[0]) || 'contratante';
+      const userId = role === 'contratante'
+        ? payload.contratanteId
+        : payload.userId;
+
       setUser({
         email: payload.upn,
         firstName: payload.firstName,
         paternalSurname: payload.paternalSurname,
         maternalSurname: payload.maternalSurname,
-        userId: payload.contratanteId.toString(),
-        role: payload.groups[0] // El primer grupo es el rol
+        userId: userId.toString(),
+        role: role as 'contratante' | 'portador'
       });
       
       return response;
