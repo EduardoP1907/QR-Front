@@ -11,9 +11,7 @@ interface Pulsera {
   id: number;
   name: string;
   description?: string;
-  contactInfo?: string;
   medicalInfo?: string;
-  emergencyContact?: string;
   qrCode?: string;
   active: boolean;
 }
@@ -213,41 +211,15 @@ export default function PortadorDashboard() {
                     </div>
                   </div>
 
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div className="flex items-start space-x-3">
-                      <div className="bg-blue-100 p-2 rounded-lg mt-1">
-                        <Phone className="w-4 h-4 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">Contacto</p>
-                        <p className="text-sm text-gray-600">
-                          {pulsera.contactInfo || 'No especificado'}
-                        </p>
-                      </div>
+                  <div className="flex items-start space-x-3">
+                    <div className="bg-green-100 p-2 rounded-lg mt-1">
+                      <Pill className="w-4 h-4 text-green-600" />
                     </div>
-
-                    <div className="flex items-start space-x-3">
-                      <div className="bg-red-100 p-2 rounded-lg mt-1">
-                        <AlertTriangle className="w-4 h-4 text-red-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">Emergencia</p>
-                        <p className="text-sm text-gray-600">
-                          {pulsera.emergencyContact || 'No especificado'}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start space-x-3">
-                      <div className="bg-green-100 p-2 rounded-lg mt-1">
-                        <Pill className="w-4 h-4 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">Info. Médica</p>
-                        <p className="text-sm text-gray-600">
-                          {pulsera.medicalInfo || 'No especificada'}
-                        </p>
-                      </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Info. Médica</p>
+                      <p className="text-sm text-gray-600">
+                        {pulsera.medicalInfo || 'No especificada'}
+                      </p>
                     </div>
                   </div>
 

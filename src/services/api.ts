@@ -81,13 +81,11 @@ export const pulseraApi = {
   create: (pulseraData: { name: string; description?: string }) => 
     api.post(API_ENDPOINTS.pulseras.create, pulseraData),
     
-  update: (id: string | number, pulseraData: { 
-    name: string; 
-    description?: string; 
-    contactInfo?: string; 
-    medicalInfo?: string; 
-    emergencyContact?: string; 
-  }) => 
+  update: (id: string | number, pulseraData: {
+    name: string;
+    description?: string;
+    medicalInfo?: string;
+  }) =>
     api.put(API_ENDPOINTS.pulseras.update(id), pulseraData),
     
   delete: (id: string | number) => 
@@ -105,10 +103,8 @@ export const pulseraApi = {
     firstName: string;
     paternalSurname: string;
     maternalSurname?: string;
-    contactInfo?: string;
     medicalInfo?: string;
-    emergencyContact?: string;
-  }) => 
+  }) =>
     api.post(API_ENDPOINTS.pulseras.assign(id), assignData),
     
   unassign: (id: string | number) => 

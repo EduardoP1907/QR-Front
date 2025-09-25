@@ -10,9 +10,7 @@ interface PulseraData {
   id: string;
   name: string;
   nombre: string;
-  contactInfo: string;
   medicalInfo: string;
-  emergencyContact: string;
   contactoEmergencia: string;
   telefonoEmergencia: string;
   condicionesMedicas: string;
@@ -132,7 +130,7 @@ export default function ScanPage() {
           {/* Information Cards */}
           <div className="p-6 space-y-6">
             {/* Contacto de Emergencia */}
-            {(pulsera.emergencyContact || pulsera.contactoEmergencia || pulsera.telefonoEmergencia) && (
+            {(pulsera.contactoEmergencia || pulsera.telefonoEmergencia) && (
               <div className="bg-green-50 border border-green-200 rounded-xl p-6">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -150,11 +148,6 @@ export default function ScanPage() {
                     {pulsera.telefonoEmergencia && (
                       <p className="text-green-800 text-base leading-relaxed">
                         <strong>Teléfono:</strong> {pulsera.telefonoEmergencia}
-                      </p>
-                    )}
-                    {pulsera.emergencyContact && (
-                      <p className="text-green-800 text-base leading-relaxed">
-                        {pulsera.emergencyContact}
                       </p>
                     )}
                   </div>
@@ -208,29 +201,9 @@ export default function ScanPage() {
               </div>
             )}
 
-            {/* Información General de Contacto */}
-            {pulsera.contactInfo && (
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <User className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-blue-900 mb-2">
-                      Información de Contacto
-                    </h3>
-                    <p className="text-blue-800 text-base leading-relaxed">
-                      {pulsera.contactInfo}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Fallback si no hay información */}
-            {!pulsera.contactInfo && 
-             !pulsera.medicalInfo && 
-             !pulsera.emergencyContact && 
+            {!pulsera.medicalInfo &&
              !pulsera.contactoEmergencia &&
              !pulsera.telefonoEmergencia &&
              !pulsera.condicionesMedicas &&

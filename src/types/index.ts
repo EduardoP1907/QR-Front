@@ -149,9 +149,7 @@ export interface AssignPulseraFormData {
   firstName: string;
   paternalSurname: string;
   maternalSurname?: string;
-  contactInfo?: string;
   medicalInfo?: string;
-  emergencyContact?: string;
   medicamentos?: string;
   enfermedadIds?: number[];
   principioActivoIds?: number[];

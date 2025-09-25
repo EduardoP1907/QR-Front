@@ -52,9 +52,7 @@ interface Pulsera {
   name: string;
   description?: string;
   qrCode?: string;
-  contactInfo?: string;
   medicalInfo?: string;
-  emergencyContact?: string;
   active?: boolean;
   owner?: any;
   portador?: any;
@@ -320,9 +318,7 @@ function DashboardContent() {
         firstName: data.firstName,
         paternalSurname: data.paternalSurname,
         maternalSurname: data.maternalSurname,
-        contactInfo: `${data.contactoEmergencia} - ${data.telefonoEmergencia}`,
-        medicalInfo: `Tipo de sangre: ${data.tipoSangre}\nCondiciones: ${data.condicionesMedicas}\nMedicamentos: ${data.medicamentos}\nAlergias: ${data.alergias}`,
-        emergencyContact: `${data.contactoEmergencia} - ${data.telefonoEmergencia}`
+        medicalInfo: `Tipo de sangre: ${data.tipoSangre}\nCondiciones: ${data.condicionesMedicas}\nMedicamentos: ${data.medicamentos}\nAlergias: ${data.alergias}`
       };
       
       await pulseraApi.assign(response.data.id, assignData);
@@ -379,9 +375,7 @@ function DashboardContent() {
       firstName: pulsera.portador?.firstName || '',
       paternalSurname: pulsera.portador?.paternalSurname || '',
       maternalSurname: pulsera.portador?.maternalSurname || '',
-      contactInfo: pulsera.contactInfo || '',
-      medicalInfo: pulsera.medicalInfo || '',
-      emergencyContact: pulsera.emergencyContact || ''
+      medicalInfo: pulsera.medicalInfo || ''
     });
   };
 
@@ -396,9 +390,7 @@ function DashboardContent() {
         firstName: data.firstName,
         paternalSurname: data.paternalSurname,
         maternalSurname: data.maternalSurname,
-        contactInfo: '',
         medicalInfo: data.medicalInfo,
-        emergencyContact: '',
         medicamentos: data.medicamentos || '',
         enfermedadIds: patologiasDetalle.map(p => p.enfermedadId).filter(id => id > 0),
         principiosActivos: principiosActivosDetalle,
@@ -431,7 +423,7 @@ function DashboardContent() {
       setShowAssignModal(false);
       setAssigningPulsera(null);
       assignForm.reset();
-      setSelectedEnfermedades([]);
+      setPatologiasDetalle([]);
       setPrinciosActivosDetalle([]);
       setSearchStates({});
       toast.success('Pulsera asignada exitosamente al usuario.');
