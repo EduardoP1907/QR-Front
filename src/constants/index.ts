@@ -66,6 +66,11 @@ export const API_ENDPOINTS = {
       status: '/contratantes/subscription/status',
       process: '/contratantes/subscription/process',
     },
+    profile: {
+      get: '/contratantes/perfil',
+      update: '/contratantes/perfil',
+      summary: '/contratantes/perfil/resumen',
+    },
   },
   portadores: {
     login: '/portadores/login',

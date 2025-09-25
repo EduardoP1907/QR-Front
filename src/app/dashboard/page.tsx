@@ -818,6 +818,14 @@ function DashboardContent() {
             </div>
 
             <button
+              onClick={() => router.push('/profile')}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-100"
+            >
+              <User className="w-4 h-4" />
+              <span>Mi Perfil</span>
+            </button>
+
+            <button
               onClick={handleLogout}
               className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-100"
             >

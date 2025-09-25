@@ -177,4 +177,20 @@ export const medicalDataApi = {
     api.get(`/medical-data/principios-activos/buscar?q=${encodeURIComponent(query)}`),
 };
 
+// APIs de perfil
+export const profileApi = {
+  getProfile: () =>
+    api.get(API_ENDPOINTS.contratantes.profile.get),
+
+  getProfileSummary: () =>
+    api.get(API_ENDPOINTS.contratantes.profile.summary),
+
+  updateProfile: (profileData: {
+    firstName: string;
+    paternalSurname: string;
+    maternalSurname?: string;
+  }) =>
+    api.put(API_ENDPOINTS.contratantes.profile.update, profileData),
+};
+
 export default api;
