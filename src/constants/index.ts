@@ -1,6 +1,7 @@
 // Pricing constants
-export const PRICE_PER_BRACELET = 15000; // $15.000 CLP
-export const SUBSCRIPTION_PRICE = 2990; // $2.990 CLP monthly
+export const SUBSCRIPTION_PRICE = 2900; // $2.900 CLP monthly
+export const ACTIVATION_FEE = 9900; // $9.900 CLP one-time activation fee
+export const TOTAL_FIRST_PAYMENT = SUBSCRIPTION_PRICE + ACTIVATION_FEE; // $12.800 CLP total first payment
 
 // Currency formatting
 export const CURRENCY = {

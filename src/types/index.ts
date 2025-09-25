@@ -122,6 +122,7 @@ export interface SubscriptionFormData {
     email: string;
     phone: string;
   };
+  quantity?: number;
 }
 
 // Medical data types

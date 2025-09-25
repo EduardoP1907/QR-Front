@@ -902,15 +902,7 @@ function DashboardContent() {
               style={{backgroundColor: '#551A8B'}}
             >
               <ShoppingCart className="w-4 h-4" />
-              <span>{subscriptionStatus.isActive ? 'Renovar Suscripción' : 'Obtener Suscripción'}</span>
-            </button>
-            <button
-              onClick={() => router.push('/purchase')}
-              className="inline-flex items-center gap-2 text-white px-4 py-2 rounded-xl hover:opacity-90 transition-all"
-              style={{backgroundColor: '#83C341'}}
-            >
-              <ShoppingCart className="w-4 h-4" />
-              <span>Comprar Pulseras</span>
+              <span>{'Contratar Plan'}</span>
             </button>
             <button
               onClick={handleCreate}

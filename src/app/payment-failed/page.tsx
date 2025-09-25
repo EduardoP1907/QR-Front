@@ -44,14 +44,14 @@ export default function PaymentFailedPage() {
   const handleRetryPayment = () => {
     // Limpiar contador de intentos y volver al checkout
     localStorage.removeItem('retryAttempts');
-    router.push('/checkout');
+    router.push('/subscription');
   };
 
   const handleNewOrder = () => {
     // Limpiar orden pendiente y empezar de nuevo
     localStorage.removeItem('pendingOrder');
     localStorage.removeItem('retryAttempts');
-    router.push('/purchase');
+    router.push('/subscription');
   };
 
   const getFailureReason = () => {

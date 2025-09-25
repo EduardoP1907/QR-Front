@@ -115,14 +115,11 @@ export const pulseraApi = {
     api.post(API_ENDPOINTS.pulseras.unassign(id)),
 };
 
-// APIs de contratantes (compras y suscripciones)
+// APIs de contratantes (suscripciones)
 export const contratanteApi = {
-  processPurchase: (quantity: number) => 
-    api.post(API_ENDPOINTS.contratantes.purchases.process, { quantity }),
-    
-  getAvailablePulseras: () => 
+  getAvailablePulseras: () =>
     api.get(API_ENDPOINTS.contratantes.purchases.available),
-    
+
   // Suscripciones
   getSubscriptionStatus: () => 
     api.get(API_ENDPOINTS.contratantes.subscription.status),
@@ -131,6 +128,7 @@ export const contratanteApi = {
     // Transformar los datos al formato esperado por el backend
     const payload = {
       planType: subscriptionData.planType,
+      quantity: subscriptionData.quantity,
       paymentData: {
         cardNumber: subscriptionData.paymentData.cardNumber,
         expiryDate: subscriptionData.paymentData.expiryDate,

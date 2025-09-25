@@ -36,12 +36,6 @@ type LayoutConfig<Route extends LayoutRoutes = LayoutRoutes> = {
 }
 
 
-// Validate ..\..\src\app\checkout\page.tsx
-{
-  const handler = {} as typeof import("..\\..\\src\\app\\checkout\\page.js")
-  handler satisfies AppPageConfig<"/checkout">
-}
-
 // Validate ..\..\src\app\dashboard\page.tsx
 {
   const handler = {} as typeof import("..\\..\\src\\app\\dashboard\\page.js")
@@ -88,12 +82,6 @@ type LayoutConfig<Route extends LayoutRoutes = LayoutRoutes> = {
 {
   const handler = {} as typeof import("..\\..\\src\\app\\portador\\setup-password\\page.js")
   handler satisfies AppPageConfig<"/portador/setup-password">
-}
-
-// Validate ..\..\src\app\purchase\page.tsx
-{
-  const handler = {} as typeof import("..\\..\\src\\app\\purchase\\page.js")
-  handler satisfies AppPageConfig<"/purchase">
 }
 
 // Validate ..\..\src\app\register\page.tsx

@@ -12,11 +12,18 @@ import {
   Star,
   Clock,
   ArrowLeft,
-  X
+  X,
+  Plus,
+  Minus,
+  Heart,
+  QrCode,
+  Phone,
+  Users
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { contratanteApi } from '../../services/api';
 import ProtectedRoute from '../../components/ProtectedRoute';
+import { SUBSCRIPTION_PRICE, ACTIVATION_FEE, TOTAL_FIRST_PAYMENT } from '../../constants';
 import type { SubscriptionFormData } from '../../types';
 
 interface LocalFormData {
@@ -27,9 +34,8 @@ interface LocalFormData {
   expiryDate: string;
   cvv: string;
   cardHolderName: string;
+  quantity: number;
 }
-
-const SUBSCRIPTION_PRICE = 2990; // $2.990 CLP mensual
 
 function SubscriptionContent() {
   const router = useRouter();
@@ -37,15 +43,32 @@ function SubscriptionContent() {
   const [processing, setProcessing] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [quantity, setQuantity] = useState(1);
 
   const form = useForm<LocalFormData>({
     defaultValues: {
       email: user?.email || '',
-      fullName: user?.firstName && user?.paternalSurname 
-        ? `${user.firstName} ${user.paternalSurname}` 
+      fullName: user?.firstName && user?.paternalSurname
+        ? `${user.firstName} ${user.paternalSurname}`
         : '',
+      quantity: 1,
     }
   });
+
+  // Update form value when quantity changes
+  React.useEffect(() => {
+    form.setValue('quantity', quantity);
+  }, [quantity, form]);
+
+  const handleQuantityChange = (increment: boolean) => {
+    if (increment) {
+      const newQuantity = Math.min(quantity + 1, 10); // Máximo 10 pulseras
+      setQuantity(newQuantity);
+    } else {
+      const newQuantity = Math.max(quantity - 1, 1); // Mínimo 1 pulsera
+      setQuantity(newQuantity);
+    }
+  };
 
   const handleSubmit = async (data: LocalFormData) => {
     setProcessing(true);
@@ -67,8 +90,11 @@ function SubscriptionContent() {
           fullName: data.fullName,
           email: data.email,
           phone: data.phone,
-        }
+        },
+        quantity: quantity
       };
+
+      console.log('Sending subscription data:', { quantity, subscriptionData });
 
       // Procesar suscripción en el backend
       const response = await contratanteApi.processSubscription(subscriptionData);
@@ -104,7 +130,7 @@ function SubscriptionContent() {
           </button>
           <div className="flex items-center gap-2">
             <Shield className="w-6 h-6" style={{color: '#551A8B'}} />
-            <h1 className="text-xl font-semibold text-gray-900">Suscripción Premium</h1>
+            <h1 className="text-xl font-semibold text-gray-900">Plan Bluko Life</h1>
           </div>
         </div>
       </header>
@@ -113,55 +139,97 @@ function SubscriptionContent() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Plan Details */}
           <div className="space-y-6">
+            {/* Quantity Selection */}
+            <div className="bg-white border rounded-2xl p-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">¿Cuántas pulseras necesitas?</h3>
+              <div className="flex items-center justify-center gap-4 mb-4">
+                <button
+                  type="button"
+                  onClick={() => handleQuantityChange(false)}
+                  disabled={quantity <= 1}
+                  className="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-400 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <div className="flex flex-col items-center">
+                  <span className="text-3xl font-bold text-gray-900">{quantity}</span>
+                  <span className="text-sm text-gray-500">pulsera{quantity > 1 ? 's' : ''}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleQuantityChange(true)}
+                  disabled={quantity >= 10}
+                  className="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-400 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-sm text-gray-600 text-center">Máximo 10 pulseras por pedido</p>
+            </div>
+
             {/* Plan Card */}
             <div className="text-white rounded-2xl p-6" style={{background: 'linear-gradient(to right, #3C0B5A, #551A8B)'}}>
-              <div className="flex items-center gap-3 mb-4">
-                <Star className="w-6 h-6" />
-                <h2 className="text-2xl font-bold">Plan Premium</h2>
+              <div className="flex items-center gap-3 mb-6">
+                <Heart className="w-6 h-6" />
+                <h2 className="text-2xl font-bold">SUSCRIPCIÓN</h2>
               </div>
-              
+
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-bold">${SUBSCRIPTION_PRICE.toLocaleString('es-CL')}</span>
-                  <span className="text-white opacity-80">CLP/mes</span>
+                  <span className="text-white opacity-80">/CLP</span>
+                </div>
+                <div className="text-sm text-white opacity-90 mt-1">Mensual</div>
+              </div>
+
+              <div className="mb-6 p-4 bg-white/10 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">+ ${ACTIVATION_FEE.toLocaleString('es-CL')} Tarifa de habilitación</span>
+                </div>
+                <div className="text-xs text-white opacity-80 mt-1">
+                  (Pago único al momento de contratación)
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Check className="w-5 h-5 text-green-300" />
-                  <span>Acceso ilimitado a todas las pulseras</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Check className="w-5 h-5 text-green-300" />
-                  <span>Generación de códigos QR personalizados</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Check className="w-5 h-5 text-green-300" />
-                  <span>Almacenamiento seguro de información médica</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Check className="w-5 h-5 text-green-300" />
-                  <span>Actualizaciones automáticas</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Check className="w-5 h-5 text-green-300" />
-                  <span>Soporte técnico prioritario</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Important Notice */}
-            <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-6">
-              <div className="flex items-start gap-3">
-                <Clock className="w-5 h-5 text-yellow-600 mt-1 flex-shrink-0" />
-                <div>
-                  <h3 className="font-semibold text-yellow-800 mb-2">¿Por qué necesito una suscripción?</h3>
-                  <p className="text-yellow-700 text-sm">
-                    La suscripción nos permite mantener los servidores activos, garantizar la seguridad 
-                    de tus datos médicos y proporcionar actualizaciones continuas del sistema. 
-                    Sin una suscripción activa, las pulseras no podrán mostrar la información de emergencia.
-                  </p>
+              <div className="mb-6">
+                <h3 className="font-bold text-lg mb-3">INCLUYE</h3>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-green-300 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Pulsera Bluko Life con QR activado</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-green-300 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Acceso a la plataforma Bluko Life</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-green-300 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Ficha médica editable en tiempo real</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-green-300 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Personalización del diseño de tarjeta digital</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-green-300 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Configuración de contactos de emergencia</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-green-300 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Protección con contraseña</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-green-300 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Instructivo completo en español</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-green-300 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Soporte técnico por WhatsApp y mail</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-green-300 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Garantía por falla o extravío (Algunas restricciones aplican)</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -172,6 +240,12 @@ function SubscriptionContent() {
             <h3 className="text-xl font-semibold text-gray-900 mb-6">Información de pago</h3>
 
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+              {/* Hidden quantity field */}
+              <input
+                type="hidden"
+                {...form.register('quantity')}
+              />
+
               {/* Customer Information */}
               <div className="space-y-4">
                 <h4 className="font-medium text-gray-900">Datos del titular</h4>
@@ -338,11 +412,26 @@ function SubscriptionContent() {
 
               {/* Submit */}
               <div className="pt-6 border-t">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-lg font-semibold text-gray-900">Total a pagar:</span>
-                  <span className="text-2xl font-bold" style={{color: '#551A8B'}}>
-                    ${SUBSCRIPTION_PRICE.toLocaleString('es-CL')} CLP
-                  </span>
+                <div className="space-y-3 mb-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Suscripción mensual:</span>
+                    <span className="font-semibold text-black">${SUBSCRIPTION_PRICE.toLocaleString('es-CL')} CLP</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Tarifa de habilitación:</span>
+                    <span className="font-semibold text-black">${ACTIVATION_FEE.toLocaleString('es-CL')} CLP</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Cantidad de pulseras:</span>
+                    <span className="font-semibold text-black">{quantity}</span>
+                  </div>
+                  <hr />
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-semibold text-gray-900">Total primer pago:</span>
+                    <span className="text-2xl font-bold" style={{color: '#551A8B'}}>
+                      ${TOTAL_FIRST_PAYMENT.toLocaleString('es-CL')} CLP
+                    </span>
+                  </div>
                 </div>
 
                 {/* Términos y Condiciones */}
@@ -377,7 +466,7 @@ function SubscriptionContent() {
                   style={{backgroundColor: '#83C341'}}
                 >
                   <CreditCard className="w-5 h-5" />
-                  <span>{processing ? 'Procesando...' : 'Activar Suscripción'}</span>
+                  <span>{processing ? 'Procesando...' : 'Contratar Ahora'}</span>
                 </button>
 
                 <p className="text-xs text-gray-500 text-center mt-3">

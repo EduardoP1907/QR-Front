@@ -374,6 +374,7 @@ export default function LoginPage() {
               <Link
                 href="/portador/login"
                 className="text-blue-600 hover:text-blue-700 font-semibold transition-colors"
+                style={{color: '#551A8B'}}
               >
                 Acceder aquí
               </Link>
