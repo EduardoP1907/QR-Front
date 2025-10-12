@@ -9,7 +9,7 @@ interface User {
   paternalSurname: string;
   maternalSurname?: string;
   userId: string;
-  role: 'contratante' | 'portador';
+  role: 'contratante' | 'portador' | 'admin';
 }
 
 interface AuthContextType {
@@ -56,17 +56,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (payload.exp * 1000 > Date.now()) {
           const role = (payload.groups && payload.groups[0]) || 'contratante';
-          const userId = role === 'contratante'
-            ? payload.contratanteId
-            : payload.userId;
+          let userId;
+
+          if (role === 'admin') {
+            userId = payload.adminId;
+          } else if (role === 'contratante') {
+            userId = payload.contratanteId;
+          } else {
+            userId = payload.userId;
+          }
 
           setUser({
             email: payload.upn || payload.email,
             firstName: payload.firstName || 'Usuario',
-            paternalSurname: payload.paternalSurname || '',
+            paternalSurname: payload.paternalSurname || payload.lastName || '',
             maternalSurname: payload.maternalSurname || '',
             userId: userId?.toString() || '',
-            role: role as 'contratante' | 'portador'
+            role: role as 'contratante' | 'portador' | 'admin'
           });
         } else {
           // Token expirado
@@ -103,17 +109,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Decodificar el token para obtener la información del usuario
       const payload = JSON.parse(atob(token.split('.')[1]));
       const role = (payload.groups && payload.groups[0]) || 'contratante';
-      const userId = role === 'contratante'
-        ? payload.contratanteId
-        : payload.userId;
+      let userId;
+
+      if (role === 'admin') {
+        userId = payload.adminId;
+      } else if (role === 'contratante') {
+        userId = payload.contratanteId;
+      } else {
+        userId = payload.userId;
+      }
 
       setUser({
         email: payload.upn,
         firstName: payload.firstName,
-        paternalSurname: payload.paternalSurname,
+        paternalSurname: payload.paternalSurname || payload.lastName || '',
         maternalSurname: payload.maternalSurname,
         userId: userId.toString(),
-        role: role as 'contratante' | 'portador'
+        role: role as 'contratante' | 'portador' | 'admin'
       });
       
       return response;
@@ -135,17 +147,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Decodificar el token para obtener la información del usuario
       const payload = JSON.parse(atob(token.split('.')[1]));
       const role = (payload.groups && payload.groups[0]) || 'contratante';
-      const userId = role === 'contratante'
-        ? payload.contratanteId
-        : payload.userId;
+      let userId;
+
+      if (role === 'admin') {
+        userId = payload.adminId;
+      } else if (role === 'contratante') {
+        userId = payload.contratanteId;
+      } else {
+        userId = payload.userId;
+      }
 
       setUser({
         email: payload.upn,
         firstName: payload.firstName,
-        paternalSurname: payload.paternalSurname,
+        paternalSurname: payload.paternalSurname || payload.lastName || '',
         maternalSurname: payload.maternalSurname,
         userId: userId.toString(),
-        role: role as 'contratante' | 'portador'
+        role: role as 'contratante' | 'portador' | 'admin'
       });
       
       return response;

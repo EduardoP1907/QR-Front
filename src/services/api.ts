@@ -224,4 +224,37 @@ export const profileApi = {
     api.put(API_ENDPOINTS.contratantes.profile.update, profileData),
 };
 
+// APIs de administrador
+export const adminApi = {
+  login: (email: string, password: string) =>
+    api.post('/admin/login', { email, password }),
+
+  getStats: () =>
+    api.get('/admin/stats'),
+
+  getAllContratantes: () =>
+    api.get('/admin/contratantes'),
+
+  getContratanteDetail: (id: number) =>
+    api.get(`/admin/contratantes/${id}`),
+
+  deleteContratante: (id: number) =>
+    api.delete(`/admin/contratantes/${id}`),
+
+  deactivateContratanteSubscription: (id: number) =>
+    api.post(`/admin/contratantes/${id}/deactivate-subscription`),
+
+  getAllPortadores: () =>
+    api.get('/admin/portadores'),
+
+  deletePortador: (id: number) =>
+    api.delete(`/admin/portadores/${id}`),
+
+  getAllPulseras: () =>
+    api.get('/admin/pulseras'),
+
+  deactivatePulseraSubscription: (id: number) =>
+    api.post(`/admin/pulseras/${id}/deactivate-subscription`),
+};
+
 export default api;
