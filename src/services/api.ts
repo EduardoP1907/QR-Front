@@ -2,7 +2,8 @@ import axios from 'axios';
 import { API_ENDPOINTS, STORAGE_KEYS } from '@/constants';
 import type { RegisterData, PulseraFormData, SubscriptionFormData } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+// Forzar la URL en desarrollo para evitar problemas con variables de entorno
+const API_BASE_URL = 'http://localhost:8080/api';
 
 // Configuración base de axios
 const api = axios.create({
@@ -75,26 +76,26 @@ export const authApi = {
 
 // APIs de pulseras
 export const pulseraApi = {
-  getAll: () => 
+  getAll: () =>
     api.get(API_ENDPOINTS.pulseras.getAll),
-    
-  create: (pulseraData: { name: string; description?: string }) => 
+
+  create: (pulseraData: { name: string; description?: string }) =>
     api.post(API_ENDPOINTS.pulseras.create, pulseraData),
-    
+
   update: (id: string | number, pulseraData: {
     name: string;
     description?: string;
     medicalInfo?: string;
   }) =>
     api.put(API_ENDPOINTS.pulseras.update(id), pulseraData),
-    
-  delete: (id: string | number) => 
+
+  delete: (id: string | number) =>
     api.delete(API_ENDPOINTS.pulseras.delete(id)),
-    
-  generateQr: (id: string | number) => 
+
+  generateQr: (id: string | number) =>
     api.get(API_ENDPOINTS.pulseras.generateQr(id)),
-    
-  scanQr: (qrCode: string) => 
+
+  scanQr: (qrCode: string) =>
     api.get(API_ENDPOINTS.pulseras.scanQr(qrCode)),
 
   assign: (id: string | number, assignData: {
@@ -104,11 +105,33 @@ export const pulseraApi = {
     paternalSurname: string;
     maternalSurname?: string;
     medicalInfo?: string;
+    medicamentos?: string;
+    enfermedadIds?: number[];
+    principiosActivos?: Array<{
+      principioActivoId: number;
+      concentracion: string;
+      dosis: string;
+      observaciones?: string;
+    }>;
+    contactosEmergencia?: Array<{
+      nombre: string;
+      telefono: string;
+    }>;
   }) =>
     api.post(API_ENDPOINTS.pulseras.assign(id), assignData),
-    
-  unassign: (id: string | number) => 
+
+  unassign: (id: string | number) =>
     api.post(API_ENDPOINTS.pulseras.unassign(id)),
+
+  // Suscripciones por pulsera
+  activateSubscription: (id: string | number) =>
+    api.post(API_ENDPOINTS.pulseras.subscription.activate(id)),
+
+  renewSubscription: (id: string | number) =>
+    api.post(API_ENDPOINTS.pulseras.subscription.renew(id)),
+
+  getSubscriptionStatus: (id: string | number) =>
+    api.get(API_ENDPOINTS.pulseras.subscription.status(id)),
 };
 
 // APIs de contratantes (suscripciones)
@@ -116,28 +139,36 @@ export const contratanteApi = {
   getAvailablePulseras: () =>
     api.get(API_ENDPOINTS.contratantes.purchases.available),
 
-  // Suscripciones
-  getSubscriptionStatus: () => 
-    api.get(API_ENDPOINTS.contratantes.subscription.status),
-    
-  processSubscription: (subscriptionData: SubscriptionFormData) => {
-    // Transformar los datos al formato esperado por el backend
+  // Protection Plan (compra de pulseras + suscripción incluida)
+  processProtectionPlan: (quantity: number, cardData: {
+    cardNumber: string;
+    expiryDate: string;
+    cvv: string;
+    cardHolderName: string;
+  }, saveCard: boolean = true) => {
     const payload = {
-      planType: subscriptionData.planType,
-      quantity: subscriptionData.quantity,
-      paymentData: {
-        cardNumber: subscriptionData.paymentData.cardNumber,
-        expiryDate: subscriptionData.paymentData.expiryDate,
-        cvv: subscriptionData.paymentData.cvv,
-        cardHolderName: subscriptionData.paymentData.cardHolderName
+      quantity: quantity,
+      tarjeta: {
+        numeroTarjeta: cardData.cardNumber,
+        nombreTitular: cardData.cardHolderName,
+        fechaExpiracion: cardData.expiryDate,
+        cvv: cardData.cvv,
+        esPrincipal: true
       },
-      customerData: {
-        fullName: subscriptionData.customerData.fullName,
-        email: subscriptionData.customerData.email,
-        phone: subscriptionData.customerData.phone
-      }
+      saveCard: saveCard
     };
-    return api.post(API_ENDPOINTS.contratantes.subscription.process, payload);
+    return api.post('/contratantes/protection-plan/process', payload);
+  },
+
+  initiateProtectionPlan: (quantity: number) =>
+    api.post('/contratantes/protection-plan/initiate', { quantity }),
+
+  getPricing: () =>
+    api.get('/contratantes/protection-plan/pricing'),
+
+  verifyPaymentAndUpdate: (quantity?: number | null) => {
+    const payload = quantity ? { quantity } : {};
+    return api.post('/contratantes/payment-verification/verify-and-update', payload);
   },
 };
 

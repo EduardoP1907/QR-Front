@@ -17,9 +17,6 @@ interface AuthContextType {
   token: string | null;
   login: (email: string, password: string) => Promise<any>;
   loginWithOtp: (email: string, otp: string) => Promise<any>;
-  register: (userData: any) => Promise<any>;
-  verifyOtp: (email: string, otp: string) => Promise<any>;
-  resendOtp: (email: string) => Promise<any>;
   logout: () => void;
   loading: boolean;
 }
@@ -157,33 +154,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const register = async (userData: any) => {
-    try {
-      const response = await authApi.register(userData);
-      return response;
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const verifyOtp = async (email: string, otp: string) => {
-    try {
-      const response = await authApi.verifyOtp(email, otp);
-      return response;
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const resendOtp = async (email: string) => {
-    try {
-      const response = await authApi.resendOtp(email);
-      return response;
-    } catch (error) {
-      throw error;
-    }
-  };
-
   const logout = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
@@ -197,9 +167,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     token,
     login,
     loginWithOtp,
-    register,
-    verifyOtp,
-    resendOtp,
     logout,
     loading
   };

@@ -1,7 +1,7 @@
 // Pricing constants
-export const SUBSCRIPTION_PRICE = 2900; // $2.900 CLP monthly
-export const ACTIVATION_FEE = 9900; // $9.900 CLP one-time activation fee
-export const TOTAL_FIRST_PAYMENT = SUBSCRIPTION_PRICE + ACTIVATION_FEE; // $12.800 CLP total first payment
+export const SUBSCRIPTION_PRICE = 2990; // $2.990 CLP monthly per pulsera
+export const PULSERA_PRICE = 9990; // $9.990 CLP per pulsera
+export const TOTAL_PER_PULSERA = PULSERA_PRICE + SUBSCRIPTION_PRICE; // $12.980 CLP per pulsera (pulsera + first month subscription)
 
 // Currency formatting
 export const CURRENCY = {
@@ -89,6 +89,11 @@ export const API_ENDPOINTS = {
     scanQr: (qrCode: string) => `/new-pulseras/scan/${qrCode}`,
     assign: (id: string | number) => `/new-pulseras/${id}/assign`,
     unassign: (id: string | number) => `/new-pulseras/${id}/unassign`,
+    subscription: {
+      activate: (id: string | number) => `/new-pulseras/${id}/subscription/activate`,
+      renew: (id: string | number) => `/new-pulseras/${id}/subscription/renew`,
+      status: (id: string | number) => `/new-pulseras/${id}/subscription/status`,
+    },
   },
 };
 

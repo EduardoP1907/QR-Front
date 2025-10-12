@@ -23,17 +23,10 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { contratanteApi } from '../../services/api';
 import ProtectedRoute from '../../components/ProtectedRoute';
-import { SUBSCRIPTION_PRICE, ACTIVATION_FEE, TOTAL_FIRST_PAYMENT } from '../../constants';
+import { SUBSCRIPTION_PRICE, PULSERA_PRICE, TOTAL_PER_PULSERA } from '../../constants';
 import type { SubscriptionFormData } from '../../types';
 
 interface LocalFormData {
-  fullName: string;
-  email: string;
-  phone: string;
-  cardNumber: string;
-  expiryDate: string;
-  cvv: string;
-  cardHolderName: string;
   quantity: number;
 }
 
@@ -47,10 +40,6 @@ function SubscriptionContent() {
 
   const form = useForm<LocalFormData>({
     defaultValues: {
-      email: user?.email || '',
-      fullName: user?.firstName && user?.paternalSurname
-        ? `${user.firstName} ${user.paternalSurname}`
-        : '',
       quantity: 1,
     }
   });
@@ -74,44 +63,34 @@ function SubscriptionContent() {
     setProcessing(true);
 
     try {
-      // Simular procesamiento de pago (siempre exitoso para pruebas)
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('Initiating protection plan payment:', { quantity });
 
-      // Transformar los datos al formato esperado por el backend
-      const subscriptionData: SubscriptionFormData = {
-        planType: 'monthly',
-        paymentData: {
-          cardNumber: data.cardNumber,
-          expiryDate: data.expiryDate,
-          cvv: data.cvv,
-          cardHolderName: data.cardHolderName,
-        },
-        customerData: {
-          fullName: data.fullName,
-          email: data.email,
-          phone: data.phone,
-        },
-        quantity: quantity
-      };
+      // Iniciar pago - obtener URL del checkout de VirtualPos
+      const response = await contratanteApi.initiateProtectionPlan(quantity);
 
-      console.log('Sending subscription data:', { quantity, subscriptionData });
+      if (response.data.checkoutUrl) {
+        // Guardar información del pedido en localStorage para verificación posterior
+        localStorage.setItem('pendingPurchase', JSON.stringify({
+          quantity,
+          timestamp: Date.now()
+        }));
 
-      // Procesar suscripción en el backend
-      const response = await contratanteApi.processSubscription(subscriptionData);
-
-      toast.success('¡Suscripción activada exitosamente!');
-      router.push('/subscription-success');
+        toast.success('Redirigiendo al pago seguro...');
+        // Redirigir al usuario al checkout de VirtualPos
+        window.location.href = response.data.checkoutUrl;
+      } else {
+        throw new Error('No se recibió URL de checkout');
+      }
     } catch (err: any) {
-      console.error('Error processing subscription:', err);
+      console.error('Error initiating protection plan:', err);
       console.error('Error response:', err.response?.data);
-      
-      const errorMessage = err.response?.data?.error || 
-                          err.response?.data?.message || 
-                          err.message || 
-                          'Error al procesar la suscripción. Inténtalo de nuevo.';
-      
+
+      const errorMessage = err.response?.data?.error ||
+                          err.response?.data?.message ||
+                          err.message ||
+                          'Error al iniciar el pago. Inténtalo de nuevo.';
+
       toast.error(errorMessage);
-    } finally {
       setProcessing(false);
     }
   };
@@ -179,15 +158,15 @@ function SubscriptionContent() {
                   <span className="text-3xl font-bold">${SUBSCRIPTION_PRICE.toLocaleString('es-CL')}</span>
                   <span className="text-white opacity-80">/CLP</span>
                 </div>
-                <div className="text-sm text-white opacity-90 mt-1">Mensual</div>
+                <div className="text-sm text-white opacity-90 mt-1">Mensual por pulsera</div>
               </div>
 
               <div className="mb-6 p-4 bg-white/10 rounded-lg">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">+ ${ACTIVATION_FEE.toLocaleString('es-CL')} Tarifa de habilitación</span>
+                  <span className="text-sm">+ ${PULSERA_PRICE.toLocaleString('es-CL')} Pulsera física</span>
                 </div>
                 <div className="text-xs text-white opacity-80 mt-1">
-                  (Pago único al momento de contratación)
+                  (Precio por pulsera)
                 </div>
               </div>
 
@@ -237,7 +216,7 @@ function SubscriptionContent() {
 
           {/* Payment Form */}
           <div className="bg-white border rounded-2xl p-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-6">Información de pago</h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-6">Resumen de tu compra</h3>
 
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
               {/* Hidden quantity field */}
@@ -246,180 +225,30 @@ function SubscriptionContent() {
                 {...form.register('quantity')}
               />
 
-              {/* Customer Information */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">Datos del titular</h4>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Payment information notice */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <Shield className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Nombre completo *
-                    </label>
-                    <input
-                      {...form.register('fullName', { required: 'El nombre es requerido' })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-opacity-75 focus:border-opacity-75 text-black"
-                      placeholder="Juan Pérez"
-                    />
-                    {form.formState.errors.fullName && (
-                      <p className="text-red-500 text-xs mt-1">{form.formState.errors.fullName.message}</p>
-                    )}
+                    <h4 className="font-semibold text-blue-900 mb-1">Pago Seguro con VirtualPos</h4>
+                    <p className="text-sm text-blue-700">
+                      Serás redirigido a nuestra plataforma de pago segura donde podrás ingresar
+                      los datos de tu tarjeta de forma protegida.
+                    </p>
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Teléfono *
-                    </label>
-                    <input
-                      {...form.register('phone', { required: 'El teléfono es requerido' })}
-                      type="tel"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-opacity-75 focus:border-opacity-75 text-black"
-                      placeholder="+56 9 1234 5678"
-                    />
-                    {form.formState.errors.phone && (
-                      <p className="text-red-500 text-xs mt-1">{form.formState.errors.phone.message}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email *
-                  </label>
-                  <input
-                    {...form.register('email', { 
-                      required: 'El email es requerido',
-                      pattern: {
-                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: 'Email inválido'
-                      }
-                    })}
-                    type="email"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-opacity-75 focus:border-opacity-75 text-black"
-                    placeholder="correo@ejemplo.com"
-                  />
-                  {form.formState.errors.email && (
-                    <p className="text-red-500 text-xs mt-1">{form.formState.errors.email.message}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Payment Information */}
-              <div className="space-y-4 pt-4 border-t">
-                <h4 className="font-medium text-gray-900">Información de la tarjeta</h4>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Número de tarjeta *
-                  </label>
-                  <input
-                    {...form.register('cardNumber', { 
-                      required: 'El número de tarjeta es requerido',
-                      pattern: {
-                        value: /^[0-9\s]{13,19}$/,
-                        message: 'Número de tarjeta inválido'
-                      }
-                    })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-opacity-75 focus:border-opacity-75 text-black"
-                    placeholder="1234 5678 9012 3456"
-                    maxLength={19}
-                    onChange={(e) => {
-                      // Format card number with spaces
-                      const value = e.target.value.replace(/\s/g, '').replace(/(\d{4})/g, '$1 ').trim();
-                      if (value.length <= 19) {
-                        e.target.value = value;
-                        form.setValue('cardNumber', value);
-                      }
-                    }}
-                  />
-                  {form.formState.errors.cardNumber && (
-                    <p className="text-red-500 text-xs mt-1">{form.formState.errors.cardNumber.message}</p>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Fecha de expiración *
-                    </label>
-                    <input
-                      {...form.register('expiryDate', { 
-                        required: 'La fecha de expiración es requerida',
-                        pattern: {
-                          value: /^(0[1-9]|1[0-2])\/([0-9]{2})$/,
-                          message: 'Formato MM/AA'
-                        }
-                      })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-opacity-75 focus:border-opacity-75 text-black"
-                      placeholder="MM/AA"
-                      maxLength={5}
-                      onChange={(e) => {
-                        // Format expiry date
-                        let value = e.target.value.replace(/\D/g, '');
-                        if (value.length >= 2) {
-                          value = value.substring(0, 2) + '/' + value.substring(2, 4);
-                        }
-                        e.target.value = value;
-                        form.setValue('expiryDate', value);
-                      }}
-                    />
-                    {form.formState.errors.expiryDate && (
-                      <p className="text-red-500 text-xs mt-1">{form.formState.errors.expiryDate.message}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      CVV *
-                    </label>
-                    <input
-                      {...form.register('cvv', { 
-                        required: 'El CVV es requerido',
-                        pattern: {
-                          value: /^[0-9]{3,4}$/,
-                          message: 'CVV inválido (3-4 dígitos)'
-                        }
-                      })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-opacity-75 focus:border-opacity-75 text-black"
-                      placeholder="123"
-                      maxLength={4}
-                      onChange={(e) => {
-                        e.target.value = e.target.value.replace(/\D/g, '');
-                      }}
-                    />
-                    {form.formState.errors.cvv && (
-                      <p className="text-red-500 text-xs mt-1">{form.formState.errors.cvv.message}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nombre en la tarjeta *
-                  </label>
-                  <input
-                    {...form.register('cardHolderName', { required: 'El nombre en la tarjeta es requerido' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-opacity-75 focus:border-opacity-75 text-black "
-                    placeholder="JUAN PEREZ"
-                    onChange={(e) => {
-                      e.target.value = e.target.value.toUpperCase();
-                    }}
-                  />
-                  {form.formState.errors.cardHolderName && (
-                    <p className="text-red-500 text-xs mt-1">{form.formState.errors.cardHolderName.message}</p>
-                  )}
                 </div>
               </div>
 
               {/* Submit */}
-              <div className="pt-6 border-t">
+              <div className="pt-2">
                 <div className="space-y-3 mb-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Suscripción mensual:</span>
-                    <span className="font-semibold text-black">${SUBSCRIPTION_PRICE.toLocaleString('es-CL')} CLP</span>
+                    <span className="text-sm text-gray-600">Pulseras físicas ({quantity}x):</span>
+                    <span className="font-semibold text-black">${(PULSERA_PRICE * quantity).toLocaleString('es-CL')} CLP</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Tarifa de habilitación:</span>
-                    <span className="font-semibold text-black">${ACTIVATION_FEE.toLocaleString('es-CL')} CLP</span>
+                    <span className="text-sm text-gray-600">Suscripciones ({quantity}x):</span>
+                    <span className="font-semibold text-black">${(SUBSCRIPTION_PRICE * quantity).toLocaleString('es-CL')} CLP</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Cantidad de pulseras:</span>
@@ -429,7 +258,7 @@ function SubscriptionContent() {
                   <div className="flex items-center justify-between">
                     <span className="text-lg font-semibold text-gray-900">Total primer pago:</span>
                     <span className="text-2xl font-bold" style={{color: '#551A8B'}}>
-                      ${TOTAL_FIRST_PAYMENT.toLocaleString('es-CL')} CLP
+                      ${(TOTAL_PER_PULSERA * quantity).toLocaleString('es-CL')} CLP
                     </span>
                   </div>
                 </div>
@@ -466,7 +295,7 @@ function SubscriptionContent() {
                   style={{backgroundColor: '#83C341'}}
                 >
                   <CreditCard className="w-5 h-5" />
-                  <span>{processing ? 'Procesando...' : 'Contratar Ahora'}</span>
+                  <span>{processing ? 'Redirigiendo...' : 'Proceder al Pago'}</span>
                 </button>
 
                 <p className="text-xs text-gray-500 text-center mt-3">

@@ -13,9 +13,7 @@ export interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<any>;
-  register: (userData: RegisterData) => Promise<any>;
-  verifyOtp: (email: string, otp: string) => Promise<any>;
-  resendOtp: (email: string) => Promise<any>;
+  loginWithOtp: (email: string, otp: string) => Promise<any>;
   logout: () => void;
   loading: boolean;
 }
@@ -31,6 +29,8 @@ export interface RegisterData {
 export interface Pulsera {
   id: string;
   nombre: string;
+  name?: string;
+  description?: string;
   descripcion?: string;
   tipoSangre?: string;
   contactoEmergencia: string;
@@ -41,6 +41,24 @@ export interface Pulsera {
   codigo?: string;
   qrCode?: string;
   active?: boolean;
+  medicalInfo?: string;
+  enfermedadesResumen?: string;
+  principiosActivosResumen?: string;
+  contactosEmergenciaResumen?: string;
+  assigned?: boolean;
+  portador?: {
+    id: string;
+    email: string;
+    firstName: string;
+    paternalSurname: string;
+    maternalSurname?: string;
+    rut: string;
+  } | null;
+  // Campos de suscripción por pulsera
+  subscriptionActive?: boolean;
+  subscriptionExpiresAt?: string | null;
+  subscriptionPlanType?: string;
+  daysRemaining?: number;
 }
 
 export interface PulseraFormData {
@@ -100,7 +118,15 @@ export interface OtpFormData {
   otp: string;
 }
 
-// Subscription types
+// Subscription types (por pulsera)
+export interface PulseraSubscriptionStatus {
+  subscriptionActive: boolean;
+  subscriptionExpiresAt: string | null;
+  subscriptionPlanType: string;
+  daysRemaining: number;
+}
+
+// Deprecated - Las suscripciones ahora son por pulsera
 export interface SubscriptionStatus {
   isActive: boolean;
   daysRemaining: number;

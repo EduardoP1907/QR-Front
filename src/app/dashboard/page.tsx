@@ -88,11 +88,6 @@ function DashboardContent() {
   const [pulseras, setPulseras] = useState<Pulsera[]>([]);
   const [loading, setLoading] = useState(true);
   const [availablePulseras, setAvailablePulseras] = useState(0);
-  const [subscriptionStatus, setSubscriptionStatus] = useState<{
-    isActive: boolean;
-    daysRemaining: number;
-    expiresAt: string | null;
-  }>({ isActive: false, daysRemaining: 0, expiresAt: null });
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingPulsera, setEditingPulsera] = useState<Pulsera | null>(null);
@@ -140,19 +135,17 @@ function DashboardContent() {
   const editForm = useForm<PulseraFormData>();
   const assignForm = useForm<AssignFormData>();
 
-  // Cargar pulseras, pulseras disponibles y estado de suscripción
+  // Cargar pulseras y pulseras disponibles
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [pulserasResponse, availableResponse, subscriptionResponse] = await Promise.all([
+        const [pulserasResponse, availableResponse] = await Promise.all([
           pulseraApi.getAll(),
-          contratanteApi.getAvailablePulseras(),
-          contratanteApi.getSubscriptionStatus().catch(() => ({ data: { isActive: false, daysRemaining: 0, expiresAt: null } }))
+          contratanteApi.getAvailablePulseras()
         ]);
-        
+
         setPulseras(Array.isArray(pulserasResponse.data) ? pulserasResponse.data : pulserasResponse.data?.items ?? []);
         setAvailablePulseras(availableResponse.data.availablePulseras || 0);
-        setSubscriptionStatus(subscriptionResponse.data);
       } catch (err) {
         console.error(err);
         toast.error('No se pudieron cargar los datos.');
@@ -220,10 +213,6 @@ function DashboardContent() {
   };
 
   const handleCreate = () => {
-    if (!subscriptionStatus.isActive) {
-      toast.error('Necesitas una suscripción activa para usar las pulseras.');
-      return;
-    }
     if (availablePulseras <= 0) {
       toast.error('No tienes pulseras disponibles. Compra más pulseras primero.');
       return;
@@ -381,7 +370,7 @@ function DashboardContent() {
 
   const handleAssignSubmit = async (data: AssignFormData) => {
     if (!assigningPulsera) return;
-    
+
     try {
       // Preparar datos de asignación
       const assignData = {
@@ -404,22 +393,20 @@ function DashboardContent() {
           description: 'Pulsera personalizada'
         };
         const createResponse = await pulseraApi.create(createData);
-        
+
         // Luego asignar la pulsera recién creada
-        const assignResponse = await pulseraApi.assign(createResponse.data.pulsera.id, assignData);
-        
-        // Actualizar el estado con la pulsera asignada
-        setPulseras((prev) => [...prev, assignResponse.data.pulsera]);
+        await pulseraApi.assign(createResponse.data.pulsera.id, assignData);
+
         setAvailablePulseras((prev) => prev - 1);
       } else {
         // Para pulsera existente: solo asignar
-        const assignResponse = await pulseraApi.assign(assigningPulsera.id, assignData);
-        
-        setPulseras((prev) => 
-          prev.map((p) => p.id === assigningPulsera.id ? assignResponse.data.pulsera : p)
-        );
+        await pulseraApi.assign(assigningPulsera.id, assignData);
       }
-      
+
+      // Recargar todas las pulseras desde el servidor para obtener datos actualizados
+      const pulserasResponse = await pulseraApi.getAll();
+      setPulseras(Array.isArray(pulserasResponse.data) ? pulserasResponse.data : pulserasResponse.data?.items ?? []);
+
       setShowAssignModal(false);
       setAssigningPulsera(null);
       assignForm.reset();
@@ -430,6 +417,54 @@ function DashboardContent() {
     } catch (err) {
       console.error(err);
       toast.error('Error al asignar la pulsera.');
+    }
+  };
+
+  const handleActivateSubscription = async (pulseraId: string) => {
+    try {
+      const response = await pulseraApi.activateSubscription(pulseraId);
+
+      setPulseras((prev) =>
+        prev.map((p) =>
+          p.id === pulseraId
+            ? {
+                ...p,
+                subscriptionActive: response.data.subscriptionActive,
+                subscriptionExpiresAt: response.data.subscriptionExpiresAt,
+                daysRemaining: response.data.daysRemaining,
+              }
+            : p
+        )
+      );
+
+      toast.success(response.data.message || 'Suscripción activada exitosamente');
+    } catch (err) {
+      console.error(err);
+      toast.error('Error al activar la suscripción');
+    }
+  };
+
+  const handleRenewSubscription = async (pulseraId: string) => {
+    try {
+      const response = await pulseraApi.renewSubscription(pulseraId);
+
+      setPulseras((prev) =>
+        prev.map((p) =>
+          p.id === pulseraId
+            ? {
+                ...p,
+                subscriptionActive: response.data.subscriptionActive,
+                subscriptionExpiresAt: response.data.subscriptionExpiresAt,
+                daysRemaining: response.data.daysRemaining,
+              }
+            : p
+        )
+      );
+
+      toast.success(response.data.message || 'Suscripción renovada exitosamente');
+    } catch (err) {
+      console.error(err);
+      toast.error('Error al renovar la suscripción');
     }
   };
 
@@ -854,33 +889,15 @@ function DashboardContent() {
         </div>
 
         {/* Status Cards */}
-        <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Subscription Status */}
-          <div className="bg-white border rounded-2xl p-4">
-            <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full ${subscriptionStatus.isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-900">
-                  {subscriptionStatus.isActive ? 'Suscripción Activa' : 'Sin Suscripción'}
-                </h4>
-                <p className="text-sm text-gray-600">
-                  {subscriptionStatus.isActive 
-                    ? `${subscriptionStatus.daysRemaining} días restantes`
-                    : 'Necesitas una suscripción para usar las pulseras'
-                  }
-                </p>
-              </div>
-            </div>
-          </div>
-
+        <div className="mb-6 grid grid-cols-1 md:grid-cols-1 gap-4">
           {/* Available Bracelets */}
           <div className="bg-white border rounded-2xl p-4">
             <div className="flex items-center gap-3">
               <div className={`w-3 h-3 rounded-full ${availablePulseras > 0 ? 'bg-blue-500' : 'bg-gray-400'}`}></div>
               <div className="flex-1">
-                <h4 className="font-semibold text-gray-900">Pulseras Disponibles</h4>
+                <h4 className="font-semibold text-gray-900">Bluko Life Por Asignar</h4>
                 <p className="text-sm text-gray-600">
-                  {availablePulseras} pulseras {subscriptionStatus.isActive ? 'activas' : 'inactivas'}
+                  {availablePulseras} {availablePulseras === 1 ? 'pulsera disponible' : 'pulseras disponibles'} para crear y asignar
                 </p>
               </div>
             </div>
@@ -890,7 +907,7 @@ function DashboardContent() {
         {/* Actions */}
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Mis pulseras</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Mis Bluko Life</h3>
             <p className="text-sm text-gray-600">
               Administra tu sistema Bluko Life
             </p>
@@ -906,23 +923,17 @@ function DashboardContent() {
             </button>
             <button
               onClick={handleCreate}
-              disabled={availablePulseras <= 0 || !subscriptionStatus.isActive}
+              disabled={availablePulseras <= 0}
               className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
-                availablePulseras > 0 && subscriptionStatus.isActive
-                  ? 'text-white hover:opacity-90' 
+                availablePulseras > 0
+                  ? 'text-white hover:opacity-90'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
-              style={availablePulseras > 0 && subscriptionStatus.isActive ? {backgroundColor: '#83C341'} : {}}
-              title={
-                !subscriptionStatus.isActive 
-                  ? 'Necesitas una suscripción activa' 
-                  : availablePulseras <= 0 
-                    ? 'Compra pulseras primero' 
-                    : 'Asignar pulsera a usuario'
-              }
+              style={availablePulseras > 0 ? {backgroundColor: '#83C341'} : {}}
+              title={availablePulseras <= 0 ? 'Compra pulseras primero' : 'Asignar pulsera a usuario'}
             >
               <Plus className="w-4 h-4" />
-              <span>Asignar Pulsera</span>
+              <span>Asignar Bluko Life</span>
             </button>
           </div>
         </div>
@@ -955,7 +966,22 @@ function DashboardContent() {
                     </div>
                     
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-gray-900 truncate">{p.name ?? `Pulsera #${p.id}`}</p>
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-sm font-medium text-gray-900 truncate">{p.name ?? `Pulsera #${p.id}`}</p>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                          p.subscriptionActive
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            p.subscriptionActive ? 'bg-green-500' : 'bg-red-500'
+                          }`}></span>
+                          {p.subscriptionActive
+                            ? `Activa (${p.daysRemaining || 0}d)`
+                            : 'Inactiva'
+                          }
+                        </span>
+                      </div>
                       <p className="text-sm text-gray-500 truncate">
                         Código: {p.qrCode ?? p.id}
                       </p>
@@ -968,6 +994,20 @@ function DashboardContent() {
                   </div>
 
                   <div className="flex items-center gap-2">
+                    {/* Botón de Suscripción */}
+                    <button
+                      onClick={() => p.subscriptionActive ? handleRenewSubscription(p.id) : handleActivateSubscription(p.id)}
+                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${
+                        p.subscriptionActive
+                          ? 'border-green-200 text-green-600 hover:bg-green-50'
+                          : 'border-purple-200 text-purple-600 hover:bg-purple-50'
+                      }`}
+                      title={p.subscriptionActive ? 'Renovar suscripción' : 'Activar suscripción'}
+                    >
+                      <Shield className="w-4 h-4" />
+                      <span className="hidden sm:inline">{p.subscriptionActive ? 'Renovar' : 'Activar'}</span>
+                    </button>
+
                     <button
                       onClick={() => handleShowQr(p)}
                       className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border hover:bg-gray-50"
@@ -1630,17 +1670,7 @@ function DashboardContent() {
                       </div>
 
                       {/* Medicamentos (texto libre) */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Otros Medicamentos
-                        </label>
-                        <textarea
-                          {...assignForm.register('medicamentos')}
-                          rows={2}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
-                          placeholder="Otros medicamentos no listados arriba..."
-                        />
-                      </div>
+                      
 
                       {/* Información médica adicional */}
                       <div>

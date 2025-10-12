@@ -272,7 +272,7 @@ export default function PortadorLoginPage() {
                   type="text"
                   id="otp"
                   maxLength={6}
-                  className="w-full px-4 py-3 text-center text-2xl tracking-widest border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 text-center text-2xl tracking-widest border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                   placeholder="123456"
                 />
                 {otpForm.formState.errors.otp && (

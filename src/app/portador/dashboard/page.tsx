@@ -4,16 +4,41 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Heart, Edit3, User, Mail, Phone, AlertTriangle, Pill, Droplet, LogOut, QrCode } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { portadorApi, newPulseraApi } from '@/services/api';
+import { portadorApi, pulseraApi } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
+
+interface Enfermedad {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+}
+
+interface PrincipioActivo {
+  id: number;
+  nombre: string;
+  nombreComercial?: string;
+  concentracion: string;
+  dosis: string;
+  observaciones?: string;
+}
+
+interface ContactoEmergencia {
+  id: number;
+  nombre: string;
+  telefono: string;
+}
 
 interface Pulsera {
   id: number;
   name: string;
   description?: string;
   medicalInfo?: string;
+  medicamentos?: string;
   qrCode?: string;
   active: boolean;
+  enfermedades?: Enfermedad[];
+  principiosActivos?: PrincipioActivo[];
+  contactosEmergencia?: ContactoEmergencia[];
 }
 
 interface EditMedicalFormData {
@@ -33,10 +58,40 @@ export default function PortadorDashboard() {
     fetchPulseras();
   }, []);
 
+  useEffect(() => {
+    console.log('Estado pulseras actualizado:', pulseras);
+    console.log('Longitud de pulseras:', pulseras.length);
+  }, [pulseras]);
+
   const fetchPulseras = async () => {
     try {
       const response = await portadorApi.getMyPulseras();
-      setPulseras(response.data);
+      console.log('Response from API:', response.data);
+      console.log('Type of response.data:', typeof response.data);
+      console.log('Is Array?:', Array.isArray(response.data));
+      console.log('Constructor:', response.data?.constructor?.name);
+
+      // Forzar conversión a array si es necesario
+      let pulserasData = [];
+      if (Array.isArray(response.data)) {
+        pulserasData = response.data;
+      } else if (response.data && typeof response.data === 'object') {
+        // Si es un objeto, intentar convertirlo a array
+        pulserasData = Object.values(response.data);
+      } else if (typeof response.data === 'string') {
+        // Si es un string, parsearlo
+        try {
+          pulserasData = JSON.parse(response.data);
+        } catch (e) {
+          console.error('Error parsing JSON:', e);
+          pulserasData = [];
+        }
+      }
+
+      console.log('Pulseras Data length:', pulserasData.length);
+      console.log('Pulseras Data:', pulserasData);
+      setPulseras(pulserasData);
+      console.log('Estado actualizado con pulseras');
     } catch (error: any) {
       console.error('Error fetching pulseras:', error);
       if (error.response?.status === 401) {
@@ -70,11 +125,11 @@ export default function PortadorDashboard() {
 
   const handleShowQrCode = async (pulsera: Pulsera) => {
     try {
-      const response = await newPulseraApi.generateQr(pulsera.id);
-      setShowQrModal({ 
-        show: true, 
-        pulsera, 
-        qrImage: response.data.qrImage 
+      const response = await pulseraApi.generateQr(pulsera.id);
+      setShowQrModal({
+        show: true,
+        pulsera,
+        qrImage: response.data.qrImage
       });
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Error al generar código QR';
@@ -211,16 +266,96 @@ export default function PortadorDashboard() {
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-3">
-                    <div className="bg-green-100 p-2 rounded-lg mt-1">
-                      <Pill className="w-4 h-4 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Info. Médica</p>
-                      <p className="text-sm text-gray-600">
-                        {pulsera.medicalInfo || 'No especificada'}
-                      </p>
-                    </div>
+                  {/* Información Médica Completa */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    {/* Info Médica General */}
+                    {pulsera.medicalInfo && (
+                      <div className="flex items-start space-x-3">
+                        <div className="bg-blue-100 p-2 rounded-lg mt-1">
+                          <Pill className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900 mb-1">Información Médica</p>
+                          <p className="text-sm text-gray-600">{pulsera.medicalInfo}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Enfermedades */}
+                    {pulsera.enfermedades && pulsera.enfermedades.length > 0 && (
+                      <div className="flex items-start space-x-3">
+                        <div className="bg-red-100 p-2 rounded-lg mt-1">
+                          <AlertTriangle className="w-4 h-4 text-red-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900 mb-1">Condiciones Médicas</p>
+                          <ul className="text-sm text-gray-600 list-disc list-inside">
+                            {pulsera.enfermedades.map((enfermedad) => (
+                              <li key={enfermedad.id}>{enfermedad.nombre}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Medicamentos */}
+                    {pulsera.medicamentos && (
+                      <div className="flex items-start space-x-3">
+                        <div className="bg-purple-100 p-2 rounded-lg mt-1">
+                          <Pill className="w-4 h-4 text-purple-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900 mb-1">Medicamentos</p>
+                          <p className="text-sm text-gray-600">{pulsera.medicamentos}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Principios Activos */}
+                    {pulsera.principiosActivos && pulsera.principiosActivos.length > 0 && (
+                      <div className="flex items-start space-x-3">
+                        <div className="bg-green-100 p-2 rounded-lg mt-1">
+                          <Pill className="w-4 h-4 text-green-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900 mb-1">Principios Activos</p>
+                          <div className="space-y-2">
+                            {pulsera.principiosActivos.map((principio) => (
+                              <div key={principio.id} className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                                <p className="font-medium">{principio.nombre}</p>
+                                {principio.nombreComercial && (
+                                  <p className="text-xs text-gray-500">Comercial: {principio.nombreComercial}</p>
+                                )}
+                                <p className="text-xs">Concentración: {principio.concentracion} | Dosis: {principio.dosis}</p>
+                                {principio.observaciones && (
+                                  <p className="text-xs text-gray-500">Obs: {principio.observaciones}</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Contactos de Emergencia */}
+                    {pulsera.contactosEmergencia && pulsera.contactosEmergencia.length > 0 && (
+                      <div className="flex items-start space-x-3 md:col-span-2">
+                        <div className="bg-orange-100 p-2 rounded-lg mt-1">
+                          <Phone className="w-4 h-4 text-orange-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900 mb-2">Contactos de Emergencia</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {pulsera.contactosEmergencia.map((contacto) => (
+                              <div key={contacto.id} className="bg-gray-50 p-3 rounded-lg">
+                                <p className="text-sm font-medium text-gray-900">{contacto.nombre}</p>
+                                <p className="text-sm text-gray-600">{contacto.telefono}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Edit Medical Info Form */}

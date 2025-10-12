@@ -1,8 +1,6 @@
 {
   "/favicon.ico/route": "app/favicon.ico/route.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/login/page": "app/login/page.js",
-  "/subscription/page": "app/subscription/page.js",
-  "/subscription-success/page": "app/subscription-success/page.js",
-  "/profile/page": "app/profile/page.js"
+  "/portador/login/page": "app/portador/login/page.js",
+  "/portador/dashboard/page": "app/portador/dashboard/page.js"
 }
