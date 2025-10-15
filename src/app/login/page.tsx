@@ -28,6 +28,10 @@ export default function LoginPage() {
   const { login, loginWithOtp } = useAuth();
   const router = useRouter();
 
+  // Obtener returnUrl de los query params
+  const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const returnUrl = searchParams.get('returnUrl') || '/dashboard';
+
   const passwordForm = useForm<LoginFormData>();
   const otpForm = useForm<OtpFormData>();
 
@@ -37,7 +41,7 @@ export default function LoginPage() {
     try {
       await login(data.email, data.password);
       toast.success('¡Bienvenido de vuelta!');
-      router.push('/dashboard');
+      router.push(returnUrl);
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Error al iniciar sesión';
       toast.error(errorMessage);
@@ -68,7 +72,7 @@ export default function LoginPage() {
     try {
       await loginWithOtp(data.email, data.otp);
       toast.success('¡Acceso autorizado!');
-      router.push('/dashboard');
+      router.push(returnUrl);
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Código inválido';
       toast.error(errorMessage);
