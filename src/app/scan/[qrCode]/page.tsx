@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { Shield, Phone, Heart, AlertTriangle, Home, User } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { Shield, Phone, Heart, AlertTriangle, Home, User, QrCode } from 'lucide-react';
 import { pulseraApi } from '../../../services/api';
+import { useAuth } from '../../../context/AuthContext';
 
 interface PulseraData {
   id: string;
@@ -17,22 +18,45 @@ interface PulseraData {
   medicamentos: string;
   alergias: string;
   tipoSangre: string;
+  status?: string;
+  customId?: string;
 }
 
 export default function ScanPage() {
   const params = useParams();
+  const router = useRouter();
+  const { user } = useAuth();
   const qrCode = params.qrCode as string;
   const [pulsera, setPulsera] = useState<PulseraData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isGenerated, setIsGenerated] = useState(false);
 
   useEffect(() => {
     const fetchPulseraData = async () => {
       try {
         const response = await pulseraApi.scanQr(qrCode);
         setPulsera(response.data);
+
+        // Detectar si es un QR generado por admin pero no reclamado
+        if (response.data?.status === 'GENERATED') {
+          setIsGenerated(true);
+        }
       } catch (error: any) {
-        setError(error.response?.data?.error || 'Pulsera no encontrada');
+        const errorMsg = error.response?.data?.error || 'Pulsera no encontrada';
+
+        // Si el error indica que el QR existe pero no está asignado, es GENERATED
+        if (errorMsg.includes('no tiene información') || errorMsg.includes('no está asignada')) {
+          setIsGenerated(true);
+          setPulsera(error.response?.data || {
+            id: qrCode,
+            status: 'GENERATED',
+            name: 'Pulsera sin asignar',
+            customId: error.response?.data?.customId
+          } as PulseraData);
+        } else {
+          setError(errorMsg);
+        }
       } finally {
         setLoading(false);
       }
@@ -43,12 +67,98 @@ export default function ScanPage() {
     }
   }, [qrCode]);
 
+  const handleClaimQr = () => {
+    // Si no hay usuario, redirigir a login con returnUrl
+    if (!user) {
+      const currentUrl = `/scan/${qrCode}`;
+      router.push(`/login?returnUrl=${encodeURIComponent(currentUrl)}`);
+      return;
+    }
+
+    // Si hay usuario, redirigir al dashboard donde puede reclamar el QR
+    router.push(`/dashboard?claimQr=${qrCode}`);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Cargando información de la pulsera...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // UI especial para QRs generados pero no reclamados
+  if (isGenerated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full text-center">
+          <div className="bg-white rounded-2xl shadow-xl p-8">
+            <div className="w-20 h-20 bg-gradient-to-r from-purple-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <QrCode className="w-10 h-10 text-purple-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Pulsera Disponible
+            </h2>
+            {pulsera?.customId && (
+              <p className="text-sm text-gray-500 mb-4">
+                Código: {pulsera.customId}
+              </p>
+            )}
+            <p className="text-gray-600 mb-4">
+              Esta pulsera está lista para ser reclamada. {!user ? 'Inicia sesión' : 'Ve a tu dashboard'} para activarla y asignarla a un usuario.
+            </p>
+            {!user && (
+              <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-xs text-blue-800">
+                  <strong>Nota:</strong> Debes iniciar sesión con una cuenta de contratante para reclamar esta pulsera. Si eres administrador, por favor usa una cuenta de contratante.
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <button
+                onClick={handleClaimQr}
+                className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all transform hover:scale-105"
+              >
+                <Shield className="w-5 h-5" />
+                {!user ? 'Iniciar sesión para reclamar' : 'Ir a mi dashboard'}
+              </button>
+
+              <Link
+                href="/"
+                className="w-full inline-flex items-center justify-center gap-2 border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <Home className="w-4 h-4" />
+                Volver al inicio
+              </Link>
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <p className="text-sm text-gray-500 mb-3">
+                ¿Aún no tienes una cuenta?
+              </p>
+              <Link
+                href="/register"
+                className="text-purple-600 hover:text-purple-700 font-semibold text-sm"
+              >
+                Crear cuenta gratis
+              </Link>
+            </div>
+          </div>
+
+          {/* Info adicional */}
+          <div className="mt-6 bg-white rounded-xl p-4 shadow-md">
+            <h3 className="font-semibold text-gray-900 mb-2 flex items-center justify-center gap-2">
+              <Shield className="w-5 h-5 text-purple-600" />
+              ¿Qué es Bluko Life?
+            </h3>
+            <p className="text-sm text-gray-600">
+              Pulseras inteligentes con QR que almacenan información médica de emergencia accesible 24/7.
+            </p>
+          </div>
         </div>
       </div>
     );

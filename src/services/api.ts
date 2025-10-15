@@ -170,6 +170,37 @@ export const contratanteApi = {
     const payload = quantity ? { quantity } : {};
     return api.post('/contratantes/payment-verification/verify-and-update', payload);
   },
+
+  // Claim QR code
+  claimQr: (qrCode: string, portadorData?: {
+    email?: string;
+    rut?: string;
+    firstName?: string;
+    paternalSurname?: string;
+    maternalSurname?: string;
+  }) => {
+    const payload = {
+      qrCode,
+      portadorData: portadorData || {}
+    };
+    return api.post('/contratantes/claim-qr', payload);
+  },
+
+  // Crear portador sin asignar pulsera
+  createPortador: (portadorData: {
+    email: string;
+    rut: string;
+    firstName: string;
+    paternalSurname: string;
+    maternalSurname?: string;
+  }) => {
+    return api.post('/contratantes/portadores/create', portadorData);
+  },
+
+  // Listar todos los portadores del contratante
+  getPortadores: () => {
+    return api.get('/contratantes/portadores');
+  },
 };
 
 // APIs de portadores
@@ -255,6 +286,18 @@ export const adminApi = {
 
   deactivatePulseraSubscription: (id: number) =>
     api.post(`/admin/pulseras/${id}/deactivate-subscription`),
+
+  generatePulserasBatch: (quantity: number) =>
+    api.post('/admin/pulseras/generate-batch', { quantity }),
+
+  getUnassignedPulseras: () =>
+    api.get('/admin/pulseras/unassigned'),
+
+  getPulseraQrImage: (id: number) =>
+    api.get(`/admin/pulseras/${id}/qr-image`),
+
+  getPulseraQrImageByCustomId: (customId: string) =>
+    api.get(`/admin/pulseras/custom/${customId}/qr-image`),
 };
 
 export default api;

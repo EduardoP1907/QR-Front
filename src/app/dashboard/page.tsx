@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import {
@@ -83,11 +83,30 @@ interface AssignFormData {
 
 function DashboardContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, logout } = useAuth();
-  
+
+  // Verificar rol del usuario
+  useEffect(() => {
+    if (user && user.role !== 'contratante') {
+      toast.error('Acceso denegado. Esta página es solo para contratantes.');
+
+      // Redirigir según el rol
+      if (user.role === 'admin') {
+        router.push('/admin/dashboard');
+      } else if (user.role === 'portador') {
+        router.push('/portador/dashboard');
+      } else {
+        logout();
+        router.push('/login');
+      }
+    }
+  }, [user, router, logout]);
+
   const [pulseras, setPulseras] = useState<Pulsera[]>([]);
   const [loading, setLoading] = useState(true);
   const [availablePulseras, setAvailablePulseras] = useState(0);
+  const [claimingQr, setClaimingQr] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingPulsera, setEditingPulsera] = useState<Pulsera | null>(null);
@@ -96,6 +115,9 @@ function DashboardContent() {
   const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [assigningPulsera, setAssigningPulsera] = useState<Pulsera | null>(null);
+  const [portadores, setPortadores] = useState<any[]>([]);
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [selectedPortadorId, setSelectedPortadorId] = useState<string>('');
   
   // Medical data for dropdowns
   const [enfermedades, setEnfermedades] = useState<Enfermedad[]>([]);
@@ -135,17 +157,25 @@ function DashboardContent() {
   const editForm = useForm<PulseraFormData>();
   const assignForm = useForm<AssignFormData>();
 
-  // Cargar pulseras y pulseras disponibles
+  // Cargar pulseras, pulseras disponibles y portadores
   useEffect(() => {
+    // Solo cargar datos si el usuario es contratante
+    if (!user || user.role !== 'contratante') {
+      setLoading(false);
+      return;
+    }
+
     const fetchData = async () => {
       try {
-        const [pulserasResponse, availableResponse] = await Promise.all([
+        const [pulserasResponse, availableResponse, portadoresResponse] = await Promise.all([
           pulseraApi.getAll(),
-          contratanteApi.getAvailablePulseras()
+          contratanteApi.getAvailablePulseras(),
+          contratanteApi.getPortadores()
         ]);
 
         setPulseras(Array.isArray(pulserasResponse.data) ? pulserasResponse.data : pulserasResponse.data?.items ?? []);
         setAvailablePulseras(availableResponse.data.availablePulseras || 0);
+        setPortadores(Array.isArray(portadoresResponse.data) ? portadoresResponse.data : portadoresResponse.data?.items ?? []);
       } catch (err) {
         console.error(err);
         toast.error('No se pudieron cargar los datos.');
@@ -155,7 +185,7 @@ function DashboardContent() {
     };
 
     fetchData();
-  }, []);
+  }, [user]);
 
   // Load medical data for dropdowns
   useEffect(() => {
@@ -176,6 +206,66 @@ function DashboardContent() {
 
     loadMedicalData();
   }, []);
+
+  // Handle QR claim from scan page
+  useEffect(() => {
+    // Solo permitir claim si el usuario es contratante
+    if (!user || user.role !== 'contratante') {
+      return;
+    }
+
+    const claimQr = searchParams.get('claimQr');
+
+    if (claimQr && !claimingQr) {
+      const handleClaimQr = async () => {
+        setClaimingQr(true);
+
+        try {
+          const response = await contratanteApi.claimQr(claimQr);
+
+          toast.success('¡QR reclamado exitosamente! Ahora puedes asignar la pulsera a un usuario.');
+
+          // Reload pulseras and available count
+          const [pulserasResponse, availableResponse] = await Promise.all([
+            pulseraApi.getAll(),
+            contratanteApi.getAvailablePulseras()
+          ]);
+
+          setPulseras(Array.isArray(pulserasResponse.data) ? pulserasResponse.data : pulserasResponse.data?.items ?? []);
+          setAvailablePulseras(availableResponse.data.availablePulseras || 0);
+
+          // Open assignment modal for the claimed pulsera
+          const claimedPulsera = response.data.pulsera || response.data;
+          if (claimedPulsera) {
+            setAssigningPulsera(claimedPulsera);
+            assignForm.reset();
+            setPatologiasDetalle([]);
+            setPrinciosActivosDetalle([]);
+            setContactosEmergenciaDetalle([]);
+            setSearchStates({});
+            setFocusStates({});
+            setSearchStatesPatologias({});
+            setFocusStatesPatologias({});
+            setShowAssignModal(true);
+          }
+
+          // Remove claimQr from URL
+          router.replace('/dashboard');
+        } catch (error: any) {
+          console.error('Error claiming QR:', error);
+          const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al reclamar el QR';
+          toast.error(errorMsg);
+
+          // Remove claimQr from URL even on error
+          router.replace('/dashboard');
+        } finally {
+          setClaimingQr(false);
+        }
+      };
+
+      handleClaimQr();
+    }
+  }, [searchParams, claimingQr, router, assignForm, user]);
 
   // Cargar QR codes para todas las pulseras
   useEffect(() => {
@@ -214,7 +304,7 @@ function DashboardContent() {
 
   const handleCreate = () => {
     if (availablePulseras <= 0) {
-      toast.error('No tienes pulseras disponibles. Compra más pulseras primero.');
+      toast.error('No tienes créditos disponibles. Escanea un QR físico o compra más pulseras.');
       return;
     }
     // For assignment, we need a placeholder pulsera
@@ -227,6 +317,7 @@ function DashboardContent() {
     setFocusStates({});
     setSearchStatesPatologias({});
     setFocusStatesPatologias({});
+    setSelectedPortadorId('');
     setShowAssignModal(true);
   };
 
@@ -319,8 +410,8 @@ function DashboardContent() {
       toast.success('Pulsera asignada exitosamente al usuario.');
     } catch (err) {
       console.error(err);
-      if (err.response?.data?.error?.includes('disponibles')) {
-        toast.error('No tienes pulseras disponibles. Compra más pulseras primero.');
+      if (err.response?.data?.error?.includes('disponibles') || err.response?.data?.error?.includes('créditos')) {
+        toast.error('No tienes créditos disponibles. Escanea un QR físico o compra más pulseras.');
       } else {
         toast.error('Error al asignar la pulsera.');
       }
@@ -350,7 +441,13 @@ function DashboardContent() {
     setShowAssignModal(true);
     assignForm.reset();
     setPrinciosActivosDetalle([]);
+    setPatologiasDetalle([]);
+    setContactosEmergenciaDetalle([]);
     setSearchStates({});
+    setSearchStatesPatologias({});
+    setFocusStates({});
+    setFocusStatesPatologias({});
+    setSelectedPortadorId('');
   };
 
   const handleEditAssignment = (pulsera: Pulsera) => {
@@ -368,10 +465,58 @@ function DashboardContent() {
     });
   };
 
+  const handleCreateUser = () => {
+    setShowCreateUserModal(true);
+    assignForm.reset();
+  };
+
+  const handleCreateUserSubmit = async (data: AssignFormData) => {
+    try {
+      const portadorData = {
+        email: data.portadorEmail,
+        rut: data.portadorRut,
+        firstName: data.firstName,
+        paternalSurname: data.paternalSurname,
+        maternalSurname: data.maternalSurname
+      };
+
+      await contratanteApi.createPortador(portadorData);
+
+      // Recargar portadores
+      const portadoresResponse = await contratanteApi.getPortadores();
+      setPortadores(Array.isArray(portadoresResponse.data) ? portadoresResponse.data : portadoresResponse.data?.items ?? []);
+
+      setShowCreateUserModal(false);
+      assignForm.reset();
+      toast.success('Usuario creado exitosamente.');
+    } catch (err: any) {
+      console.error(err);
+      const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Error al crear el usuario';
+      toast.error(errorMsg);
+    }
+  };
+
   const handleAssignSubmit = async (data: AssignFormData) => {
+    // Modo: Crear usuario sin pulsera
+    if (showCreateUserModal) {
+      return handleCreateUserSubmit(data);
+    }
+
     if (!assigningPulsera) return;
 
     try {
+      // Si seleccionó un portador existente, usar sus datos
+      if (selectedPortadorId) {
+        const portador = portadores.find(p => p.id.toString() === selectedPortadorId);
+        if (portador) {
+          data.portadorEmail = portador.email;
+          data.portadorRut = portador.rut;
+          data.firstName = portador.firstName;
+          data.paternalSurname = portador.paternalSurname;
+          data.maternalSurname = portador.maternalSurname;
+        }
+      }
+
       // Preparar datos de asignación
       const assignData = {
         portadorEmail: data.portadorEmail,
@@ -403,9 +548,13 @@ function DashboardContent() {
         await pulseraApi.assign(assigningPulsera.id, assignData);
       }
 
-      // Recargar todas las pulseras desde el servidor para obtener datos actualizados
-      const pulserasResponse = await pulseraApi.getAll();
+      // Recargar todas las pulseras y portadores desde el servidor
+      const [pulserasResponse, portadoresResponse] = await Promise.all([
+        pulseraApi.getAll(),
+        contratanteApi.getPortadores()
+      ]);
       setPulseras(Array.isArray(pulserasResponse.data) ? pulserasResponse.data : pulserasResponse.data?.items ?? []);
+      setPortadores(Array.isArray(portadoresResponse.data) ? portadoresResponse.data : portadoresResponse.data?.items ?? []);
 
       setShowAssignModal(false);
       setAssigningPulsera(null);
@@ -413,6 +562,7 @@ function DashboardContent() {
       setPatologiasDetalle([]);
       setPrinciosActivosDetalle([]);
       setSearchStates({});
+      setSelectedPortadorId('');
       toast.success('Pulsera asignada exitosamente al usuario.');
     } catch (err) {
       console.error(err);
@@ -895,10 +1045,15 @@ function DashboardContent() {
             <div className="flex items-center gap-3">
               <div className={`w-3 h-3 rounded-full ${availablePulseras > 0 ? 'bg-blue-500' : 'bg-gray-400'}`}></div>
               <div className="flex-1">
-                <h4 className="font-semibold text-gray-900">Bluko Life Por Asignar</h4>
+                <h4 className="font-semibold text-gray-900">Créditos para Reclamar QRs</h4>
                 <p className="text-sm text-gray-600">
-                  {availablePulseras} {availablePulseras === 1 ? 'pulsera disponible' : 'pulseras disponibles'} para crear y asignar
+                  {availablePulseras} {availablePulseras === 1 ? 'crédito disponible' : 'créditos disponibles'} para reclamar pulseras físicas
                 </p>
+                {claimingQr && (
+                  <p className="text-sm text-blue-600 mt-1">
+                    Procesando reclamo de QR...
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -922,6 +1077,15 @@ function DashboardContent() {
               <span>{'Contratar Plan'}</span>
             </button>
             <button
+              onClick={handleCreateUser}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl transition-colors text-white hover:opacity-90"
+              style={{backgroundColor: '#2563EB'}}
+              title="Crear usuario sin asignar pulsera"
+            >
+              <User className="w-4 h-4" />
+              <span>Crear Usuario</span>
+            </button>
+            <button
               onClick={handleCreate}
               disabled={availablePulseras <= 0}
               className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
@@ -930,10 +1094,10 @@ function DashboardContent() {
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
               style={availablePulseras > 0 ? {backgroundColor: '#83C341'} : {}}
-              title={availablePulseras <= 0 ? 'Compra pulseras primero' : 'Asignar pulsera a usuario'}
+              title={availablePulseras <= 0 ? 'Necesitas créditos. Escanea un QR o compra más pulseras' : 'Asignar pulsera reclamada a un usuario'}
             >
-              <Plus className="w-4 h-4" />
-              <span>Asignar Bluko Life</span>
+              <UserPlus className="w-4 h-4" />
+              <span>Asignar a Usuario</span>
             </button>
           </div>
         </div>
@@ -1183,19 +1347,16 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* Modal Asignar Pulsera */}
-      {showAssignModal && assigningPulsera && (
+      {/* Modal Crear Usuario */}
+      {showCreateUserModal && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="overflow-visible">
             <div className="flex items-center justify-between mb-6">
-              <h4 className="text-xl font-semibold text-gray-900">
-                {assigningPulsera.portador ? 'Editar Asignación de Usuario' : 'Asignar Pulsera a Usuario'}: {assigningPulsera.name || `Pulsera #${assigningPulsera.id}`}
-              </h4>
+              <h4 className="text-xl font-semibold text-gray-900">Crear Nuevo Usuario</h4>
               <button
                 onClick={() => {
-                  setShowAssignModal(false);
-                  setAssigningPulsera(null);
+                  setShowCreateUserModal(false);
+                  assignForm.reset();
                 }}
                 className="text-gray-400 hover:text-gray-600"
               >
@@ -1213,7 +1374,7 @@ function DashboardContent() {
                       Email del Usuario *
                     </label>
                     <input
-                      {...assignForm.register('portadorEmail', { 
+                      {...assignForm.register('portadorEmail', {
                         required: 'El email es requerido',
                         pattern: {
                           value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
@@ -1234,7 +1395,7 @@ function DashboardContent() {
                       RUT del Usuario *
                     </label>
                     <input
-                      {...assignForm.register('portadorRut', { 
+                      {...assignForm.register('portadorRut', {
                         required: 'El RUT es requerido',
                         validate: (value) => {
                           const validation = validateRutWithMessage(value);
@@ -1265,7 +1426,7 @@ function DashboardContent() {
                       Nombre *
                     </label>
                     <input
-                      {...assignForm.register('firstName', { 
+                      {...assignForm.register('firstName', {
                         required: 'El nombre es requerido'
                       })}
                       type="text"
@@ -1282,7 +1443,7 @@ function DashboardContent() {
                       Apellido Paterno *
                     </label>
                     <input
-                      {...assignForm.register('paternalSurname', { 
+                      {...assignForm.register('paternalSurname', {
                         required: 'El apellido paterno es requerido'
                       })}
                       type="text"
@@ -1302,6 +1463,201 @@ function DashboardContent() {
                       {...assignForm.register('maternalSurname')}
                       type="text"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
+                      placeholder="Apellido Materno (opcional)"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCreateUserModal(false);
+                    assignForm.reset();
+                  }}
+                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-gray-500"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={assignForm.formState.isSubmitting}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                >
+                  {assignForm.formState.isSubmitting ? 'Creando...' : 'Crear Usuario'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Asignar Pulsera */}
+      {showAssignModal && assigningPulsera && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="overflow-visible">
+            <div className="flex items-center justify-between mb-6">
+              <h4 className="text-xl font-semibold text-gray-900">
+                {assigningPulsera.portador ? 'Editar Asignación de Usuario' : 'Asignar Pulsera a Usuario'}: {assigningPulsera.name || `Pulsera #${assigningPulsera.id}`}
+              </h4>
+              <button
+                onClick={() => {
+                  setShowAssignModal(false);
+                  setAssigningPulsera(null);
+                  setSelectedPortadorId('');
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={assignForm.handleSubmit(handleAssignSubmit)} className="space-y-6">
+              {/* Selección de Usuario Existente o Nuevo */}
+              {portadores.length > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                    ¿Asignar a usuario existente o crear nuevo?
+                  </label>
+                  <select
+                    value={selectedPortadorId}
+                    onChange={(e) => {
+                      setSelectedPortadorId(e.target.value);
+                      if (e.target.value) {
+                        const portador = portadores.find(p => p.id.toString() === e.target.value);
+                        if (portador) {
+                          assignForm.setValue('portadorEmail', portador.email);
+                          assignForm.setValue('portadorRut', portador.rut);
+                          assignForm.setValue('firstName', portador.firstName);
+                          assignForm.setValue('paternalSurname', portador.paternalSurname);
+                          assignForm.setValue('maternalSurname', portador.maternalSurname || '');
+                        }
+                      } else {
+                        assignForm.reset();
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                  >
+                    <option value="">Crear nuevo usuario</option>
+                    {portadores.map((portador) => (
+                      <option key={portador.id} value={portador.id}>
+                        {portador.firstName} {portador.paternalSurname} - {portador.email}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-600 mt-2">
+                    Selecciona un usuario existente o deja en "Crear nuevo usuario" para crear uno nuevo.
+                  </p>
+                </div>
+              )}
+
+              {/* Datos del Usuario */}
+              <div>
+                <h5 className="text-sm font-medium text-gray-900 mb-3">Datos del Usuario</h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email del Usuario *
+                    </label>
+                    <input
+                      {...assignForm.register('portadorEmail', {
+                        required: 'El email es requerido',
+                        pattern: {
+                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                          message: 'Email inválido'
+                        }
+                      })}
+                      type="email"
+                      disabled={!!selectedPortadorId}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black ${selectedPortadorId ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      placeholder="usuario@email.com"
+                    />
+                    {assignForm.formState.errors.portadorEmail && (
+                      <p className="text-red-500 text-xs mt-1">{assignForm.formState.errors.portadorEmail.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      RUT del Usuario *
+                    </label>
+                    <input
+                      {...assignForm.register('portadorRut', {
+                        required: 'El RUT es requerido',
+                        validate: (value) => {
+                          const validation = validateRutWithMessage(value);
+                          return validation.isValid || validation.message;
+                        }
+                      })}
+                      type="text"
+                      disabled={!!selectedPortadorId}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black ${selectedPortadorId ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      placeholder="20.283.752-3"
+                      maxLength={12}
+                      onChange={(e) => {
+                        const formatted = formatRutSimple(e.target.value);
+                        e.target.value = formatted;
+                        assignForm.setValue('portadorRut', formatted);
+                        assignForm.trigger('portadorRut');
+                      }}
+                    />
+                    {assignForm.formState.errors.portadorRut && (
+                      <p className="text-red-500 text-xs mt-1">{assignForm.formState.errors.portadorRut.message}</p>
+                    )}
+                    {!selectedPortadorId && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        💡 Ingresa números y dígito verificador (ej: 202837523). Se formateará automáticamente.
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Nombre *
+                    </label>
+                    <input
+                      {...assignForm.register('firstName', {
+                        required: 'El nombre es requerido'
+                      })}
+                      type="text"
+                      disabled={!!selectedPortadorId}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black ${selectedPortadorId ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      placeholder="Nombre"
+                    />
+                    {assignForm.formState.errors.firstName && (
+                      <p className="text-red-500 text-xs mt-1">{assignForm.formState.errors.firstName.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Apellido Paterno *
+                    </label>
+                    <input
+                      {...assignForm.register('paternalSurname', {
+                        required: 'El apellido paterno es requerido'
+                      })}
+                      type="text"
+                      disabled={!!selectedPortadorId}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black ${selectedPortadorId ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      placeholder="Apellido Paterno"
+                    />
+                    {assignForm.formState.errors.paternalSurname && (
+                      <p className="text-red-500 text-xs mt-1">{assignForm.formState.errors.paternalSurname.message}</p>
+                    )}
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Apellido Materno
+                    </label>
+                    <input
+                      {...assignForm.register('maternalSurname')}
+                      type="text"
+                      disabled={!!selectedPortadorId}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black ${selectedPortadorId ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                       placeholder="Apellido Materno (opcional)"
                     />
                   </div>
