@@ -1,6 +1,6 @@
 // Pricing constants
-export const SUBSCRIPTION_PRICE = 2990; // $2.990 CLP monthly per pulsera
-export const PULSERA_PRICE = 9990; // $9.990 CLP per pulsera
+export const SUBSCRIPTION_PRICE = 2900; // $2.990 CLP monthly per pulsera
+export const PULSERA_PRICE = 9900; // $9.990 CLP per pulsera
 export const TOTAL_PER_PULSERA = PULSERA_PRICE + SUBSCRIPTION_PRICE; // $12.980 CLP per pulsera (pulsera + first month subscription)
 
 // Currency formatting

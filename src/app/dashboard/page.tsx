@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
@@ -18,7 +18,15 @@ import {
   AlertTriangle,
   X,
   ShoppingCart,
-  UserPlus
+  UserPlus,
+  TrendingUp,
+  Package,
+  CheckCircle,
+  Clock,
+  Activity,
+  Users,
+  Calendar,
+  CreditCard
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { pulseraApi, contratanteApi, medicalDataApi } from '../../services/api';
@@ -50,6 +58,7 @@ interface PulseraFormData {
 interface Pulsera {
   id: string;
   name: string;
+  customId?: string;
   description?: string;
   qrCode?: string;
   medicalInfo?: string;
@@ -107,6 +116,7 @@ function DashboardContent() {
   const [loading, setLoading] = useState(true);
   const [availablePulseras, setAvailablePulseras] = useState(0);
   const [claimingQr, setClaimingQr] = useState(false);
+  const claimedQrsRef = useRef<Set<string>>(new Set());
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingPulsera, setEditingPulsera] = useState<Pulsera | null>(null);
@@ -118,7 +128,13 @@ function DashboardContent() {
   const [portadores, setPortadores] = useState<any[]>([]);
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [selectedPortadorId, setSelectedPortadorId] = useState<string>('');
-  
+  const [showEditUserModal, setShowEditUserModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<any | null>(null);
+  const [claimedPulseraForAssignment, setClaimedPulseraForAssignment] = useState<Pulsera | null>(null);
+  const [showExpandedQrModal, setShowExpandedQrModal] = useState(false);
+  const [expandedQrImage, setExpandedQrImage] = useState('');
+  const [expandedQrUserName, setExpandedQrUserName] = useState('');
+
   // Medical data for dropdowns
   const [enfermedades, setEnfermedades] = useState<Enfermedad[]>([]);
   const [principiosActivos, setPrincipiosActivos] = useState<PrincipioActivo[]>([]);
@@ -129,7 +145,7 @@ function DashboardContent() {
   }>>([]);
 
   // New structure for active principles with concentration and dosage
-  const [principiosActivosDetalle, setPrinciosActivosDetalle] = useState<Array<{
+  const [principiosActivosDetalle, setPrincipiosActivosDetalle] = useState<Array<{
     principioActivoId: number;
     concentracion: string;
     dosis: string;
@@ -216,7 +232,11 @@ function DashboardContent() {
 
     const claimQr = searchParams.get('claimQr');
 
-    if (claimQr && !claimingQr) {
+    // Prevent claiming the same QR multiple times
+    if (claimQr && !claimingQr && !claimedQrsRef.current.has(claimQr)) {
+      // Mark this QR as being claimed
+      claimedQrsRef.current.add(claimQr);
+
       const handleClaimQr = async () => {
         setClaimingQr(true);
 
@@ -234,19 +254,14 @@ function DashboardContent() {
           setPulseras(Array.isArray(pulserasResponse.data) ? pulserasResponse.data : pulserasResponse.data?.items ?? []);
           setAvailablePulseras(availableResponse.data.availablePulseras || 0);
 
-          // Open assignment modal for the claimed pulsera
-          const claimedPulsera = response.data.pulsera || response.data;
-          if (claimedPulsera) {
-            setAssigningPulsera(claimedPulsera);
-            assignForm.reset();
-            setPatologiasDetalle([]);
-            setPrinciosActivosDetalle([]);
-            setContactosEmergenciaDetalle([]);
-            setSearchStates({});
-            setFocusStates({});
-            setSearchStatesPatologias({});
-            setFocusStatesPatologias({});
-            setShowAssignModal(true);
+          // Save the claimed pulsera for assignment
+          const pulseraId = response.data.pulseraId || response.data.pulsera?.id;
+          if (pulseraId) {
+            // Find the claimed pulsera in the updated list
+            const claimedPulsera = pulserasResponse.data.find((p: any) => p.id === pulseraId);
+            if (claimedPulsera) {
+              setClaimedPulseraForAssignment(claimedPulsera);
+            }
           }
 
           // Remove claimQr from URL
@@ -254,9 +269,20 @@ function DashboardContent() {
         } catch (error: any) {
           console.error('Error claiming QR:', error);
           const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al reclamar el QR';
-          toast.error(errorMsg);
 
-          // Remove claimQr from URL even on error
+          // Check if it's an "already claimed" error
+          if (errorMsg.toLowerCase().includes('ya ha sido reclamada') ||
+              errorMsg.toLowerCase().includes('already claimed') ||
+              error.response?.status === 400) {
+            toast.error('Esta pulsera ya fue reclamada. Por favor escanea un QR nuevo.');
+          } else {
+            toast.error(errorMsg);
+          }
+
+          // Remove from ref on error so it can be retried if needed
+          claimedQrsRef.current.delete(claimQr);
+
+          // ALWAYS remove claimQr from URL to prevent infinite loop
           router.replace('/dashboard');
         } finally {
           setClaimingQr(false);
@@ -302,23 +328,10 @@ function DashboardContent() {
     }
   };
 
+  // DEPRECATED: Ya no se pueden crear pulseras directamente
+  // Solo se reclaman QRs físicos escaneados
   const handleCreate = () => {
-    if (availablePulseras <= 0) {
-      toast.error('No tienes créditos disponibles. Escanea un QR físico o compra más pulseras.');
-      return;
-    }
-    // For assignment, we need a placeholder pulsera
-    setAssigningPulsera({ id: 'new', name: 'Nueva Pulsera' } as Pulsera);
-    assignForm.reset();
-    setPatologiasDetalle([]);
-    setPrinciosActivosDetalle([]);
-    setContactosEmergenciaDetalle([]);
-    setSearchStates({});
-    setFocusStates({});
-    setSearchStatesPatologias({});
-    setFocusStatesPatologias({});
-    setSelectedPortadorId('');
-    setShowAssignModal(true);
+    toast.error('La creación directa está deshabilitada. Debes escanear el QR de una pulsera física para reclamarla.');
   };
 
   const handleEdit = (pulsera: Pulsera) => {
@@ -440,7 +453,7 @@ function DashboardContent() {
     setAssigningPulsera(pulsera);
     setShowAssignModal(true);
     assignForm.reset();
-    setPrinciosActivosDetalle([]);
+    setPrincipiosActivosDetalle([]);
     setPatologiasDetalle([]);
     setContactosEmergenciaDetalle([]);
     setSearchStates({});
@@ -470,6 +483,58 @@ function DashboardContent() {
     assignForm.reset();
   };
 
+  const handleAssignPulseraToUser = async (portador: any) => {
+    try {
+      // Check if we have a pulsera to assign
+      if (!assigningPulsera || !assigningPulsera.id) {
+        toast.error('No hay pulsera para asignar. Por favor, escanea un QR primero.');
+        return;
+      }
+
+      const loadingToast = toast.loading('Asignando pulsera al usuario...');
+
+      const assignData = {
+        portadorEmail: portador.email,
+        portadorRut: portador.rut,
+        firstName: portador.firstName,
+        paternalSurname: portador.paternalSurname,
+        maternalSurname: portador.maternalSurname,
+        medicalInfo: portador.medicalInfo || '',
+        medicamentos: portador.medicamentos || '',
+        enfermedadIds: portador.enfermedades?.map((e: any) => e.id) || [],
+        principiosActivos: portador.principiosActivos?.map((p: any) => ({
+          principioActivoId: p.principioActivo?.id || p.id,
+          concentracion: p.concentracion || '',
+          dosis: p.dosis || '',
+          observaciones: p.observaciones || ''
+        })) || [],
+        contactosEmergencia: portador.contactosEmergencia?.map((c: any) => ({
+          nombre: c.nombre,
+          telefono: c.telefono
+        })) || []
+      };
+
+      // Assign the existing pulsera (already claimed)
+      await pulseraApi.assign(assigningPulsera.id, assignData);
+
+      const portadoresResponse = await contratanteApi.getPortadores();
+      setPortadores(Array.isArray(portadoresResponse.data) ? portadoresResponse.data : portadoresResponse.data?.items ?? []);
+
+      await fetchPulseras();
+
+      toast.dismiss(loadingToast);
+      toast.success(`Pulsera asignada exitosamente a ${portador.firstName}!`);
+
+      // Close modal
+      setShowAssignModal(false);
+      setAssigningPulsera(null);
+    } catch (err: any) {
+      console.error(err);
+      const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Error al asignar la pulsera';
+      toast.error(errorMsg);
+    }
+  };
+
   const handleCreateUserSubmit = async (data: AssignFormData) => {
     try {
       const portadorData = {
@@ -477,21 +542,118 @@ function DashboardContent() {
         rut: data.portadorRut,
         firstName: data.firstName,
         paternalSurname: data.paternalSurname,
-        maternalSurname: data.maternalSurname
+        maternalSurname: data.maternalSurname,
+        medicalInfo: data.medicalInfo,
+        medicamentos: data.medicamentos || '',
+        enfermedadIds: patologiasDetalle.map(p => p.enfermedadId).filter(id => id > 0),
+        principiosActivos: principiosActivosDetalle,
+        contactosEmergencia: contactosEmergenciaDetalle.filter(c => c.nombre && c.telefono)
       };
 
       await contratanteApi.createPortador(portadorData);
 
-      // Recargar portadores
       const portadoresResponse = await contratanteApi.getPortadores();
       setPortadores(Array.isArray(portadoresResponse.data) ? portadoresResponse.data : portadoresResponse.data?.items ?? []);
 
       setShowCreateUserModal(false);
       assignForm.reset();
-      toast.success('Usuario creado exitosamente.');
+      setPatologiasDetalle([]);
+      setPrincipiosActivosDetalle([]);
+      setContactosEmergenciaDetalle([]);
+      setSearchStates([]);
+      setFocusStates([]);
+      setSearchStatesPatologias([]);
+      setFocusStatesPatologias([]);
+
+      toast.success('Usuario creado exitosamente. Ahora puedes asignarle una pulsera.');
     } catch (err: any) {
       console.error(err);
       const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Error al crear el usuario';
+      toast.error(errorMsg);
+    }
+  };
+
+  const handleEditUser = (portador: any) => {
+    setEditingUser(portador);
+    assignForm.reset({
+      portadorEmail: portador.email,
+      portadorRut: portador.rut,
+      firstName: portador.firstName,
+      paternalSurname: portador.paternalSurname,
+      maternalSurname: portador.maternalSurname || '',
+      medicalInfo: portador.medicalInfo || '',
+      medicamentos: portador.medicamentos || ''
+    });
+
+    setPatologiasDetalle(portador.enfermedades?.map((e: any) => ({ enfermedadId: e.id })) || []);
+    setPrincipiosActivosDetalle(portador.principiosActivos?.map((p: any) => ({
+      principioActivoId: p.principioActivo?.id || p.id,
+      concentracion: p.concentracion || '',
+      dosis: p.dosis || '',
+      observaciones: p.observaciones || ''
+    })) || []);
+    setContactosEmergenciaDetalle(portador.contactosEmergencia?.map((c: any) => ({
+      nombre: c.nombre,
+      telefono: c.telefono
+    })) || []);
+
+    setShowEditUserModal(true);
+  };
+
+  const handleEditUserSubmit = async (data: AssignFormData) => {
+    if (!editingUser) return;
+
+    try {
+      const updateData = {
+        firstName: data.firstName,
+        paternalSurname: data.paternalSurname,
+        maternalSurname: data.maternalSurname,
+        medicalInfo: data.medicalInfo,
+        medicamentos: data.medicamentos || '',
+        enfermedadIds: patologiasDetalle.map(p => p.enfermedadId).filter(id => id > 0),
+        principiosActivos: principiosActivosDetalle,
+        contactosEmergencia: contactosEmergenciaDetalle.filter(c => c.nombre && c.telefono)
+      };
+
+      await contratanteApi.updatePortador(editingUser.id, updateData);
+
+      const portadoresResponse = await contratanteApi.getPortadores();
+      setPortadores(Array.isArray(portadoresResponse.data) ? portadoresResponse.data : portadoresResponse.data?.items ?? []);
+
+      setShowEditUserModal(false);
+      setEditingUser(null);
+      assignForm.reset();
+      setPatologiasDetalle([]);
+      setPrincipiosActivosDetalle([]);
+      setContactosEmergenciaDetalle([]);
+      setSearchStates([]);
+      setFocusStates([]);
+      setSearchStatesPatologias([]);
+      setFocusStatesPatologias([]);
+
+      toast.success('Usuario actualizado exitosamente.');
+    } catch (err: any) {
+      console.error(err);
+      const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Error al actualizar el usuario';
+      toast.error(errorMsg);
+    }
+  };
+
+  const handleDeleteUser = async (portador: any) => {
+    if (!confirm(`¿Estás seguro de que deseas eliminar al usuario ${portador.firstName} ${portador.paternalSurname}?`)) {
+      return;
+    }
+
+    try {
+      await contratanteApi.deletePortador(portador.id);
+
+      const portadoresResponse = await contratanteApi.getPortadores();
+      setPortadores(Array.isArray(portadoresResponse.data) ? portadoresResponse.data : portadoresResponse.data?.items ?? []);
+
+      toast.success('Usuario eliminado exitosamente.');
+    } catch (err: any) {
+      console.error(err);
+      const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Error al eliminar el usuario';
       toast.error(errorMsg);
     }
   };
@@ -560,7 +722,7 @@ function DashboardContent() {
       setAssigningPulsera(null);
       assignForm.reset();
       setPatologiasDetalle([]);
-      setPrinciosActivosDetalle([]);
+      setPrincipiosActivosDetalle([]);
       setSearchStates({});
       setSelectedPortadorId('');
       toast.success('Pulsera asignada exitosamente al usuario.');
@@ -617,7 +779,6 @@ function DashboardContent() {
       toast.error('Error al renovar la suscripción');
     }
   };
-
 
   // Functions for managing emergency contacts table
   const addContactoEmergencia = () => {
@@ -710,7 +871,7 @@ function DashboardContent() {
   // Functions for managing active principles table
   const addPrincipioActivo = () => {
     const newIndex = principiosActivosDetalle.length;
-    setPrinciosActivosDetalle([...principiosActivosDetalle, {
+    setPrincipiosActivosDetalle([...principiosActivosDetalle, {
       principioActivoId: 0,
       concentracion: '',
       dosis: '',
@@ -722,7 +883,7 @@ function DashboardContent() {
 
   const removePrincipioActivo = (index: number) => {
     const nuevosDetalles = principiosActivosDetalle.filter((_, i) => i !== index);
-    setPrinciosActivosDetalle(nuevosDetalles);
+    setPrincipiosActivosDetalle(nuevosDetalles);
 
     // Remove search and focus states for this index and reindex
     const newSearchStates: Record<number, string> = {};
@@ -746,7 +907,7 @@ function DashboardContent() {
   const updatePrincipioActivo = (index: number, field: string, value: any) => {
     const nuevosDetalles = [...principiosActivosDetalle];
     nuevosDetalles[index] = { ...nuevosDetalles[index], [field]: value };
-    setPrinciosActivosDetalle(nuevosDetalles);
+    setPrincipiosActivosDetalle(nuevosDetalles);
   };
 
   const updateSearchState = (index: number, searchTerm: string) => {
@@ -986,272 +1147,462 @@ function DashboardContent() {
     </>
   );
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center animate-fadeIn">
+          <div className="relative">
+            <div className="w-16 h-16 mx-auto mb-4">
+              <div className="absolute inset-0 rounded-full border-3 border-gray-200"></div>
+              <div className="absolute inset-0 rounded-full border-3 border-t-[#7030A0] animate-spin"></div>
+            </div>
+            <div className="mb-3">
+              <Shield className="w-8 h-8 mx-auto text-[#7030A0] animate-pulse" />
+            </div>
+          </div>
+          <h2 className="text-lg font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] bg-clip-text text-transparent mb-1">
+            Cargando Dashboard
+          </h2>
+          <p className="text-sm text-gray-600">Preparando tu información médica...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Top Bar */}
-      <header className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+      <header className="sticky top-0 z-40 backdrop-blur-sm bg-white/95 border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Shield className="w-7 h-7" style={{color: '#551A8B'}} />
-            <h1 className="text-xl font-semibold text-gray-900">Mi Panel</h1>
+            <div className="bg-gradient-to-br from-[#7030A0] to-[#5d2785] p-1.5 rounded-lg shadow-md">
+              <Shield className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h1 className="text-base font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] bg-clip-text text-transparent">
+                Mi Panel
+              </h1>
+              <p className="text-[10px] text-gray-500">Gestión de Pulseras Médicas</p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-2 text-gray-600">
-              <User className="w-5 h-5" />
-              <span>{user?.email ?? 'Usuario'}</span>
+          <div className="flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gray-50">
+              <User className="w-3.5 h-3.5 text-[#7030A0]" />
+              <span className="text-xs font-medium text-gray-700">{user?.email ?? 'Usuario'}</span>
             </div>
 
             <button
               onClick={() => router.push('/profile')}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-100"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-gradient-to-r from-[#7030A0] to-[#5d2785] text-white hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
             >
-              <User className="w-4 h-4" />
-              <span>Mi Perfil</span>
+              <User className="w-3.5 h-3.5" />
+              <span className="font-medium">Mi Perfil</span>
             </button>
 
             <button
               onClick={handleLogout}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-100"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-300"
             >
-              <LogOut className="w-4 h-4" />
-              <span>Cerrar sesión</span>
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="font-medium">Salir</span>
             </button>
           </div>
         </div>
       </header>
 
       {/* Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {/* Hero */}
-        <div className="mb-6 rounded-2xl p-6 text-white flex items-center justify-between" style={{background: 'linear-gradient(to right, #3C0B5A, #551A8B)'}}>
-          <div>
-            <h2 className="text-2xl font-bold mb-1">Bluko Life</h2>
-            <p className="text-white opacity-90">
-              Gestiona la información médica y contactos de emergencia.
-            </p>
-          </div>
-          <div className="hidden md:flex items-center gap-4 opacity-90">
-            <Heart className="w-6 h-6" />
-            <Phone className="w-6 h-6" />
-            <AlertTriangle className="w-6 h-6" />
-          </div>
-        </div>
-
-        {/* Status Cards */}
-        <div className="mb-6 grid grid-cols-1 md:grid-cols-1 gap-4">
-          {/* Available Bracelets */}
-          <div className="bg-white border rounded-2xl p-4">
-            <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full ${availablePulseras > 0 ? 'bg-blue-500' : 'bg-gray-400'}`}></div>
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-900">Créditos para Reclamar QRs</h4>
-                <p className="text-sm text-gray-600">
-                  {availablePulseras} {availablePulseras === 1 ? 'crédito disponible' : 'créditos disponibles'} para reclamar pulseras físicas
-                </p>
-                {claimingQr && (
-                  <p className="text-sm text-blue-600 mt-1">
-                    Procesando reclamo de QR...
-                  </p>
-                )}
+        <div className="mb-4 rounded-xl p-4 text-white shadow-lg animate-fadeIn relative overflow-hidden" style={{background: 'linear-gradient(135deg, #3C0B5A 0%, #551A8B 50%, #7030A0 100%)'}}>
+          <div className="absolute inset-0 bg-black opacity-10"></div>
+          <div className="relative z-10 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold mb-1 drop-shadow-lg">Bluko Life</h2>
+              <p className="text-white text-sm opacity-95 drop-shadow">
+                Gestiona la información médica y contactos de emergencia de forma segura
+              </p>
+            </div>
+            <div className="hidden md:flex items-center gap-3">
+              <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+                <Heart className="w-5 h-5" />
+              </div>
+              <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+                <Phone className="w-5 h-5" />
+              </div>
+              <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+                <AlertTriangle className="w-5 h-5" />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">Mis Bluko Life</h3>
-            <p className="text-sm text-gray-600">
-              Administra tu sistema Bluko Life
+        {/* Status Cards */}
+        <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* Available Bracelets */}
+          <div className="bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-xl p-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 animate-scaleIn">
+            <div className="flex items-start justify-between mb-2">
+              <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+                <Package className="w-4 h-4" />
+              </div>
+              {availablePulseras > 0 ? (
+                <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <CheckCircle className="w-2.5 h-2.5" />
+                  Activo
+                </span>
+              ) : (
+                <span className="bg-gray-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  Sin créditos
+                </span>
+              )}
+            </div>
+            <h3 className="text-2xl font-bold mb-0.5">{availablePulseras}</h3>
+            <p className="text-white/90 text-xs font-medium">
+              {availablePulseras === 1 ? 'Crédito Disponible' : 'Créditos Disponibles'}
+            </p>
+            <p className="text-white/70 text-[10px] mt-1">
+              Para reclamar pulseras físicas
+            </p>
+            {claimingQr && (
+              <div className="mt-2 flex items-center gap-1.5 text-xs bg-white/20 backdrop-blur-sm px-2 py-1 rounded-lg">
+                <div className="animate-spin rounded-full h-2.5 w-2.5 border-2 border-white border-t-transparent"></div>
+                <span>Procesando...</span>
+              </div>
+            )}
+          </div>
+
+          {/* Total Pulseras */}
+          <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 animate-scaleIn" style={{animationDelay: '0.1s'}}>
+            <div className="flex items-start justify-between mb-2">
+              <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+                <QrCode className="w-4 h-4" />
+              </div>
+              <span className="bg-white/30 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                Total
+              </span>
+            </div>
+            <h3 className="text-2xl font-bold mb-0.5">{pulseras.length}</h3>
+            <p className="text-white/90 text-xs font-medium">
+              {pulseras.length === 1 ? 'Pulsera Registrada' : 'Pulseras Registradas'}
+            </p>
+            <p className="text-white/70 text-[10px] mt-1">
+              En tu sistema Bluko Life
             </p>
           </div>
-          <div className="flex items-center gap-3">
+
+          {/* Active Subscriptions */}
+          <div className="bg-gradient-to-br from-green-600 to-green-800 rounded-xl p-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 animate-scaleIn" style={{animationDelay: '0.2s'}}>
+            <div className="flex items-start justify-between mb-2">
+              <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+                <Activity className="w-4 h-4" />
+              </div>
+              <span className="bg-white/30 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                <TrendingUp className="w-2.5 h-2.5" />
+                Estado
+              </span>
+            </div>
+            <h3 className="text-2xl font-bold mb-0.5">
+              {pulseras.filter(p => p.subscriptionActive).length}
+            </h3>
+            <p className="text-white/90 text-xs font-medium">
+              Suscripciones Activas
+            </p>
+            <p className="text-white/70 text-[10px] mt-1">
+              De {pulseras.length} pulseras totales
+            </p>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="mb-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 bg-white rounded-xl p-4 shadow-md border border-gray-100">
+          <div>
+            <h3 className="text-base font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] bg-clip-text text-transparent mb-0.5">
+              Mis Bluko Life
+            </h3>
+            <p className="text-xs text-gray-600">
+              Administra tu sistema de pulseras médicas
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => router.push('/subscription')}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl transition-colors text-white hover:opacity-90"
-              style={{backgroundColor: '#551A8B'}}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-gradient-to-r from-[#7030A0] to-[#5d2785] text-white font-medium hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
             >
               <ShoppingCart className="w-4 h-4" />
-              <span>{'Contratar Plan'}</span>
+              <span>Contratar Plan</span>
             </button>
             <button
-              onClick={handleCreateUser}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl transition-colors text-white hover:opacity-90"
-              style={{backgroundColor: '#2563EB'}}
-              title="Crear usuario sin asignar pulsera"
+              onClick={() => {
+                if (claimedPulseraForAssignment) {
+                  setAssigningPulsera(claimedPulseraForAssignment);
+                  setShowAssignModal(true);
+                  setClaimedPulseraForAssignment(null);
+                  assignForm.reset();
+                  setPatologiasDetalle([]);
+                  setPrincipiosActivosDetalle([]);
+                  setContactosEmergenciaDetalle([]);
+                } else {
+                  handleCreateUser();
+                }
+              }}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg font-medium hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 ${
+                claimedPulseraForAssignment
+                  ? 'bg-gradient-to-r from-green-500 to-green-600 text-white ring-2 ring-green-300 animate-pulse'
+                  : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
+              }`}
+              title={
+                claimedPulseraForAssignment
+                  ? `Crear nuevo usuario y asignar QR reclamado (${claimedPulseraForAssignment.customId})`
+                  : 'Crear usuario con información médica completa'
+              }
             >
               <User className="w-4 h-4" />
-              <span>Crear Usuario</span>
-            </button>
-            <button
-              onClick={handleCreate}
-              disabled={availablePulseras <= 0}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
-                availablePulseras > 0
-                  ? 'text-white hover:opacity-90'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
-              style={availablePulseras > 0 ? {backgroundColor: '#83C341'} : {}}
-              title={availablePulseras <= 0 ? 'Necesitas créditos. Escanea un QR o compra más pulseras' : 'Asignar pulsera reclamada a un usuario'}
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>Asignar a Usuario</span>
+              <span>{claimedPulseraForAssignment ? 'Crear Usuario con QR Reclamado' : 'Crear Usuario'}</span>
             </button>
           </div>
         </div>
 
-        {/* List */}
-        <div className="bg-white border rounded-2xl overflow-hidden">
-          {loading ? (
-            <div className="p-10 text-center text-gray-500">Cargando…</div>
-          ) : pulseras.length === 0 ? (
-            <div className="p-10 text-center text-gray-500">
-              Aún no tienes pulseras registradas.
+        {/* Usuarios Creados Section */}
+        <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 mb-4">
+          <div className="bg-gradient-to-r from-[#7030A0] to-[#5d2785] p-4">
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              Usuarios Creados ({portadores.length})
+            </h3>
+            <p className="text-xs text-white/80 mt-0.5">Lista de todos los portadores registrados</p>
+          </div>
+
+          {portadores.length === 0 ? (
+            <div className="p-8 text-center">
+              <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                <Users className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-base font-semibold text-gray-900 mb-1">No hay usuarios creados</h3>
+              <p className="text-sm text-gray-500 mb-4">Crea un usuario para comenzar</p>
             </div>
           ) : (
-            <ul role="list" className="divide-y divide-gray-100">
-              {pulseras.map((p) => (
-                <li key={p.id} className="p-4 sm:p-5 flex items-start justify-between gap-4">
-                  <div className="flex gap-4 min-w-0 flex-1">
-                    <div className="flex-shrink-0">
-                      {qrCodes[p.id] ? (
-                        <img 
-                          src={qrCodes[p.id]} 
-                          alt={`QR Code para ${p.name}`}
-                          className="w-16 h-16 border rounded-lg"
-                        />
-                      ) : (
-                        <div className="w-16 h-16 border rounded-lg bg-gray-100 flex items-center justify-center">
-                          <QrCode className="w-6 h-6 text-gray-400" />
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="text-sm font-medium text-gray-900 truncate">{p.name ?? `Pulsera #${p.id}`}</p>
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                          p.subscriptionActive
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${
-                            p.subscriptionActive ? 'bg-green-500' : 'bg-red-500'
-                          }`}></span>
-                          {p.subscriptionActive
-                            ? `Activa (${p.daysRemaining || 0}d)`
-                            : 'Inactiva'
-                          }
-                        </span>
+            <div className="divide-y divide-gray-100">
+              {portadores.map((portador, index) => {
+                // Buscar la pulsera asignada a este portador
+                const pulseraAsignada = pulseras.find(p => p.portador?.id === portador.id);
+                const qrCodeAsignado = pulseraAsignada ? qrCodes[pulseraAsignada.id] : null;
+
+                return (
+                <div
+                  key={portador.id}
+                  className="p-4 hover:bg-gray-50 transition-all duration-200 animate-fadeIn"
+                  style={{animationDelay: `${index * 0.05}s`}}
+                >
+                  <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
+                    <div className="flex gap-3 min-w-0 flex-1">
+                      <div className="flex-shrink-0">
+                        {qrCodeAsignado ? (
+                          <div
+                            className="w-14 h-14 border-2 border-[#7030A0] rounded-lg overflow-hidden bg-white cursor-pointer hover:ring-2 hover:ring-[#7030A0] transition-all duration-200"
+                            onClick={() => {
+                              setExpandedQrImage(qrCodeAsignado);
+                              setExpandedQrUserName(`${portador.firstName} ${portador.paternalSurname}`);
+                              setShowExpandedQrModal(true);
+                            }}
+                            title="Click para ver QR en tamaño completo"
+                          >
+                            <img
+                              src={`data:image/png;base64,${qrCodeAsignado}`}
+                              alt="QR Asignado"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-14 h-14 border-2 border-[#7030A0] rounded-full bg-gradient-to-br from-[#7030A0]/10 to-[#5d2785]/10 flex items-center justify-center">
+                            <User className="w-7 h-7 text-[#7030A0]" />
+                          </div>
+                        )}
                       </div>
-                      <p className="text-sm text-gray-500 truncate">
-                        Código: {p.qrCode ?? p.id}
-                      </p>
-                      {p.portador && (
-                        <p className="text-sm text-blue-600 truncate">
-                          Asignada a: {p.portador.firstName} {p.portador.paternalSurname}
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                          <h4 className="text-sm font-bold text-gray-900">
+                            {portador.firstName} {portador.paternalSurname}
+                          </h4>
+                          {portador.verified ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r from-green-500 to-green-600 text-white shadow-sm">
+                              <CheckCircle className="w-2.5 h-2.5" />
+                              Verificado
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r from-gray-400 to-gray-500 text-white shadow-sm">
+                              <Clock className="w-2.5 h-2.5" />
+                              Pendiente
+                            </span>
+                          )}
+                          {pulseraAsignada && (
+                            <>
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] text-white shadow-sm">
+                                <QrCode className="w-2.5 h-2.5" />
+                                QR Asignado
+                              </span>
+                              {pulseraAsignada.subscriptionActive ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-sm">
+                                  <CheckCircle className="w-2.5 h-2.5" />
+                                  Suscripción Activa
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r from-red-500 to-red-600 text-white shadow-sm">
+                                  <Clock className="w-2.5 h-2.5" />
+                                  Suscripción Inactiva
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-600 mb-1">
+                          <span className="font-semibold">Email:</span> {portador.email}
                         </p>
-                      )}
+                        <p className="text-xs text-gray-600 font-mono">
+                          <span className="font-semibold">RUT:</span> {portador.rut}
+                        </p>
+                        {pulseraAsignada && (
+                          <p className="text-xs text-[#7030A0] font-semibold mt-1">
+                            <span className="font-semibold">Pulsera:</span> {pulseraAsignada.customId || pulseraAsignada.name}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 lg:ml-auto">
+                      <button
+                        onClick={async () => {
+                          if (claimedPulseraForAssignment) {
+                            const loadingToast = toast.loading(`Asignando QR a ${portador.firstName}...`);
+
+                            try {
+                              const assignData = {
+                                portadorEmail: portador.email,
+                                portadorRut: portador.rut,
+                                firstName: portador.firstName,
+                                paternalSurname: portador.paternalSurname,
+                                maternalSurname: portador.maternalSurname,
+                                medicalInfo: portador.medicalInfo,
+                                medicamentos: portador.medicamentos || '',
+                                enfermedadIds: portador.enfermedades?.map((e: any) => e.id) || [],
+                                principiosActivos: portador.principiosActivos?.map((pa: any) => ({
+                                  principioActivoId: pa.principioActivo?.id || pa.principioActivoId,
+                                  concentracion: pa.concentracion || '',
+                                  dosis: pa.dosis || '',
+                                  observaciones: pa.observaciones || ''
+                                })) || [],
+                                contactosEmergencia: portador.contactosEmergencia?.map((c: any) => ({
+                                  nombre: c.nombre,
+                                  telefono: c.telefono
+                                })) || []
+                              };
+
+                              await pulseraApi.assign(claimedPulseraForAssignment.id, assignData);
+
+                              const [pulserasResponse, portadoresResponse] = await Promise.all([
+                                pulseraApi.getAll(),
+                                contratanteApi.getPortadores()
+                              ]);
+
+                              setPulseras(Array.isArray(pulserasResponse.data) ? pulserasResponse.data : pulserasResponse.data?.items ?? []);
+                              setPortadores(Array.isArray(portadoresResponse.data) ? portadoresResponse.data : portadoresResponse.data?.items ?? []);
+
+                              toast.dismiss(loadingToast);
+                              toast.success(`¡QR ${claimedPulseraForAssignment.customId} asignado exitosamente a ${portador.firstName}!`);
+
+                              setClaimedPulseraForAssignment(null);
+                            } catch (err: any) {
+                              toast.dismiss(loadingToast);
+                              console.error(err);
+                              const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Error al asignar el QR';
+                              toast.error(errorMsg);
+                            }
+                          } else {
+                            handleAssignPulseraToUser(portador);
+                          }
+                        }}
+                        disabled={!claimedPulseraForAssignment && availablePulseras <= 0}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg font-medium transition-all duration-300 transform ${
+                          claimedPulseraForAssignment
+                            ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:shadow-lg hover:-translate-y-0.5 ring-2 ring-green-300 animate-pulse'
+                            : availablePulseras > 0
+                            ? 'bg-gradient-to-r from-[#7030A0] to-[#5d2785] text-white hover:shadow-lg hover:-translate-y-0.5'
+                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        }`}
+                        title={
+                          claimedPulseraForAssignment
+                            ? `Asignar QR reclamado (${claimedPulseraForAssignment.customId}) a este usuario`
+                            : availablePulseras <= 0
+                            ? 'No tienes pulseras disponibles'
+                            : 'Asignar pulsera a este usuario con un click'
+                        }
+                      >
+                        <UserPlus className="w-3 h-3" />
+                        <span>{claimedPulseraForAssignment ? 'Asignar QR Reclamado' : 'Asignar Pulsera'}</span>
+                      </button>
+                      <button
+                        onClick={() => handleEditUser(portador)}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 hover:border-gray-300 transition-all duration-300"
+                        title="Editar información del usuario"
+                      >
+                        <Edit className="w-3 h-3" />
+                        <span>Editar</span>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteUser(portador)}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition-all duration-300 shadow-sm hover:shadow-md"
+                        title="Eliminar usuario"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span>Eliminar</span>
+                      </button>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    {/* Botón de Suscripción */}
-                    <button
-                      onClick={() => p.subscriptionActive ? handleRenewSubscription(p.id) : handleActivateSubscription(p.id)}
-                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${
-                        p.subscriptionActive
-                          ? 'border-green-200 text-green-600 hover:bg-green-50'
-                          : 'border-purple-200 text-purple-600 hover:bg-purple-50'
-                      }`}
-                      title={p.subscriptionActive ? 'Renovar suscripción' : 'Activar suscripción'}
-                    >
-                      <Shield className="w-4 h-4" />
-                      <span className="hidden sm:inline">{p.subscriptionActive ? 'Renovar' : 'Activar'}</span>
-                    </button>
-
-                    <button
-                      onClick={() => handleShowQr(p)}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border hover:bg-gray-50"
-                      title="Ver QR Grande"
-                    >
-                      <QrCode className="w-4 h-4" />
-                      <span className="hidden sm:inline">Ver QR</span>
-                    </button>
-
-                    <button
-                      onClick={() => handleEdit(p)}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border hover:bg-gray-50"
-                      title="Editar Pulsera"
-                    >
-                      <Edit className="w-4 h-4" />
-                      <span className="hidden sm:inline">Editar</span>
-                    </button>
-
-                    {p.portador ? (
-                      <button
-                        onClick={() => handleEditAssignment(p)}
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50"
-                        title="Editar Asignación"
-                      >
-                        <UserPlus className="w-4 h-4" />
-                        <span className="hidden sm:inline">Editar Asignación</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleAssign(p)}
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-green-200 text-green-600 hover:bg-green-50"
-                        title="Asignar a Usuario"
-                      >
-                        <UserPlus className="w-4 h-4" />
-                        <span className="hidden sm:inline">Asignar</span>
-                      </button>
-                    )}
-
-                    <button
-                      onClick={() => handleDelete(p.id)}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
-                      title="Eliminar"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span className="hidden sm:inline">Eliminar</span>
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                </div>
+                );
+              })}
+            </div>
           )}
         </div>
       </main>
 
       {/* Modal QR */}
       {showQrModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-            <h4 className="text-lg font-semibold mb-4">Código QR</h4>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl animate-scaleIn">
+            <div className="mb-4">
+              <h4 className="text-lg font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] bg-clip-text text-transparent">
+                Código QR
+              </h4>
+              <p className="text-xs text-gray-600 mt-0.5">Escanea o descarga el código</p>
+            </div>
             {qrImage ? (
-              <img
-                src={qrImage}
-                alt="QR Pulsera"
-                className="mx-auto w-64 h-64 object-contain border rounded-xl"
-              />
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-xl mb-4">
+                <img
+                  src={qrImage}
+                  alt="QR Pulsera"
+                  className="mx-auto w-48 h-48 object-contain"
+                />
+              </div>
             ) : (
-              <div className="text-center text-gray-500 py-10">Cargando QR…</div>
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-8 rounded-xl mb-4">
+                <div className="text-center">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-3 border-gray-200 border-t-[#7030A0] mb-2"></div>
+                  <p className="text-sm text-gray-500">Cargando código QR...</p>
+                </div>
+              </div>
             )}
 
-            <div className="mt-6 flex items-center justify-end gap-2">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowQrModal(false)}
-                className="px-4 py-2 rounded-lg border hover:bg-gray-50"
+                className="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 hover:border-gray-300 transition-all duration-300"
               >
                 Cerrar
               </button>
               <button
                 onClick={handleDownloadQr}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white hover:opacity-90 transition-all"
-                style={{backgroundColor: '#83C341'}}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-gradient-to-r from-green-500 to-green-600 text-white font-medium hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
               >
                 <Download className="w-4 h-4" />
                 Descargar
@@ -1263,36 +1614,47 @@ function DashboardContent() {
 
       {/* Modal Crear */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h4 className="text-xl font-semibold text-gray-900">Asignar Pulsera Inteligente</h4>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-scaleIn">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h4 className="text-2xl font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] bg-clip-text text-transparent">
+                  Asignar Pulsera Inteligente
+                </h4>
+                <p className="text-sm text-gray-600 mt-1">Complete la información del portador</p>
+              </div>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all duration-300"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               </button>
             </div>
 
             <form onSubmit={createForm.handleSubmit(handleCreateSubmit)} className="space-y-6">
               <FormFields form={createForm} />
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t">
+              <div className="flex items-center gap-3 pt-6 border-t border-gray-200">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-gray-500"
+                  className="flex-1 px-6 py-3 text-gray-700 border-2 border-gray-200 rounded-xl font-medium hover:bg-gray-50 hover:border-gray-300 transition-all duration-300"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={createForm.formState.isSubmitting}
-                  className="px-6 py-2 text-white rounded-lg hover:opacity-90 transition-all disabled:opacity-50"
-                  style={{backgroundColor: '#83C341'}}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-medium hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                  {createForm.formState.isSubmitting ? 'Asignando...' : 'Asignar Pulsera'}
+                  {createForm.formState.isSubmitting ? (
+                    <span className="inline-flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      Asignando...
+                    </span>
+                  ) : (
+                    'Asignar Pulsera'
+                  )}
                 </button>
               </div>
             </form>
@@ -1302,44 +1664,53 @@ function DashboardContent() {
 
       {/* Modal Editar */}
       {showEditModal && editingPulsera && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h4 className="text-xl font-semibold text-gray-900">
-                Editar: {editingPulsera.name || `Pulsera #${editingPulsera.id}`}
-              </h4>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-scaleIn">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h4 className="text-2xl font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] bg-clip-text text-transparent">
+                  Editar: {editingPulsera.name || `Pulsera #${editingPulsera.id}`}
+                </h4>
+                <p className="text-sm text-gray-600 mt-1">Actualiza la información de la pulsera</p>
+              </div>
               <button
                 onClick={() => {
                   setShowEditModal(false);
                   setEditingPulsera(null);
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all duration-300"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               </button>
             </div>
 
             <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-6">
               <FormFields form={editForm} />
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t">
+              <div className="flex items-center gap-3 pt-6 border-t border-gray-200">
                 <button
                   type="button"
                   onClick={() => {
                     setShowEditModal(false);
                     setEditingPulsera(null);
                   }}
-                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-gray-500"
+                  className="flex-1 px-6 py-3 text-gray-700 border-2 border-gray-200 rounded-xl font-medium hover:bg-gray-50 hover:border-gray-300 transition-all duration-300"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={editForm.formState.isSubmitting}
-                  className="px-6 py-2 text-white rounded-lg hover:opacity-90 transition-all disabled:opacity-50"
-                  style={{backgroundColor: '#83C341'}}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-medium hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                  {editForm.formState.isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
+                  {editForm.formState.isSubmitting ? (
+                    <span className="inline-flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      Guardando...
+                    </span>
+                  ) : (
+                    'Guardar Cambios'
+                  )}
                 </button>
               </div>
             </form>
@@ -1349,22 +1720,28 @@ function DashboardContent() {
 
       {/* Modal Crear Usuario */}
       {showCreateUserModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h4 className="text-xl font-semibold text-gray-900">Crear Nuevo Usuario</h4>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-scaleIn">
+            <div className="overflow-visible">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h4 className="text-2xl font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] bg-clip-text text-transparent">
+                  Crear Nuevo Usuario
+                </h4>
+                <p className="text-sm text-gray-600 mt-1">Registra un nuevo portador con información médica completa</p>
+              </div>
               <button
                 onClick={() => {
                   setShowCreateUserModal(false);
                   assignForm.reset();
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all duration-300"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               </button>
             </div>
 
-            <form onSubmit={assignForm.handleSubmit(handleAssignSubmit)} className="space-y-6">
+            <form onSubmit={assignForm.handleSubmit(handleCreateUserSubmit)} className="space-y-6">
               {/* Datos del Usuario */}
               <div>
                 <h5 className="text-sm font-medium text-gray-900 mb-3">Datos del Usuario</h5>
@@ -1469,48 +1846,695 @@ function DashboardContent() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t">
+              {/* Información Médica */}
+              <div>
+                <h5 className="text-sm font-medium text-gray-900 mb-3">Información Médica</h5>
+                <div className="space-y-4">
+                  {/* Contactos de emergencia */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Contactos de emergencia
+                      </label>
+                      <button
+                        type="button"
+                        onClick={addContactoEmergencia}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Agregar
+                      </button>
+                    </div>
+
+                    <div className="border border-gray-300 rounded-lg overflow-visible">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Nombre
+                            </th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Teléfono
+                            </th>
+                            <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                              Acción
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {contactosEmergenciaDetalle.length > 0 ? (
+                            contactosEmergenciaDetalle.map((contacto, index) => (
+                              <tr key={index}>
+                                <td className="px-3 py-2 relative">
+                                  <input
+                                    type="text"
+                                    value={contacto.nombre}
+                                    onChange={(e) => updateContactoEmergencia(index, 'nombre', e.target.value)}
+                                    onBlur={(e) => {
+                                      if (!isValidName(e.target.value)) {
+                                        alert('El nombre debe contener solo letras y espacios');
+                                        e.target.focus();
+                                      }
+                                    }}
+                                    className="w-full px-2 py-1 border border-gray-300 rounded text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Nombre completo"
+                                  />
+                                </td>
+                                <td className="px-3 py-2">
+                                  <input
+                                    type="text"
+                                    value={contacto.telefono}
+                                    onChange={(e) => updateContactoEmergencia(index, 'telefono', e.target.value)}
+                                    onBlur={(e) => {
+                                      if (!isValidPhone(e.target.value)) {
+                                        alert('El teléfono debe contener solo números y caracteres válidos (+, -, espacios, paréntesis)');
+                                        e.target.focus();
+                                      }
+                                    }}
+                                    className="w-full px-2 py-1 border border-gray-300 rounded text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Teléfono"
+                                  />
+                                </td>
+                                <td className="px-3 py-2 text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => removeContactoEmergencia(index)}
+                                    className="text-red-600 hover:text-red-800"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={3} className="px-3 py-4 text-center text-gray-500 text-sm">
+                                No hay contactos de emergencia agregados
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Patologías */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Patologías
+                      </label>
+                      <button
+                        type="button"
+                        onClick={addPatologia}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Agregar
+                      </button>
+                    </div>
+
+                    {patologiasDetalle.length > 0 && (
+                      <div className="border border-gray-300 rounded-lg overflow-visible">
+                        <table className="w-full text-sm">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Patología
+                              </th>
+                              <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                                Acción
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {patologiasDetalle.map((detalle, index) => (
+                              <tr key={index}>
+                                <td className="px-3 py-2 relative">
+                                  <div className="relative">
+                                    <input
+                                      type="text"
+                                      value={detalle.enfermedadId ?
+                                        enfermedades.find(e => e.id === detalle.enfermedadId)?.nombre || searchStatesPatologias[index] || ''
+                                        : searchStatesPatologias[index] || ''
+                                      }
+                                      onChange={(e) => updateSearchStatePatologia(index, e.target.value)}
+                                      onFocus={() => {
+                                        setFocusStatePatologia(index, true);
+                                        if (detalle.enfermedadId) {
+                                          updatePatologia(index, 'enfermedadId', 0);
+                                          updateSearchStatePatologia(index, '');
+                                        }
+                                      }}
+                                      onBlur={() => {
+                                        setTimeout(() => setFocusStatePatologia(index, false), 200);
+                                      }}
+                                      className="w-full px-2 py-1 text-sm text-black border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                      placeholder="Haz clic para ver lista o escribe para buscar..."
+                                    />
+
+                                    {(focusStatesPatologias[index] || (searchStatesPatologias[index] && searchStatesPatologias[index].length > 0)) && (
+                                      <div className="absolute z-[9999] w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                        {getFilteredPatologias(searchStatesPatologias[index] || '').length > 0 ? (
+                                          getFilteredPatologias(searchStatesPatologias[index] || '').slice(0, 15).map((patologia) => (
+                                            <button
+                                              key={patologia.id}
+                                              type="button"
+                                              onClick={() => {
+                                                updatePatologia(index, 'enfermedadId', patologia.id);
+                                                updateSearchStatePatologia(index, '');
+                                                setFocusStatePatologia(index, false);
+                                              }}
+                                              className="w-full text-left px-3 py-2 hover:bg-gray-100 focus:bg-gray-100 border-b border-gray-100 last:border-b-0"
+                                            >
+                                              <div className="text-sm font-medium text-gray-900">{patologia.nombre}</div>
+                                            </button>
+                                          ))
+                                        ) : searchStatesPatologias[index] ? (
+                                          <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                                            <div>No se encontraron patologías</div>
+                                            <div className="text-xs mt-1">que coincidan con "{searchStatesPatologias[index]}"</div>
+                                          </div>
+                                        ) : (
+                                          enfermedades.length === 0 && (
+                                            <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                                              Cargando patologías...
+                                            </div>
+                                          )
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-2 text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => removePatologia(index)}
+                                    className="text-red-600 hover:text-red-800"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {patologiasDetalle.length === 0 && (
+                      <div className="text-center py-8 text-gray-500 border border-gray-300 rounded-lg bg-gray-50">
+                        <p className="text-sm">No hay patologías agregadas</p>
+                        <p className="text-xs mt-1">Haz clic en "Agregar" para añadir patologías</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Principios Activos */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Principios Activos (Medicamentos)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={addPrincipioActivo}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Agregar
+                      </button>
+                    </div>
+
+                    {principiosActivosDetalle.length > 0 && (
+                      <div className="border border-gray-300 rounded-lg overflow-visible">
+                        <table className="w-full text-sm">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Principio Activo
+                              </th>
+                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Concentración
+                              </th>
+                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Dosis
+                              </th>
+                              <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                                Acción
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {principiosActivosDetalle.map((detalle, index) => (
+                              <tr key={index}>
+                                <td className="px-3 py-2 relative">
+                                  <div className="relative">
+                                    <input
+                                      type="text"
+                                      value={detalle.principioActivoId ?
+                                        principiosActivos.find(p => p.id === detalle.principioActivoId)?.nombre || searchStates[index] || ''
+                                        : searchStates[index] || ''
+                                      }
+                                      onChange={(e) => updateSearchState(index, e.target.value)}
+                                      onFocus={() => {
+                                        setFocusState(index, true);
+                                        if (detalle.principioActivoId) {
+                                          updatePrincipioActivo(index, 'principioActivoId', 0);
+                                          updateSearchState(index, '');
+                                        }
+                                      }}
+                                      onBlur={() => {
+                                        setTimeout(() => setFocusState(index, false), 200);
+                                      }}
+                                      className="w-full px-2 py-1 text-sm text-black border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                      placeholder="Haz clic para ver lista o escribe para buscar..."
+                                    />
+
+                                    {(focusStates[index] || (searchStates[index] && searchStates[index].length > 0)) && (
+                                      <div className="absolute z-[9999] w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                        {getFilteredPrincipiosActivos(searchStates[index] || '').length > 0 ? (
+                                          getFilteredPrincipiosActivos(searchStates[index] || '').slice(0, 15).map((principio) => (
+                                            <button
+                                              key={principio.id}
+                                              type="button"
+                                              onClick={() => {
+                                                updatePrincipioActivo(index, 'principioActivoId', principio.id);
+                                                updateSearchState(index, '');
+                                                setFocusState(index, false);
+                                              }}
+                                              className="w-full text-left px-3 py-2 hover:bg-gray-100 focus:bg-gray-100 border-b border-gray-100 last:border-b-0"
+                                            >
+                                              <div className="text-sm font-medium text-gray-900">{principio.nombre}</div>
+                                              <div className="flex flex-col mt-1">
+                                                {principio.nombreComercial && (
+                                                  <span className="text-xs text-blue-600">
+                                                    Comercial: {principio.nombreComercial}
+                                                  </span>
+                                                )}
+                                                {principio.descripcion && (
+                                                  <span className="text-xs text-gray-500 truncate">
+                                                    {principio.descripcion}
+                                                  </span>
+                                                )}
+                                              </div>
+                                            </button>
+                                          ))
+                                        ) : searchStates[index] ? (
+                                          <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                                            <div>No se encontraron principios activos</div>
+                                            <div className="text-xs mt-1">que coincidan con "{searchStates[index]}"</div>
+                                          </div>
+                                        ) : (
+                                          principiosActivos.length === 0 && (
+                                            <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                                              Cargando principios activos...
+                                            </div>
+                                          )
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-2">
+                                  <input
+                                    type="text"
+                                    value={detalle.concentracion}
+                                    onChange={(e) => updatePrincipioActivo(index, 'concentracion', e.target.value)}
+                                    className="w-full px-2 py-1 text-sm text-black border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                    placeholder="ej: 500mg"
+                                  />
+                                </td>
+                                <td className="px-3 py-2">
+                                  <input
+                                    type="text"
+                                    value={detalle.dosis}
+                                    onChange={(e) => updatePrincipioActivo(index, 'dosis', e.target.value)}
+                                    className="w-full px-2 py-1 text-sm text-black border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                    placeholder="ej: 1 cada 8h"
+                                  />
+                                </td>
+                                <td className="px-3 py-2 text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => removePrincipioActivo(index)}
+                                    className="text-red-600 hover:text-red-800"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {principiosActivosDetalle.length === 0 && (
+                      <div className="text-center py-8 text-gray-500 border border-gray-300 rounded-lg bg-gray-50">
+                        <p className="text-sm">No hay principios activos agregados</p>
+                        <p className="text-xs mt-1">Haz clic en "Agregar" para añadir medicamentos</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Información médica adicional */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Información Médica Adicional
+                    </label>
+                    <textarea
+                      {...assignForm.register('medicalInfo')}
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
+                      placeholder="Alergias, observaciones médicas adicionales, etc."
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-6 border-t border-gray-200">
                 <button
                   type="button"
                   onClick={() => {
                     setShowCreateUserModal(false);
                     assignForm.reset();
                   }}
-                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-gray-500"
+                  className="flex-1 px-6 py-3 text-gray-700 border-2 border-gray-200 rounded-xl font-medium hover:bg-gray-50 hover:border-gray-300 transition-all duration-300"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={assignForm.formState.isSubmitting}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                  {assignForm.formState.isSubmitting ? 'Creando...' : 'Crear Usuario'}
+                  {assignForm.formState.isSubmitting ? (
+                    <span className="inline-flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      Creando...
+                    </span>
+                  ) : (
+                    'Crear Usuario'
+                  )}
                 </button>
               </div>
             </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Editar Usuario */}
+      {showEditUserModal && editingUser && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-scaleIn">
+            <div className="overflow-visible">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h4 className="text-2xl font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] bg-clip-text text-transparent">
+                  Editar Usuario
+                </h4>
+                <p className="text-sm text-gray-600 mt-1">Actualiza la información del portador {editingUser.firstName} {editingUser.paternalSurname}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowEditUserModal(false);
+                  setEditingUser(null);
+                  assignForm.reset();
+                  setPatologiasDetalle([]);
+                  setPrincipiosActivosDetalle([]);
+                  setContactosEmergenciaDetalle([]);
+                }}
+                className="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all duration-300"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <form onSubmit={assignForm.handleSubmit(handleEditUserSubmit)} className="space-y-6">
+              {/* Datos del Usuario */}
+              <div>
+                <h5 className="text-sm font-medium text-gray-900 mb-3">Datos del Usuario</h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">
+                      Email del Usuario
+                    </label>
+                    <input
+                      type="email"
+                      value={editingUser.email}
+                      disabled
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      El email no se puede modificar
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">
+                      RUT del Usuario
+                    </label>
+                    <input
+                      type="text"
+                      value={editingUser.rut}
+                      disabled
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      El RUT no se puede modificar
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Nombre *
+                    </label>
+                    <input
+                      {...assignForm.register('firstName', {
+                        required: 'El nombre es requerido'
+                      })}
+                      type="text"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
+                      placeholder="Nombre"
+                    />
+                    {assignForm.formState.errors.firstName && (
+                      <p className="text-red-500 text-xs mt-1">{assignForm.formState.errors.firstName.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Apellido Paterno *
+                    </label>
+                    <input
+                      {...assignForm.register('paternalSurname', {
+                        required: 'El apellido paterno es requerido'
+                      })}
+                      type="text"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
+                      placeholder="Apellido Paterno"
+                    />
+                    {assignForm.formState.errors.paternalSurname && (
+                      <p className="text-red-500 text-xs mt-1">{assignForm.formState.errors.paternalSurname.message}</p>
+                    )}
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Apellido Materno
+                    </label>
+                    <input
+                      {...assignForm.register('maternalSurname')}
+                      type="text"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
+                      placeholder="Apellido Materno (opcional)"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Información Médica - Reutilizar los mismos campos que en crear usuario */}
+              <div>
+                <h5 className="text-sm font-medium text-gray-900 mb-3">Información Médica</h5>
+                <div className="space-y-4">
+                  {/* Información médica adicional */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Información Médica Adicional
+                    </label>
+                    <textarea
+                      {...assignForm.register('medicalInfo')}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
+                      rows={3}
+                      placeholder="Ej: Alergias, condiciones especiales, tipo de sangre, etc."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Medicamentos
+                    </label>
+                    <textarea
+                      {...assignForm.register('medicamentos')}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
+                      rows={2}
+                      placeholder="Medicamentos que toma regularmente"
+                    />
+                  </div>
+
+                  {/* Contactos de emergencia */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Contactos de emergencia
+                      </label>
+                      <button
+                        type="button"
+                        onClick={addContactoEmergencia}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Agregar
+                      </button>
+                    </div>
+
+                    <div className="border border-gray-300 rounded-lg overflow-visible">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Nombre
+                            </th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Teléfono
+                            </th>
+                            <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                              Acción
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {contactosEmergenciaDetalle.length > 0 ? (
+                            contactosEmergenciaDetalle.map((contacto, index) => (
+                              <tr key={index}>
+                                <td className="px-3 py-2 relative">
+                                  <input
+                                    type="text"
+                                    value={contacto.nombre}
+                                    onChange={(e) => updateContactoEmergencia(index, 'nombre', e.target.value)}
+                                    onBlur={(e) => {
+                                      if (!isValidName(e.target.value)) {
+                                        alert('El nombre debe contener solo letras y espacios');
+                                        e.target.focus();
+                                      }
+                                    }}
+                                    className="w-full px-2 py-1 border border-gray-300 rounded text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Nombre completo"
+                                  />
+                                </td>
+                                <td className="px-3 py-2">
+                                  <input
+                                    type="text"
+                                    value={contacto.telefono}
+                                    onChange={(e) => updateContactoEmergencia(index, 'telefono', e.target.value)}
+                                    onBlur={(e) => {
+                                      if (!isValidPhone(e.target.value)) {
+                                        alert('El teléfono debe contener solo números y caracteres válidos (+, -, espacios, paréntesis)');
+                                        e.target.focus();
+                                      }
+                                    }}
+                                    className="w-full px-2 py-1 border border-gray-300 rounded text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Teléfono"
+                                  />
+                                </td>
+                                <td className="px-3 py-2 text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => removeContactoEmergencia(index)}
+                                    className="text-red-600 hover:text-red-800"
+                                    title="Eliminar contacto"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={3} className="px-3 py-4 text-center text-gray-500 text-sm">
+                                No hay contactos de emergencia. Haz clic en "Agregar" para añadir uno.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Botones de acción */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditUserModal(false);
+                    setEditingUser(null);
+                    assignForm.reset();
+                    setPatologiasDetalle([]);
+                    setPrincipiosActivosDetalle([]);
+                    setContactosEmergenciaDetalle([]);
+                  }}
+                  className="flex-1 px-6 py-3 bg-gray-200 text-gray-800 rounded-xl font-medium hover:bg-gray-300 transition-all duration-300"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={assignForm.formState.isSubmitting}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-[#7030A0] to-[#5d2785] text-white rounded-xl font-medium hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                >
+                  {assignForm.formState.isSubmitting ? (
+                    <span className="inline-flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      Actualizando...
+                    </span>
+                  ) : (
+                    'Guardar Cambios'
+                  )}
+                </button>
+              </div>
+            </form>
+            </div>
           </div>
         </div>
       )}
 
       {/* Modal Asignar Pulsera */}
       {showAssignModal && assigningPulsera && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-scaleIn">
             <div className="overflow-visible">
-            <div className="flex items-center justify-between mb-6">
-              <h4 className="text-xl font-semibold text-gray-900">
-                {assigningPulsera.portador ? 'Editar Asignación de Usuario' : 'Asignar Pulsera a Usuario'}: {assigningPulsera.name || `Pulsera #${assigningPulsera.id}`}
-              </h4>
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h4 className="text-2xl font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] bg-clip-text text-transparent">
+                  {assigningPulsera.portador ? 'Editar Asignación' : 'Asignar Pulsera'}
+                </h4>
+                <p className="text-sm text-gray-600 mt-1">
+                  {assigningPulsera.name || `Pulsera #${assigningPulsera.id}`}
+                </p>
+              </div>
               <button
                 onClick={() => {
                   setShowAssignModal(false);
                   setAssigningPulsera(null);
                   setSelectedPortadorId('');
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all duration-300"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               </button>
             </div>
 
@@ -2046,29 +3070,79 @@ function DashboardContent() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t">
+              <div className="flex items-center gap-3 pt-6 border-t border-gray-200">
                 <button
                   type="button"
                   onClick={() => {
                     setShowAssignModal(false);
                     setAssigningPulsera(null);
                   }}
-                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-gray-500"
+                  className="flex-1 px-6 py-3 text-gray-700 border-2 border-gray-200 rounded-xl font-medium hover:bg-gray-50 hover:border-gray-300 transition-all duration-300"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={assignForm.formState.isSubmitting}
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-medium hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                  {assignForm.formState.isSubmitting ? 
-                    (assigningPulsera?.portador ? 'Actualizando...' : 'Asignando...') : 
-                    (assigningPulsera?.portador ? 'Actualizar Asignación' : 'Asignar a Usuario')
-                  }
+                  {assignForm.formState.isSubmitting ? (
+                    <span className="inline-flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      {assigningPulsera?.portador ? 'Actualizando...' : 'Asignando...'}
+                    </span>
+                  ) : (
+                    assigningPulsera?.portador ? 'Actualizar Asignación' : 'Asignar a Usuario'
+                  )}
                 </button>
               </div>
             </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal QR Expandido */}
+      {showExpandedQrModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn"
+          onClick={() => setShowExpandedQrModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl animate-scaleIn"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900">
+                QR de {expandedQrUserName}
+              </h3>
+              <button
+                onClick={() => setShowExpandedQrModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-6 h-6 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-full max-w-md aspect-square bg-white border-4 border-[#7030A0] rounded-2xl overflow-hidden p-4">
+                <img
+                  src={`data:image/png;base64,${expandedQrImage}`}
+                  alt={`QR de ${expandedQrUserName}`}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              <p className="text-sm text-gray-600 text-center">
+                Código QR para {expandedQrUserName}
+              </p>
+
+              <button
+                onClick={() => setShowExpandedQrModal(false)}
+                className="w-full px-4 py-2 bg-gradient-to-r from-[#7030A0] to-[#5d2785] text-white rounded-lg font-medium hover:shadow-lg transition-all duration-300"
+              >
+                Cerrar
+              </button>
             </div>
           </div>
         </div>

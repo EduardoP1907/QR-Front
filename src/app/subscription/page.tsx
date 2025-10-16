@@ -120,7 +120,7 @@ function SubscriptionContent() {
           <div className="space-y-6">
             {/* Quantity Selection */}
             <div className="bg-white border rounded-2xl p-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">¿Cuántas pulseras necesitas?</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">¿Cuántos Bluko Life's necesitas?</h3>
               <div className="flex items-center justify-center gap-4 mb-4">
                 <button
                   type="button"
@@ -132,7 +132,7 @@ function SubscriptionContent() {
                 </button>
                 <div className="flex flex-col items-center">
                   <span className="text-3xl font-bold text-gray-900">{quantity}</span>
-                  <span className="text-sm text-gray-500">pulsera{quantity > 1 ? 's' : ''}</span>
+                  <span className="text-sm text-gray-500">Bluko Life's{quantity > 1 ? 's' : ''}</span>
                 </div>
                 <button
                   type="button"
@@ -143,7 +143,7 @@ function SubscriptionContent() {
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
-              <p className="text-sm text-gray-600 text-center">Máximo 10 pulseras por pedido</p>
+              <p className="text-sm text-gray-600 text-center">Máximo 10 Bluko Life's por pedido</p>
             </div>
 
             {/* Plan Card */}
@@ -158,15 +158,15 @@ function SubscriptionContent() {
                   <span className="text-3xl font-bold">${SUBSCRIPTION_PRICE.toLocaleString('es-CL')}</span>
                   <span className="text-white opacity-80">/CLP</span>
                 </div>
-                <div className="text-sm text-white opacity-90 mt-1">Mensual por pulsera</div>
+                <div className="text-sm text-white opacity-90 mt-1">Mensual por Bluko Life's</div>
               </div>
 
               <div className="mb-6 p-4 bg-white/10 rounded-lg">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">+ ${PULSERA_PRICE.toLocaleString('es-CL')} Pulsera física</span>
+                  <span className="text-sm">+ ${PULSERA_PRICE.toLocaleString('es-CL')} Bluko Life's física</span>
                 </div>
                 <div className="text-xs text-white opacity-80 mt-1">
-                  (Precio por pulsera)
+                  (Precio por Bluko Life's)
                 </div>
               </div>
 
@@ -175,7 +175,7 @@ function SubscriptionContent() {
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
                     <Check className="w-5 h-5 text-green-300 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Pulsera Bluko Life con QR activado</span>
+                    <span className="text-sm">Bluko Life con QR activado</span>
                   </div>
                   <div className="flex items-start gap-3">
                     <Check className="w-5 h-5 text-green-300 mt-0.5 flex-shrink-0" />
@@ -243,7 +243,7 @@ function SubscriptionContent() {
               <div className="pt-2">
                 <div className="space-y-3 mb-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Pulseras físicas ({quantity}x):</span>
+                    <span className="text-sm text-gray-600">Bluko Life's físicas ({quantity}x):</span>
                     <span className="font-semibold text-black">${(PULSERA_PRICE * quantity).toLocaleString('es-CL')} CLP</span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -251,7 +251,7 @@ function SubscriptionContent() {
                     <span className="font-semibold text-black">${(SUBSCRIPTION_PRICE * quantity).toLocaleString('es-CL')} CLP</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Cantidad de pulseras:</span>
+                    <span className="text-sm text-gray-600">Cantidad de Bluko Life's:</span>
                     <span className="font-semibold text-black">{quantity}</span>
                   </div>
                   <hr />

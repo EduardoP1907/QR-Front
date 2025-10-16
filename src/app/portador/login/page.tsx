@@ -147,7 +147,7 @@ export default function PortadorLoginPage() {
                       {...loginForm.register('email', { required: 'Email es requerido' })}
                       type="email"
                       id="email"
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                       placeholder="tu@email.com"
                     />
                   </div>

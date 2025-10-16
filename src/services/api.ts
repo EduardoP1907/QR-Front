@@ -193,6 +193,19 @@ export const contratanteApi = {
     firstName: string;
     paternalSurname: string;
     maternalSurname?: string;
+    medicalInfo?: string;
+    medicamentos?: string;
+    enfermedadIds?: number[];
+    principiosActivos?: Array<{
+      principioActivoId: number;
+      concentracion: string;
+      dosis: string;
+      observaciones?: string;
+    }>;
+    contactosEmergencia?: Array<{
+      nombre: string;
+      telefono: string;
+    }>;
   }) => {
     return api.post('/contratantes/portadores/create', portadorData);
   },
@@ -200,6 +213,33 @@ export const contratanteApi = {
   // Listar todos los portadores del contratante
   getPortadores: () => {
     return api.get('/contratantes/portadores');
+  },
+
+  // Actualizar portador
+  updatePortador: (id: number, portadorData: {
+    firstName: string;
+    paternalSurname: string;
+    maternalSurname?: string;
+    medicalInfo?: string;
+    medicamentos?: string;
+    enfermedadIds?: number[];
+    principiosActivos?: Array<{
+      principioActivoId: number;
+      concentracion: string;
+      dosis: string;
+      observaciones?: string;
+    }>;
+    contactosEmergencia?: Array<{
+      nombre: string;
+      telefono: string;
+    }>;
+  }) => {
+    return api.put(`/contratantes/portadores/${id}`, portadorData);
+  },
+
+  // Eliminar portador
+  deletePortador: (id: number) => {
+    return api.delete(`/contratantes/portadores/${id}`);
   },
 };
 
