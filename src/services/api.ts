@@ -7,6 +7,9 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
   ? `${process.env.NEXT_PUBLIC_API_URL}/api`
   : 'http://localhost:8080/api';
 
+console.log('🌐 API_BASE_URL configured as:', API_BASE_URL);
+console.log('🌐 NEXT_PUBLIC_API_URL env var:', process.env.NEXT_PUBLIC_API_URL);
+
 // Configuración base de axios
 const api = axios.create({
   baseURL: API_BASE_URL,
