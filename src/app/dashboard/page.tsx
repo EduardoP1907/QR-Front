@@ -254,7 +254,7 @@ function DashboardContent() {
         try {
           const response = await contratanteApi.claimQr(claimQr);
 
-          toast.success('¡QR reclamado exitosamente! Ahora puedes asignar la pulsera a un usuario.');
+          toast.success('¡QR reclamado exitosamente! Ahora puedes asignar el Bluko Life a un usuario.');
 
           // Reload pulseras and available count
           const [pulserasResponse, availableResponse] = await Promise.all([
@@ -285,7 +285,7 @@ function DashboardContent() {
           if (errorMsg.toLowerCase().includes('ya ha sido reclamada') ||
               errorMsg.toLowerCase().includes('already claimed') ||
               error.response?.status === 400) {
-            toast.error('Esta pulsera ya fue reclamada. Por favor escanea un QR nuevo.');
+            toast.error('Este Bluko Life ya fue reclamado. Por favor escanea un QR nuevo.');
           } else {
             toast.error(errorMsg);
           }
@@ -342,7 +342,7 @@ function DashboardContent() {
   // DEPRECATED: Ya no se pueden crear pulseras directamente
   // Solo se reclaman QRs físicos escaneados
   const handleCreate = () => {
-    toast.error('La creación directa está deshabilitada. Debes escanear el QR de una pulsera física para reclamarla.');
+    toast.error('La creación directa está deshabilitada. Debes escanear el QR de un Bluko Life físico para reclamarlo.');
   };
 
   const handleEdit = (pulsera: Pulsera) => {
@@ -361,7 +361,7 @@ function DashboardContent() {
     try {
       await pulseraApi.delete(id);
       setPulseras((prev) => prev.filter((p) => p.id !== id));
-      toast.success('Pulsera eliminada.');
+      toast.success('Bluko Life eliminado.');
     } catch (err) {
       console.error(err);
       toast.error('No se pudo eliminar.');
@@ -425,13 +425,13 @@ function DashboardContent() {
       setAvailablePulseras((prev) => prev - 1);
       setShowCreateModal(false);
       createForm.reset();
-      toast.success('Pulsera asignada exitosamente al usuario.');
+      toast.success('Bluko Life asignado exitosamente al usuario.');
     } catch (err) {
       console.error(err);
       if (err.response?.data?.error?.includes('disponibles') || err.response?.data?.error?.includes('créditos')) {
-        toast.error('No tienes créditos disponibles. Escanea un QR físico o compra más pulseras.');
+        toast.error('No tienes créditos disponibles. Escanea un QR físico o compra más Bluko Life.');
       } else {
-        toast.error('Error al asignar la pulsera.');
+        toast.error('Error al asignar el Bluko Life.');
       }
     }
   };
@@ -447,10 +447,10 @@ function DashboardContent() {
       setShowEditModal(false);
       setEditingPulsera(null);
       editForm.reset();
-      toast.success('Pulsera actualizada exitosamente.');
+      toast.success('Bluko Life actualizado exitosamente.');
     } catch (err) {
       console.error(err);
-      toast.error('Error al actualizar la pulsera.');
+      toast.error('Error al actualizar el Bluko Life.');
     }
   };
 
@@ -492,11 +492,11 @@ function DashboardContent() {
     try {
       // Check if we have a pulsera to assign
       if (!assigningPulsera || !assigningPulsera.id) {
-        toast.error('No hay pulsera para asignar. Por favor, escanea un QR primero.');
+        toast.error('No hay Bluko Life para asignar. Por favor, escanea un QR primero.');
         return;
       }
 
-      const loadingToast = toast.loading('Asignando pulsera al usuario...');
+      const loadingToast = toast.loading('Asignando Bluko Life al usuario...');
 
       const assignData = {
         portadorEmail: portador.email,
@@ -535,7 +535,7 @@ function DashboardContent() {
       setAssigningPulsera(null);
     } catch (err: any) {
       console.error(err);
-      const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Error al asignar la pulsera';
+      const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Error al asignar el Bluko Life';
       toast.error(errorMsg);
     }
   };
@@ -570,7 +570,7 @@ function DashboardContent() {
       setSearchStatesPatologias([]);
       setFocusStatesPatologias([]);
 
-      toast.success('Usuario creado exitosamente. Ahora puedes asignarle una pulsera.');
+      toast.success('Usuario creado exitosamente. Ahora puedes asignarle un Bluko Life.');
     } catch (err: any) {
       console.error(err);
       const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Error al crear el usuario';
@@ -701,8 +701,8 @@ function DashboardContent() {
       if (assigningPulsera.id === 'new') {
         // Para nueva pulsera: crear una pulsera básica primero
         const createData = {
-          name: `Pulsera de ${data.firstName}`,
-          description: 'Pulsera personalizada'
+          name: `Bluko Life de ${data.firstName}`,
+          description: 'Bluko Life personalizado'
         };
         const createResponse = await pulseraApi.create(createData);
 
@@ -730,10 +730,10 @@ function DashboardContent() {
       setPrincipiosActivosDetalle([]);
       setSearchStates({});
       setSelectedPortadorId('');
-      toast.success('Pulsera asignada exitosamente al usuario.');
+      toast.success('Bluko Life asignado exitosamente al usuario.');
     } catch (err) {
       console.error(err);
-      toast.error('Error al asignar la pulsera.');
+      toast.error('Error al asignar el Bluko Life.');
     }
   };
 
@@ -1026,17 +1026,17 @@ function DashboardContent() {
 
       {/* Información básica de la pulsera */}
       <div>
-        <h5 className="text-sm font-medium text-gray-900 mb-3">Información de la Pulsera</h5>
+        <h5 className="text-sm font-medium text-gray-900 mb-3">Información del Bluko Life</h5>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nombre de la pulsera *
+              Nombre del Bluko Life *
             </label>
             <input
               {...form.register('name', { required: 'El nombre es requerido' })}
               type="text"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
-              placeholder="Ej: Pulsera de Juan"
+              placeholder="Ej: Bluko Life de Juan"
             />
             {form.formState.errors.name && (
               <p className="text-red-500 text-xs mt-1">{form.formState.errors.name.message}</p>
@@ -1070,7 +1070,7 @@ function DashboardContent() {
             {...form.register('description')}
             rows={2}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
-            placeholder="Información adicional sobre la pulsera"
+            placeholder="Información adicional sobre el Bluko Life"
           />
         </div>
       </div>
@@ -1288,7 +1288,7 @@ function DashboardContent() {
             </div>
             <h3 className="text-2xl font-bold mb-0.5">{pulseras.length}</h3>
             <p className="text-white/90 text-xs font-medium">
-              {pulseras.length === 1 ? 'Pulsera Registrada' : 'Pulseras Registradas'}
+              {pulseras.length === 1 ? 'Bluko Life Registrado' : 'Bluko Life Registrados'}
             </p>
             <p className="text-white/70 text-[10px] mt-1">
               En tu sistema Bluko Life
@@ -1313,7 +1313,7 @@ function DashboardContent() {
               Suscripciones Activas
             </p>
             <p className="text-white/70 text-[10px] mt-1">
-              De {pulseras.length} pulseras totales
+              De {pulseras.length} Bluko Life totales
             </p>
           </div>
         </div>
@@ -1325,7 +1325,7 @@ function DashboardContent() {
               Mis Bluko Life
             </h3>
             <p className="text-xs text-gray-600">
-              Administra tu sistema de pulseras médicas
+              Administra tu sistema de Bluko Life médico
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -1468,7 +1468,7 @@ function DashboardContent() {
                         </p>
                         {pulseraAsignada && (
                           <p className="text-xs text-[#7030A0] font-semibold mt-1">
-                            <span className="font-semibold">Pulsera:</span> {pulseraAsignada.customId || pulseraAsignada.name}
+                            <span className="font-semibold">Bluko Life:</span> {pulseraAsignada.customId || pulseraAsignada.name}
                           </p>
                         )}
                       </div>
@@ -1538,12 +1538,12 @@ function DashboardContent() {
                           claimedPulseraForAssignment
                             ? `Asignar QR reclamado (${claimedPulseraForAssignment.customId}) a este usuario`
                             : availablePulseras <= 0
-                            ? 'No tienes pulseras disponibles'
-                            : 'Asignar pulsera a este usuario con un click'
+                            ? 'No tienes Bluko Life disponibles'
+                            : 'Asignar Bluko Life a este usuario con un click'
                         }
                       >
                         <UserPlus className="w-3 h-3" />
-                        <span>{claimedPulseraForAssignment ? 'Asignar QR Reclamado' : 'Asignar Pulsera'}</span>
+                        <span>{claimedPulseraForAssignment ? 'Asignar QR Reclamado' : 'Asignar Bluko Life'}</span>
                       </button>
                       <button
                         onClick={() => handleEditUser(portador)}
@@ -1585,7 +1585,7 @@ function DashboardContent() {
               <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-xl mb-4">
                 <img
                   src={qrImage}
-                  alt="QR Pulsera"
+                  alt="QR Bluko Life"
                   className="mx-auto w-48 h-48 object-contain"
                 />
               </div>
@@ -1624,7 +1624,7 @@ function DashboardContent() {
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h4 className="text-2xl font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] bg-clip-text text-transparent">
-                  Asignar Pulsera Inteligente
+                  Asignar Bluko Life Inteligente
                 </h4>
                 <p className="text-sm text-gray-600 mt-1">Complete la información del portador</p>
               </div>
@@ -1658,7 +1658,7 @@ function DashboardContent() {
                       Asignando...
                     </span>
                   ) : (
-                    'Asignar Pulsera'
+                    'Asignar Bluko Life'
                   )}
                 </button>
               </div>
@@ -1674,9 +1674,9 @@ function DashboardContent() {
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h4 className="text-2xl font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] bg-clip-text text-transparent">
-                  Editar: {editingPulsera.name || `Pulsera #${editingPulsera.id}`}
+                  Editar: {editingPulsera.name || `Bluko Life #${editingPulsera.id}`}
                 </h4>
-                <p className="text-sm text-gray-600 mt-1">Actualiza la información de la pulsera</p>
+                <p className="text-sm text-gray-600 mt-1">Actualiza la información del Bluko Life</p>
               </div>
               <button
                 onClick={() => {
@@ -2517,7 +2517,7 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* Modal Asignar Pulsera */}
+      {/* Modal Asignar Bluko Life */}
       {showAssignModal && assigningPulsera && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
           <div className="bg-white rounded-3xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-scaleIn">
@@ -2525,10 +2525,10 @@ function DashboardContent() {
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h4 className="text-2xl font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] bg-clip-text text-transparent">
-                  {assigningPulsera.portador ? 'Editar Asignación' : 'Asignar Pulsera'}
+                  {assigningPulsera.portador ? 'Editar Asignación' : 'Asignar Bluko Life'}
                 </h4>
                 <p className="text-sm text-gray-600 mt-1">
-                  {assigningPulsera.name || `Pulsera #${assigningPulsera.id}`}
+                  {assigningPulsera.name || `Bluko Life #${assigningPulsera.id}`}
                 </p>
               </div>
               <button
@@ -2695,7 +2695,7 @@ function DashboardContent() {
 
               {/* Información de la Pulsera */}
               <div>
-                <h5 className="text-sm font-medium text-gray-900 mb-3">Información de la Pulsera</h5>
+                <h5 className="text-sm font-medium text-gray-900 mb-3">Información del Bluko Life</h5>
                 <div className="space-y-4">
                   {/* Contactos de emergencia - Nueva tabla */}
                   <div>

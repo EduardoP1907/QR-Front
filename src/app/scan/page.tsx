@@ -91,17 +91,17 @@ function ScanPageContent() {
             </div>
 
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              Pulsera Disponible para Reclamar
+              Bluko Life Disponible para Reclamar
             </h1>
 
             <p className="text-lg text-gray-600 mb-8">
-              Esta pulsera ha sido generada pero aún no ha sido reclamada por un contratante.
+              Este Bluko Life ha sido generado pero aún no ha sido reclamado por un contratante.
             </p>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-              <h2 className="font-semibold text-blue-900 mb-3">¿Eres el dueño de esta pulsera?</h2>
+              <h2 className="font-semibold text-blue-900 mb-3">¿Eres el dueño de este Bluko Life?</h2>
               <p className="text-blue-700 mb-4">
-                Si compraste esta pulsera, debes reclamarla desde tu cuenta de contratante para activarla y asignarla.
+                Si compraste este Bluko Life, debes reclamarlo desde tu cuenta de contratante para activarlo y asignarlo.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 {user ? (
@@ -162,7 +162,7 @@ function ScanPageContent() {
             </div>
 
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              Pulsera No Encontrada
+              Bluko Life No Encontrado
             </h1>
 
             <p className="text-lg text-gray-600 mb-8">
@@ -194,7 +194,7 @@ function ScanPageContent() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold">Información de Emergencia</h1>
-                <p className="text-red-100">Pulsera Médica Inteligente</p>
+                <p className="text-red-100">Bluko Life Médico Inteligente</p>
               </div>
             </div>
           </div>
