@@ -543,19 +543,7 @@ export default function AdminDashboardPage() {
                 <p className="text-4xl font-bold tracking-tight">{stats.generados.toLocaleString()}</p>
               </div>
 
-              {/* Card 2: Fabricados */}
-              <div className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
-                    <CheckCircle className="w-6 h-6" />
-                  </div>
-                  <TrendingUp className="w-5 h-5 opacity-50 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <p className="text-sm font-medium opacity-90 mb-1">Bluko Life Fabricados</p>
-                <p className="text-4xl font-bold tracking-tight">{stats.fabricados.toLocaleString()}</p>
-              </div>
-
-              {/* Card 3: En Fabricación */}
+              {/* Card 2: En Fabricación */}
               <div className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
@@ -565,6 +553,18 @@ export default function AdminDashboardPage() {
                 </div>
                 <p className="text-sm font-medium opacity-90 mb-1">Bluko Life En Fabricación</p>
                 <p className="text-4xl font-bold tracking-tight">{stats.enFabricacion.toLocaleString()}</p>
+              </div>
+
+              {/* Card 3: Fabricados */}
+              <div className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
+                    <CheckCircle className="w-6 h-6" />
+                  </div>
+                  <TrendingUp className="w-5 h-5 opacity-50 group-hover:opacity-100 transition-opacity" />
+                </div>
+                <p className="text-sm font-medium opacity-90 mb-1">Bluko Life Fabricados</p>
+                <p className="text-4xl font-bold tracking-tight">{stats.fabricados.toLocaleString()}</p>
               </div>
 
               {/* Card 4: En Stock */}
@@ -836,6 +836,210 @@ export default function AdminDashboardPage() {
                     >
                       <Download className="w-5 h-5" />
                       Descarga para Fabricar ({selectedForFabrication.size})
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* En Fabricación Tab */}
+        {activeTab === 'enFabricacion' && (
+          <div className="space-y-6 animate-fadeIn">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className="inline-flex items-center gap-2 text-[#7030A0] hover:text-[#5d2785] font-semibold group transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              Volver al Dashboard
+            </button>
+
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Bluko Life En Fabricación</h2>
+              <p className="text-gray-600">Marcar como fabricados los que llegaron físicamente</p>
+            </div>
+
+            {loadingPulseras ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#7030A0]"></div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                      <tr>
+                        <th className="px-6 py-5 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedForFabricated.size === inFabricationPulseras.length && inFabricationPulseras.length > 0}
+                            onChange={toggleSelectAllForFabricated}
+                            className="w-5 h-5 rounded border-gray-300 text-[#7030A0] focus:ring-[#7030A0] cursor-pointer"
+                          />
+                          <div className="text-sm font-bold text-gray-900 mt-2">Todos</div>
+                        </th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Código QR (UUID)</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Imagen QR</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {inFabricationPulseras.map((pulsera) => (
+                        <tr key={pulsera.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 text-center">
+                            <input
+                              type="checkbox"
+                              checked={selectedForFabricated.has(pulsera.id)}
+                              onChange={() => toggleSelectForFabricated(pulsera.id)}
+                              className="w-5 h-5 rounded border-gray-300 text-[#7030A0] focus:ring-[#7030A0] cursor-pointer"
+                            />
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-black font-bold text-lg">{pulsera.customId}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 inline-block">
+                              <span className="text-gray-700 font-mono text-sm">{pulsera.qrCode}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            {getStatusBadge(pulsera.status)}
+                          </td>
+                          <td className="px-6 py-4">
+                            <button
+                              onClick={() => handleViewQrImage(pulsera.customId)}
+                              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-[#7030A0] hover:bg-[#7030A0]/10 rounded-lg font-semibold transition-colors"
+                            >
+                              <QrCode className="w-5 h-5" />
+                              Ver Imagen
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {inFabricationPulseras.length === 0 && (
+                    <div className="text-center py-16">
+                      <TrendingUp className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500 font-medium text-lg">No hay Bluko Life en fabricación</p>
+                      <p className="text-gray-400 text-sm mt-2">Los códigos enviados a fabricar aparecerán aquí</p>
+                    </div>
+                  )}
+                </div>
+
+                {selectedForFabricated.size > 0 && (
+                  <div className="p-6 border-t-2 border-gray-100 bg-gray-50">
+                    <button
+                      onClick={handleMarkAsFabricated}
+                      className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#00FF00] to-[#00DD00] text-black font-bold rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                    >
+                      <CheckCircle className="w-5 h-5" />
+                      Marcar como Fabricados ({selectedForFabricated.size})
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Fabricados Tab */}
+        {activeTab === 'fabricados' && (
+          <div className="space-y-6 animate-fadeIn">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className="inline-flex items-center gap-2 text-[#7030A0] hover:text-[#5d2785] font-semibold group transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              Volver al Dashboard
+            </button>
+
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Bluko Life Fabricados</h2>
+              <p className="text-gray-600">Verificar QR y mover a Stock</p>
+            </div>
+
+            {loadingPulseras ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#7030A0]"></div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                      <tr>
+                        <th className="px-6 py-5 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedForStock.size === fabricatedPulseras.length && fabricatedPulseras.length > 0}
+                            onChange={toggleSelectAllForStock}
+                            className="w-5 h-5 rounded border-gray-300 text-[#7030A0] focus:ring-[#7030A0] cursor-pointer"
+                          />
+                          <div className="text-sm font-bold text-gray-900 mt-2">Todos</div>
+                        </th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Código QR (UUID)</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Imagen QR</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {fabricatedPulseras.map((pulsera) => (
+                        <tr key={pulsera.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 text-center">
+                            <input
+                              type="checkbox"
+                              checked={selectedForStock.has(pulsera.id)}
+                              onChange={() => toggleSelectForStock(pulsera.id)}
+                              className="w-5 h-5 rounded border-gray-300 text-[#7030A0] focus:ring-[#7030A0] cursor-pointer"
+                            />
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-black font-bold text-lg">{pulsera.customId}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 inline-block">
+                              <span className="text-gray-700 font-mono text-sm">{pulsera.qrCode}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            {getStatusBadge(pulsera.status)}
+                          </td>
+                          <td className="px-6 py-4">
+                            <button
+                              onClick={() => handleViewQrImage(pulsera.customId)}
+                              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-[#7030A0] hover:bg-[#7030A0]/10 rounded-lg font-semibold transition-colors"
+                            >
+                              <QrCode className="w-5 h-5" />
+                              Ver Imagen
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {fabricatedPulseras.length === 0 && (
+                    <div className="text-center py-16">
+                      <CheckCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500 font-medium text-lg">No hay Bluko Life fabricados</p>
+                      <p className="text-gray-400 text-sm mt-2">Los códigos fabricados físicamente aparecerán aquí para verificación</p>
+                    </div>
+                  )}
+                </div>
+
+                {selectedForStock.size > 0 && (
+                  <div className="p-6 border-t-2 border-gray-100 bg-gray-50">
+                    <button
+                      onClick={handleMoveToStock}
+                      className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#00FF00] to-[#00DD00] text-black font-bold rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                    >
+                      <Package className="w-5 h-5" />
+                      Mover a Stock ({selectedForStock.size})
                     </button>
                   </div>
                 )}
