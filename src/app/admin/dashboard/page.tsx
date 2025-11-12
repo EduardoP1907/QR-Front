@@ -100,15 +100,20 @@ export default function AdminDashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'fabricar') {
-      loadUnassignedPulseras();
-    } else if (activeTab === 'enFabricacion') {
-      loadInFabricationPulseras();
-    } else if (activeTab === 'fabricados') {
-      loadFabricatedPulseras();
-    } else if (activeTab === 'administrar') {
-      loadAllContratantes();
-    }
+    const loadTabData = async () => {
+      if (activeTab === 'fabricar') {
+        await loadUnassignedPulseras();
+      } else if (activeTab === 'enFabricacion') {
+        await loadInFabricationPulseras();
+      } else if (activeTab === 'fabricados') {
+        await loadFabricatedPulseras();
+      } else if (activeTab === 'administrar') {
+        await loadAllContratantes();
+      }
+    };
+
+    loadTabData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const checkAuth = () => {
