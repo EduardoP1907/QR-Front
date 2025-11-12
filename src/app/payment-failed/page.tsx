@@ -30,11 +30,13 @@ export default function PaymentFailedPage() {
   const router = useRouter();
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const savedOrder = localStorage.getItem('pendingOrder');
     if (savedOrder) {
       setOrderData(JSON.parse(savedOrder));
     }
-    
+
     // Incrementar contador de intentos fallidos
     const attempts = parseInt(localStorage.getItem('retryAttempts') || '0');
     setRetryAttempts(attempts + 1);
@@ -42,15 +44,19 @@ export default function PaymentFailedPage() {
   }, []);
 
   const handleRetryPayment = () => {
-    // Limpiar contador de intentos y volver al checkout
-    localStorage.removeItem('retryAttempts');
+    if (typeof window !== 'undefined') {
+      // Limpiar contador de intentos y volver al checkout
+      localStorage.removeItem('retryAttempts');
+    }
     router.push('/subscription');
   };
 
   const handleNewOrder = () => {
-    // Limpiar orden pendiente y empezar de nuevo
-    localStorage.removeItem('pendingOrder');
-    localStorage.removeItem('retryAttempts');
+    if (typeof window !== 'undefined') {
+      // Limpiar orden pendiente y empezar de nuevo
+      localStorage.removeItem('pendingOrder');
+      localStorage.removeItem('retryAttempts');
+    }
     router.push('/subscription');
   };
 

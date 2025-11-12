@@ -337,14 +337,8 @@ function DashboardContent() {
   const handleEdit = (pulsera: Pulsera) => {
     setEditingPulsera(pulsera);
     editForm.reset({
-      nombre: pulsera.nombre || '',
-      descripcion: pulsera.descripcion || '',
-      contactoEmergencia: pulsera.contactoEmergencia || '',
-      telefonoEmergencia: pulsera.telefonoEmergencia || '',
-      condicionesMedicas: pulsera.condicionesMedicas || '',
-      medicamentos: pulsera.medicamentos || '',
-      alergias: pulsera.alergias || '',
-      tipoSangre: pulsera.tipoSangre || ''
+      name: pulsera.name || '',
+      description: pulsera.description || ''
     });
     setShowEditModal(true);
   };

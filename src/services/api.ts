@@ -2,8 +2,10 @@ import axios from 'axios';
 import { API_ENDPOINTS, STORAGE_KEYS } from '@/constants';
 import type { RegisterData, PulseraFormData, SubscriptionFormData } from '@/types';
 
-// Forzar la URL en desarrollo para evitar problemas con variables de entorno
-const API_BASE_URL = 'http://localhost:8080/api';
+// Usar variable de entorno o localhost como fallback
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+  ? `${process.env.NEXT_PUBLIC_API_URL}/api`
+  : 'http://localhost:8080/api';
 
 // Configuración base de axios
 const api = axios.create({

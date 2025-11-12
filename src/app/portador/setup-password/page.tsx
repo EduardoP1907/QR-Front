@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import Link from 'next/link';
@@ -14,7 +14,7 @@ interface SetupPasswordFormData {
   otp: string;
 }
 
-export default function SetupPasswordPage() {
+function SetupPasswordPageContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -223,5 +223,12 @@ export default function SetupPasswordPage() {
         </div>
       </div>
     </div>
+  );
+}
+export default function SetupPasswordPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Cargando...</div>}>
+      <SetupPasswordPageContent />
+    </Suspense>
   );
 }
