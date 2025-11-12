@@ -26,8 +26,7 @@ function ScanPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useAuth();
-  // Support both ?code=UUID and /scan/UUID formats
-  const qrCode = searchParams.get('code') || window.location.pathname.split('/scan/')[1] || '';
+  const qrCode = searchParams.get('code') || '';
   const [pulsera, setPulsera] = useState<PulseraData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
