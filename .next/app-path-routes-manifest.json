@@ -1,0 +1,20 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/favicon.ico/route": "/favicon.ico",
+  "/admin/dashboard/page": "/admin/dashboard",
+  "/admin/login/page": "/admin/login",
+  "/dashboard/page": "/dashboard",
+  "/order-success/page": "/order-success",
+  "/login/page": "/login",
+  "/payment-failed/page": "/payment-failed",
+  "/page": "/",
+  "/payment-success/page": "/payment-success",
+  "/portador/login/page": "/portador/login",
+  "/portador/dashboard/page": "/portador/dashboard",
+  "/portador/setup-password/page": "/portador/setup-password",
+  "/profile/page": "/profile",
+  "/scan/page": "/scan",
+  "/subscription-success/page": "/subscription-success",
+  "/subscription/page": "/subscription",
+  "/register/page": "/register"
+}
