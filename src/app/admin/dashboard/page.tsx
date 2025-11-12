@@ -166,7 +166,7 @@ export default function AdminDashboardPage() {
     setLoadingPulseras(true);
     try {
       const response = await adminApi.getPulserasByStatus('IN_FABRICATION');
-      setInFabricationPulseras(response.data || []);
+      setInFabricationPulseras(response.data.pulseras || []);
     } catch (error: any) {
       console.error('Error loading in fabrication pulseras:', error);
       toast.error('Error al cargar QRs en fabricación');
@@ -179,7 +179,7 @@ export default function AdminDashboardPage() {
     setLoadingPulseras(true);
     try {
       const response = await adminApi.getPulserasByStatus('FABRICATED');
-      setFabricatedPulseras(response.data || []);
+      setFabricatedPulseras(response.data.pulseras || []);
     } catch (error: any) {
       console.error('Error loading fabricated pulseras:', error);
       toast.error('Error al cargar QRs fabricados');
