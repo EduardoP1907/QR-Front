@@ -26,11 +26,18 @@ function ScanPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useAuth();
-  const qrCode = searchParams.get('code') || '';
+  const [qrCode, setQrCode] = useState('');
   const [pulsera, setPulsera] = useState<PulseraData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isGenerated, setIsGenerated] = useState(false);
+
+  // Extract QR code from URL on client side
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code') || '';
+    setQrCode(code);
+  }, []);
 
   useEffect(() => {
     if (!qrCode) {
