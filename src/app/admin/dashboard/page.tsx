@@ -629,7 +629,7 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Menu Options */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mt-12">
               <button
                 onClick={() => setActiveTab('generar')}
                 className="group relative overflow-hidden bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-transparent hover:border-[#7030A0]"
@@ -658,6 +658,38 @@ export default function AdminDashboardPage() {
                   <div className="text-left">
                     <p className="font-bold text-gray-900 text-lg">Fabricar Bluko Life</p>
                     <p className="text-sm text-gray-500">Preparar para fabricación</p>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('enFabricacion')}
+                className="group relative overflow-hidden bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-transparent hover:border-[#7030A0]"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-[#7030A0]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="relative flex items-center gap-4">
+                  <div className="p-3 bg-[#7030A0]/10 rounded-xl group-hover:bg-[#7030A0]/20 transition-colors">
+                    <TrendingUp className="w-6 h-6 text-[#7030A0]" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-gray-900 text-lg">En Fabricación</p>
+                    <p className="text-sm text-gray-500">Marcar como fabricados</p>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('fabricados')}
+                className="group relative overflow-hidden bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-transparent hover:border-[#7030A0]"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-[#7030A0]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="relative flex items-center gap-4">
+                  <div className="p-3 bg-[#7030A0]/10 rounded-xl group-hover:bg-[#7030A0]/20 transition-colors">
+                    <CheckCircle className="w-6 h-6 text-[#7030A0]" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-gray-900 text-lg">Fabricados</p>
+                    <p className="text-sm text-gray-500">Mover a Stock</p>
                   </div>
                 </div>
               </button>
