@@ -340,6 +340,9 @@ export const adminApi = {
 
   getPulseraQrImageByCustomId: (customId: string) =>
     api.get(`/admin/pulseras/custom/${customId}/qr-image`),
+
+  bulkUpdatePulseraStatus: (pulseraIds: number[], newStatus: string) =>
+    api.post('/admin/pulseras/bulk-update-status', { pulseraIds, newStatus }),
 };
 
 export default api;

@@ -261,6 +261,56 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleDownloadAndFabricate = async () => {
+    if (selectedForFabrication.size === 0) {
+      toast.error('Selecciona al menos un Bluko Life');
+      return;
+    }
+
+    const selectedPulseras = unassignedPulseras.filter(p => selectedForFabrication.has(p.id));
+
+    try {
+      toast.loading(`Descargando ${selectedPulseras.length} imágenes QR...`);
+
+      // Descargar imágenes QR una por una
+      for (const pulsera of selectedPulseras) {
+        try {
+          const response = await adminApi.getPulseraQrImageByCustomId(pulsera.customId);
+          const qrImage = response.data.qrImage;
+
+          // Descargar imagen
+          const link = document.createElement('a');
+          link.href = qrImage;
+          link.download = `QR-${pulsera.customId}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          // Pequeña pausa entre descargas
+          await new Promise(resolve => setTimeout(resolve, 300));
+        } catch (error) {
+          console.error(`Error descargando QR ${pulsera.customId}:`, error);
+        }
+      }
+
+      // Cambiar estado a IN_FABRICATION
+      const pulseraIds = Array.from(selectedForFabrication);
+      await adminApi.bulkUpdatePulseraStatus(pulseraIds, 'IN_FABRICATION');
+
+      toast.dismiss();
+      toast.success(`${selectedPulseras.length} Bluko Life enviados a fabricación`);
+
+      // Limpiar selección y recargar
+      setSelectedForFabrication(new Set());
+      await loadUnassignedPulseras();
+      await loadData();
+    } catch (error: any) {
+      toast.dismiss();
+      console.error('Error en proceso de fabricación:', error);
+      toast.error('Error al procesar Bluko Life para fabricación');
+    }
+  };
+
   const toggleSelectForDispatch = (id: number) => {
     const newSet = new Set(selectedForDispatch);
     if (newSet.has(id)) {
@@ -669,6 +719,7 @@ export default function AdminDashboardPage() {
                 {selectedForFabrication.size > 0 && (
                   <div className="p-6 border-t-2 border-gray-100 bg-gray-50">
                     <button
+                      onClick={handleDownloadAndFabricate}
                       className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#00FF00] to-[#00DD00] text-black font-bold rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
                     >
                       <Download className="w-5 h-5" />
