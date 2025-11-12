@@ -1,20 +1,20 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/admin/login/page": "app/admin/login/page.js",
   "/admin/dashboard/page": "app/admin/dashboard/page.js",
+  "/admin/login/page": "app/admin/login/page.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/page": "app/page.js",
-  "/login/page": "app/login/page.js",
   "/payment-failed/page": "app/payment-failed/page.js",
   "/order-success/page": "app/order-success/page.js",
+  "/page": "app/page.js",
   "/portador/setup-password/page": "app/portador/setup-password/page.js",
+  "/payment-success/page": "app/payment-success/page.js",
+  "/login/page": "app/login/page.js",
+  "/scan/page": "app/scan/page.js",
   "/portador/login/page": "app/portador/login/page.js",
   "/portador/dashboard/page": "app/portador/dashboard/page.js",
-  "/payment-success/page": "app/payment-success/page.js",
   "/profile/page": "app/profile/page.js",
-  "/scan/page": "app/scan/page.js",
   "/register/page": "app/register/page.js",
-  "/subscription-success/page": "app/subscription-success/page.js",
-  "/subscription/page": "app/subscription/page.js"
+  "/subscription/page": "app/subscription/page.js",
+  "/subscription-success/page": "app/subscription-success/page.js"
 }

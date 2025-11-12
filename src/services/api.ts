@@ -343,6 +343,9 @@ export const adminApi = {
 
   bulkUpdatePulseraStatus: (pulseraIds: number[], newStatus: string) =>
     api.post('/admin/pulseras/bulk-update-status', { pulseraIds, newStatus }),
+
+  getPulserasByStatus: (status: string) =>
+    api.get(`/admin/pulseras/by-status/${status}`),
 };
 
 export default api;

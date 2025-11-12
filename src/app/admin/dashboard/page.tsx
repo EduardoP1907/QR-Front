@@ -71,14 +71,18 @@ export default function AdminDashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'generar' | 'fabricar' | 'administrar'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'generar' | 'fabricar' | 'enFabricacion' | 'fabricados' | 'administrar'>('dashboard');
 
   const [generateQuantity, setGenerateQuantity] = useState<number>(1);
   const [isGenerating, setIsGenerating] = useState(false);
 
   const [unassignedPulseras, setUnassignedPulseras] = useState<Pulsera[]>([]);
+  const [inFabricationPulseras, setInFabricationPulseras] = useState<Pulsera[]>([]);
+  const [fabricatedPulseras, setFabricatedPulseras] = useState<Pulsera[]>([]);
   const [loadingPulseras, setLoadingPulseras] = useState(false);
   const [selectedForFabrication, setSelectedForFabrication] = useState<Set<number>>(new Set());
+  const [selectedForFabricated, setSelectedForFabricated] = useState<Set<number>>(new Set());
+  const [selectedForStock, setSelectedForStock] = useState<Set<number>>(new Set());
 
   const [allContratantes, setAllContratantes] = useState<any[]>([]);
   const [loadingContratantes, setLoadingContratantes] = useState(false);
@@ -98,6 +102,10 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     if (activeTab === 'fabricar') {
       loadUnassignedPulseras();
+    } else if (activeTab === 'enFabricacion') {
+      loadInFabricationPulseras();
+    } else if (activeTab === 'fabricados') {
+      loadFabricatedPulseras();
     } else if (activeTab === 'administrar') {
       loadAllContratantes();
     }
@@ -144,6 +152,32 @@ export default function AdminDashboardPage() {
     } catch (error: any) {
       console.error('Error loading unassigned pulseras:', error);
       toast.error('Error al cargar QRs no asignados');
+    } finally {
+      setLoadingPulseras(false);
+    }
+  };
+
+  const loadInFabricationPulseras = async () => {
+    setLoadingPulseras(true);
+    try {
+      const response = await adminApi.getPulserasByStatus('IN_FABRICATION');
+      setInFabricationPulseras(response.data || []);
+    } catch (error: any) {
+      console.error('Error loading in fabrication pulseras:', error);
+      toast.error('Error al cargar QRs en fabricación');
+    } finally {
+      setLoadingPulseras(false);
+    }
+  };
+
+  const loadFabricatedPulseras = async () => {
+    setLoadingPulseras(true);
+    try {
+      const response = await adminApi.getPulserasByStatus('FABRICATED');
+      setFabricatedPulseras(response.data || []);
+    } catch (error: any) {
+      console.error('Error loading fabricated pulseras:', error);
+      toast.error('Error al cargar QRs fabricados');
     } finally {
       setLoadingPulseras(false);
     }
@@ -308,6 +342,84 @@ export default function AdminDashboardPage() {
       toast.dismiss();
       console.error('Error en proceso de fabricación:', error);
       toast.error('Error al procesar Bluko Life para fabricación');
+    }
+  };
+
+  const toggleSelectForFabricated = (id: number) => {
+    const newSet = new Set(selectedForFabricated);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedForFabricated(newSet);
+  };
+
+  const toggleSelectAllForFabricated = () => {
+    if (selectedForFabricated.size === inFabricationPulseras.length) {
+      setSelectedForFabricated(new Set());
+    } else {
+      setSelectedForFabricated(new Set(inFabricationPulseras.map(p => p.id)));
+    }
+  };
+
+  const handleMarkAsFabricated = async () => {
+    if (selectedForFabricated.size === 0) {
+      toast.error('Selecciona al menos un Bluko Life');
+      return;
+    }
+
+    try {
+      const pulseraIds = Array.from(selectedForFabricated);
+      await adminApi.bulkUpdatePulseraStatus(pulseraIds, 'FABRICATED');
+
+      toast.success(`${selectedForFabricated.size} Bluko Life marcados como fabricados`);
+
+      setSelectedForFabricated(new Set());
+      await loadInFabricationPulseras();
+      await loadData();
+    } catch (error: any) {
+      console.error('Error marcando como fabricados:', error);
+      toast.error('Error al marcar como fabricados');
+    }
+  };
+
+  const toggleSelectForStock = (id: number) => {
+    const newSet = new Set(selectedForStock);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedForStock(newSet);
+  };
+
+  const toggleSelectAllForStock = () => {
+    if (selectedForStock.size === fabricatedPulseras.length) {
+      setSelectedForStock(new Set());
+    } else {
+      setSelectedForStock(new Set(fabricatedPulseras.map(p => p.id)));
+    }
+  };
+
+  const handleMoveToStock = async () => {
+    if (selectedForStock.size === 0) {
+      toast.error('Selecciona al menos un Bluko Life');
+      return;
+    }
+
+    try {
+      const pulseraIds = Array.from(selectedForStock);
+      await adminApi.bulkUpdatePulseraStatus(pulseraIds, 'IN_STOCK');
+
+      toast.success(`${selectedForStock.size} Bluko Life movidos a Stock`);
+
+      setSelectedForStock(new Set());
+      await loadFabricatedPulseras();
+      await loadData();
+    } catch (error: any) {
+      console.error('Error moviendo a stock:', error);
+      toast.error('Error al mover a stock');
     }
   };
 

@@ -1,20 +1,20 @@
 {
   "/_not-found/page": "/_not-found",
   "/favicon.ico/route": "/favicon.ico",
-  "/admin/login/page": "/admin/login",
   "/admin/dashboard/page": "/admin/dashboard",
+  "/admin/login/page": "/admin/login",
   "/dashboard/page": "/dashboard",
-  "/page": "/",
-  "/login/page": "/login",
   "/payment-failed/page": "/payment-failed",
   "/order-success/page": "/order-success",
+  "/page": "/",
   "/portador/setup-password/page": "/portador/setup-password",
+  "/payment-success/page": "/payment-success",
+  "/login/page": "/login",
+  "/scan/page": "/scan",
   "/portador/login/page": "/portador/login",
   "/portador/dashboard/page": "/portador/dashboard",
-  "/payment-success/page": "/payment-success",
   "/profile/page": "/profile",
-  "/scan/page": "/scan",
   "/register/page": "/register",
-  "/subscription-success/page": "/subscription-success",
-  "/subscription/page": "/subscription"
+  "/subscription/page": "/subscription",
+  "/subscription-success/page": "/subscription-success"
 }
