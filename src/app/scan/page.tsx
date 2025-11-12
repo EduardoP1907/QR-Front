@@ -105,6 +105,14 @@ function ScanPageContent() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 py-12 px-4">
         <div className="max-w-2xl mx-auto">
+          {/* Debug banner - ALWAYS VISIBLE */}
+          <div className="mb-4 bg-gray-900 text-green-400 p-4 rounded-lg text-left text-xs font-mono">
+            <p className="font-bold mb-2">🔍 DEBUG INFO (GENERATED):</p>
+            <p className="break-all">URL: {typeof window !== 'undefined' ? window.location.href : 'N/A'}</p>
+            <p>QR Code: {qrCode || 'empty'}</p>
+            <p>Status: GENERATED (claim page)</p>
+          </div>
+
           <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
             <div className="w-24 h-24 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <QrCode className="w-12 h-12 text-amber-600" />
@@ -176,6 +184,14 @@ function ScanPageContent() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 py-12 px-4">
         <div className="max-w-2xl mx-auto">
+          {/* Debug banner - ALWAYS VISIBLE */}
+          <div className="mb-4 bg-gray-900 text-red-400 p-4 rounded-lg text-left text-xs font-mono">
+            <p className="font-bold mb-2">🔍 DEBUG INFO (ERROR):</p>
+            <p className="break-all">URL: {typeof window !== 'undefined' ? window.location.href : 'N/A'}</p>
+            <p>QR Code: {qrCode || 'empty'}</p>
+            <p>Error: {error || 'No pulsera data'}</p>
+          </div>
+
           <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
             <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <AlertTriangle className="w-12 h-12 text-red-600" />
@@ -205,6 +221,15 @@ function ScanPageContent() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4">
       <div className="max-w-4xl mx-auto">
+        {/* Debug banner - ALWAYS VISIBLE */}
+        <div className="mb-4 bg-gray-900 text-blue-400 p-4 rounded-lg text-left text-xs font-mono">
+          <p className="font-bold mb-2">🔍 DEBUG INFO (SUCCESS):</p>
+          <p className="break-all">URL: {typeof window !== 'undefined' ? window.location.href : 'N/A'}</p>
+          <p>QR Code: {qrCode || 'empty'}</p>
+          <p>Name: {pulsera.nombre || pulsera.name || 'N/A'}</p>
+          <p>Status: Medical info loaded</p>
+        </div>
+
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-red-600 to-pink-600 text-white p-8">
