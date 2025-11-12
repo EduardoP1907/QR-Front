@@ -34,32 +34,45 @@ function ScanPageContent() {
 
   // Extract QR code from URL on client side
   useEffect(() => {
+    console.log('🔍 DEBUG - Full URL:', window.location.href);
+    console.log('🔍 DEBUG - Search params:', window.location.search);
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code') || '';
+    console.log('🔍 DEBUG - Extracted code:', code);
     setQrCode(code);
   }, []);
 
   useEffect(() => {
     if (!qrCode) {
+      console.log('❌ DEBUG - No QR code provided');
       setError('Código QR no proporcionado');
       setLoading(false);
       return;
     }
 
+    console.log('🚀 DEBUG - Starting fetch for QR code:', qrCode);
+
     const fetchPulseraData = async () => {
       try {
+        console.log('📡 DEBUG - Calling API scanQr with:', qrCode);
         const response = await pulseraApi.scanQr(qrCode);
+        console.log('✅ DEBUG - API response:', response.data);
         setPulsera(response.data);
 
         if (response.data?.status === 'GENERATED') {
+          console.log('🟡 DEBUG - Status is GENERATED, showing claim page');
           setIsGenerated(true);
         }
       } catch (error: any) {
-        const errorMsg = error.response?.data?.error || 'Pulsera no encontrada';
+        console.log('❌ DEBUG - API error:', error);
+        console.log('❌ DEBUG - Error response:', error.response);
+        const errorMsg = error.response?.data?.error || 'Bluko Life no encontrado';
 
         if (errorMsg.includes('no tiene información') || errorMsg.includes('no está asignada')) {
+          console.log('🟡 DEBUG - Error indicates GENERATED status');
           setIsGenerated(true);
         } else {
+          console.log('❌ DEBUG - Setting error:', errorMsg);
           setError(errorMsg);
         }
       } finally {
@@ -76,6 +89,13 @@ function ScanPageContent() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Cargando información...</p>
+
+          {/* Debug info */}
+          <div className="mt-8 bg-gray-900 text-green-400 p-4 rounded-lg text-left text-xs font-mono max-w-md mx-auto">
+            <p className="font-bold mb-2">🔍 DEBUG INFO:</p>
+            <p>URL: {typeof window !== 'undefined' ? window.location.href : 'N/A'}</p>
+            <p>QR Code: {qrCode || 'empty'}</p>
+          </div>
         </div>
       </div>
     );
