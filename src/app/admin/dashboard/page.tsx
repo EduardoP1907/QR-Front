@@ -71,7 +71,7 @@ export default function AdminDashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'generar' | 'fabricar' | 'enFabricacion' | 'fabricados' | 'administrar'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'generar' | 'fabricar' | 'enFabricacion' | 'fabricados' | 'enStock' | 'asignados' | 'suscritos' | 'porDespachar' | 'despachados' | 'administrar'>('dashboard');
 
   const [generateQuantity, setGenerateQuantity] = useState<number>(1);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -79,6 +79,11 @@ export default function AdminDashboardPage() {
   const [unassignedPulseras, setUnassignedPulseras] = useState<Pulsera[]>([]);
   const [inFabricationPulseras, setInFabricationPulseras] = useState<Pulsera[]>([]);
   const [fabricatedPulseras, setFabricatedPulseras] = useState<Pulsera[]>([]);
+  const [inStockPulseras, setInStockPulseras] = useState<Pulsera[]>([]);
+  const [asignadosPulseras, setAsignadosPulseras] = useState<Pulsera[]>([]);
+  const [suscritosPulseras, setSuscritosPulseras] = useState<Pulsera[]>([]);
+  const [porDespacharPulseras, setPorDespacharPulseras] = useState<Pulsera[]>([]);
+  const [despachadosPulseras, setDespachadosPulseras] = useState<Pulsera[]>([]);
   const [loadingPulseras, setLoadingPulseras] = useState(false);
   const [selectedForFabrication, setSelectedForFabrication] = useState<Set<number>>(new Set());
   const [selectedForFabricated, setSelectedForFabricated] = useState<Set<number>>(new Set());
@@ -107,6 +112,16 @@ export default function AdminDashboardPage() {
         await loadInFabricationPulseras();
       } else if (activeTab === 'fabricados') {
         await loadFabricatedPulseras();
+      } else if (activeTab === 'enStock') {
+        await loadInStockPulseras();
+      } else if (activeTab === 'asignados') {
+        await loadAsignadosPulseras();
+      } else if (activeTab === 'suscritos') {
+        await loadSuscritosPulseras();
+      } else if (activeTab === 'porDespachar') {
+        await loadPorDespacharPulseras();
+      } else if (activeTab === 'despachados') {
+        await loadDespachadosPulseras();
       } else if (activeTab === 'administrar') {
         await loadAllContratantes();
       }
@@ -183,6 +198,72 @@ export default function AdminDashboardPage() {
     } catch (error: any) {
       console.error('Error loading fabricated pulseras:', error);
       toast.error('Error al cargar QRs fabricados');
+    } finally {
+      setLoadingPulseras(false);
+    }
+  };
+
+  const loadInStockPulseras = async () => {
+    setLoadingPulseras(true);
+    try {
+      const response = await adminApi.getPulserasByStatus('IN_STOCK');
+      setInStockPulseras(response.data.pulseras || []);
+    } catch (error: any) {
+      console.error('Error loading in stock pulseras:', error);
+      toast.error('Error al cargar QRs en stock');
+    } finally {
+      setLoadingPulseras(false);
+    }
+  };
+
+  const loadAsignadosPulseras = async () => {
+    setLoadingPulseras(true);
+    try {
+      const response = await adminApi.getPulserasByStatus('ASSIGNED');
+      setAsignadosPulseras(response.data.pulseras || []);
+    } catch (error: any) {
+      console.error('Error loading assigned pulseras:', error);
+      toast.error('Error al cargar QRs asignados');
+    } finally {
+      setLoadingPulseras(false);
+    }
+  };
+
+  const loadSuscritosPulseras = async () => {
+    setLoadingPulseras(true);
+    try {
+      const response = await adminApi.getAllPulseras();
+      const suscritos = response.data.pulseras?.filter((p: Pulsera) => p.subscriptionActive) || [];
+      setSuscritosPulseras(suscritos);
+    } catch (error: any) {
+      console.error('Error loading subscribed pulseras:', error);
+      toast.error('Error al cargar QRs suscritos');
+    } finally {
+      setLoadingPulseras(false);
+    }
+  };
+
+  const loadPorDespacharPulseras = async () => {
+    setLoadingPulseras(true);
+    try {
+      const response = await adminApi.getPulserasByStatus('PENDING_DISPATCH');
+      setPorDespacharPulseras(response.data.pulseras || []);
+    } catch (error: any) {
+      console.error('Error loading pending dispatch pulseras:', error);
+      toast.error('Error al cargar QRs por despachar');
+    } finally {
+      setLoadingPulseras(false);
+    }
+  };
+
+  const loadDespachadosPulseras = async () => {
+    setLoadingPulseras(true);
+    try {
+      const response = await adminApi.getPulserasByStatus('DISPATCHED');
+      setDespachadosPulseras(response.data.pulseras || []);
+    } catch (error: any) {
+      console.error('Error loading dispatched pulseras:', error);
+      toast.error('Error al cargar QRs despachados');
     } finally {
       setLoadingPulseras(false);
     }
@@ -573,7 +654,7 @@ export default function AdminDashboardPage() {
               </button>
 
               {/* Card 4: En Stock */}
-              <button onClick={() => setActiveTab('administrar')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
+              <button onClick={() => setActiveTab('enStock')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
                     <Package className="w-6 h-6" />
@@ -585,7 +666,7 @@ export default function AdminDashboardPage() {
               </button>
 
               {/* Card 5: Asignados */}
-              <button onClick={() => setActiveTab('administrar')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
+              <button onClick={() => setActiveTab('asignados')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
                     <Check className="w-6 h-6" />
@@ -597,7 +678,7 @@ export default function AdminDashboardPage() {
               </button>
 
               {/* Card 6: Suscritos */}
-              <button onClick={() => setActiveTab('administrar')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
+              <button onClick={() => setActiveTab('suscritos')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
                     <Shield className="w-6 h-6" />
@@ -609,7 +690,7 @@ export default function AdminDashboardPage() {
               </button>
 
               {/* Card 7: Por Despachar */}
-              <button onClick={() => setActiveTab('administrar')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
+              <button onClick={() => setActiveTab('porDespachar')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
                     <AlertCircle className="w-6 h-6" />
@@ -621,7 +702,7 @@ export default function AdminDashboardPage() {
               </button>
 
               {/* Card 8: Despachados */}
-              <button onClick={() => setActiveTab('administrar')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
+              <button onClick={() => setActiveTab('despachados')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
                     <Truck className="w-6 h-6" />
@@ -1080,6 +1161,397 @@ export default function AdminDashboardPage() {
                     </button>
                   </div>
                 )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* En Stock Tab */}
+        {activeTab === 'enStock' && (
+          <div className="space-y-6 animate-fadeIn">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className="inline-flex items-center gap-2 text-[#7030A0] hover:text-[#5d2785] font-semibold group transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              Volver al Dashboard
+            </button>
+
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Bluko Life En Stock</h2>
+              <p className="text-gray-600">QRs verificados y listos para asignar</p>
+            </div>
+
+            {loadingPulseras ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#7030A0]"></div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                      <tr>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Código QR (UUID)</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Imagen QR</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {inStockPulseras.map((pulsera) => (
+                        <tr key={pulsera.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4">
+                            <span className="text-black font-bold text-lg">{pulsera.customId}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 inline-block">
+                              <span className="text-gray-700 font-mono text-sm">{pulsera.qrCode}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            {getStatusBadge(pulsera.status)}
+                          </td>
+                          <td className="px-6 py-4">
+                            <button
+                              onClick={() => handleViewQrImage(pulsera.customId)}
+                              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-[#7030A0] hover:bg-[#7030A0]/10 rounded-lg font-semibold transition-colors"
+                            >
+                              <QrCode className="w-5 h-5" />
+                              Ver Imagen
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {inStockPulseras.length === 0 && (
+                    <div className="text-center py-16">
+                      <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500 font-medium text-lg">No hay Bluko Life en stock</p>
+                      <p className="text-gray-400 text-sm mt-2">Los QRs verificados aparecerán aquí listos para asignar</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Asignados Tab */}
+        {activeTab === 'asignados' && (
+          <div className="space-y-6 animate-fadeIn">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className="inline-flex items-center gap-2 text-[#7030A0] hover:text-[#5d2785] font-semibold group transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              Volver al Dashboard
+            </button>
+
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Bluko Life Asignados</h2>
+              <p className="text-gray-600">QRs asignados a portadores</p>
+            </div>
+
+            {loadingPulseras ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#7030A0]"></div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                      <tr>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Portador</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Imagen QR</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {asignadosPulseras.map((pulsera) => (
+                        <tr key={pulsera.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4">
+                            <span className="text-black font-bold text-lg">{pulsera.customId}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            {pulsera.portador ? (
+                              <div>
+                                <p className="font-semibold text-gray-900">{pulsera.portador.firstName} {pulsera.portador.paternalSurname}</p>
+                                <p className="text-sm text-gray-500">{pulsera.portador.email}</p>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">Sin portador</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            {getStatusBadge(pulsera.status)}
+                          </td>
+                          <td className="px-6 py-4">
+                            <button
+                              onClick={() => handleViewQrImage(pulsera.customId)}
+                              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-[#7030A0] hover:bg-[#7030A0]/10 rounded-lg font-semibold transition-colors"
+                            >
+                              <QrCode className="w-5 h-5" />
+                              Ver Imagen
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {asignadosPulseras.length === 0 && (
+                    <div className="text-center py-16">
+                      <Check className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500 font-medium text-lg">No hay Bluko Life asignados</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Suscritos Tab */}
+        {activeTab === 'suscritos' && (
+          <div className="space-y-6 animate-fadeIn">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className="inline-flex items-center gap-2 text-[#7030A0] hover:text-[#5d2785] font-semibold group transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              Volver al Dashboard
+            </button>
+
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Bluko Life Suscritos</h2>
+              <p className="text-gray-600">QRs con suscripción activa</p>
+            </div>
+
+            {loadingPulseras ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#7030A0]"></div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                      <tr>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Portador</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Suscripción</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Imagen QR</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {suscritosPulseras.map((pulsera) => (
+                        <tr key={pulsera.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4">
+                            <span className="text-black font-bold text-lg">{pulsera.customId}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            {pulsera.portador ? (
+                              <div>
+                                <p className="font-semibold text-gray-900">{pulsera.portador.firstName} {pulsera.portador.paternalSurname}</p>
+                                <p className="text-sm text-gray-500">{pulsera.portador.email}</p>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">Sin portador</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            {pulsera.subscriptionActive ? (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                <CheckCircle className="w-3.5 h-3.5" />
+                                Activa
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                                <X className="w-3.5 h-3.5" />
+                                Inactiva
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            <button
+                              onClick={() => handleViewQrImage(pulsera.customId)}
+                              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-[#7030A0] hover:bg-[#7030A0]/10 rounded-lg font-semibold transition-colors"
+                            >
+                              <QrCode className="w-5 h-5" />
+                              Ver Imagen
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {suscritosPulseras.length === 0 && (
+                    <div className="text-center py-16">
+                      <Shield className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500 font-medium text-lg">No hay Bluko Life suscritos</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Por Despachar Tab */}
+        {activeTab === 'porDespachar' && (
+          <div className="space-y-6 animate-fadeIn">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className="inline-flex items-center gap-2 text-[#7030A0] hover:text-[#5d2785] font-semibold group transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              Volver al Dashboard
+            </button>
+
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Bluko Life Por Despachar</h2>
+              <p className="text-gray-600">QRs pendientes de envío</p>
+            </div>
+
+            {loadingPulseras ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#7030A0]"></div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                      <tr>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Contratante</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Imagen QR</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {porDespacharPulseras.map((pulsera) => (
+                        <tr key={pulsera.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4">
+                            <span className="text-black font-bold text-lg">{pulsera.customId}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            {pulsera.contratante ? (
+                              <div>
+                                <p className="font-semibold text-gray-900">{pulsera.contratante.firstName} {pulsera.contratante.paternalSurname}</p>
+                                <p className="text-sm text-gray-500">{pulsera.contratante.email}</p>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">Sin contratante</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            {getStatusBadge(pulsera.status)}
+                          </td>
+                          <td className="px-6 py-4">
+                            <button
+                              onClick={() => handleViewQrImage(pulsera.customId)}
+                              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-[#7030A0] hover:bg-[#7030A0]/10 rounded-lg font-semibold transition-colors"
+                            >
+                              <QrCode className="w-5 h-5" />
+                              Ver Imagen
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {porDespacharPulseras.length === 0 && (
+                    <div className="text-center py-16">
+                      <AlertCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500 font-medium text-lg">No hay Bluko Life por despachar</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Despachados Tab */}
+        {activeTab === 'despachados' && (
+          <div className="space-y-6 animate-fadeIn">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className="inline-flex items-center gap-2 text-[#7030A0] hover:text-[#5d2785] font-semibold group transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              Volver al Dashboard
+            </button>
+
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Bluko Life Despachados</h2>
+              <p className="text-gray-600">QRs enviados a contratantes</p>
+            </div>
+
+            {loadingPulseras ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#7030A0]"></div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                      <tr>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Contratante</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Imagen QR</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {despachadosPulseras.map((pulsera) => (
+                        <tr key={pulsera.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4">
+                            <span className="text-black font-bold text-lg">{pulsera.customId}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            {pulsera.contratante ? (
+                              <div>
+                                <p className="font-semibold text-gray-900">{pulsera.contratante.firstName} {pulsera.contratante.paternalSurname}</p>
+                                <p className="text-sm text-gray-500">{pulsera.contratante.email}</p>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">Sin contratante</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            {getStatusBadge(pulsera.status)}
+                          </td>
+                          <td className="px-6 py-4">
+                            <button
+                              onClick={() => handleViewQrImage(pulsera.customId)}
+                              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-[#7030A0] hover:bg-[#7030A0]/10 rounded-lg font-semibold transition-colors"
+                            >
+                              <QrCode className="w-5 h-5" />
+                              Ver Imagen
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {despachadosPulseras.length === 0 && (
+                    <div className="text-center py-16">
+                      <Truck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500 font-medium text-lg">No hay Bluko Life despachados</p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
