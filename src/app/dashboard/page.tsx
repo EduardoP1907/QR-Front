@@ -230,7 +230,18 @@ function DashboardContent() {
       return;
     }
 
-    const claimQr = searchParams.get('claimQr');
+    let claimQr = searchParams.get('claimQr');
+
+    // Check localStorage for pending QR claim after login
+    if (!claimQr && typeof window !== 'undefined') {
+      const pendingQr = localStorage.getItem('pendingClaimQr');
+      if (pendingQr) {
+        claimQr = pendingQr;
+        localStorage.removeItem('pendingClaimQr');
+        // Update URL with the QR code
+        router.replace(`/dashboard?claimQr=${pendingQr}`);
+      }
+    }
 
     // Prevent claiming the same QR multiple times
     if (claimQr && !claimingQr && !claimedQrsRef.current.has(claimQr)) {

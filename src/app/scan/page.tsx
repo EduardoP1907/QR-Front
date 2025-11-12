@@ -106,7 +106,7 @@ function ScanPageContent() {
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 {user ? (
                   <Link
-                    href="/dashboard"
+                    href={`/dashboard?claimQr=${qrCode}`}
                     className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                   >
                     <User className="w-5 h-5" />
@@ -114,18 +114,30 @@ function ScanPageContent() {
                   </Link>
                 ) : (
                   <>
-                    <Link
-                      href="/login"
+                    <button
+                      onClick={() => {
+                        // Store QR code in localStorage before redirecting to login
+                        if (typeof window !== 'undefined') {
+                          localStorage.setItem('pendingClaimQr', qrCode);
+                        }
+                        router.push('/login');
+                      }}
                       className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                     >
                       Iniciar Sesión
-                    </Link>
-                    <Link
-                      href="/register"
+                    </button>
+                    <button
+                      onClick={() => {
+                        // Store QR code in localStorage before redirecting to register
+                        if (typeof window !== 'undefined') {
+                          localStorage.setItem('pendingClaimQr', qrCode);
+                        }
+                        router.push('/register');
+                      }}
                       className="inline-flex items-center gap-2 bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-colors"
                     >
                       Registrarse
-                    </Link>
+                    </button>
                   </>
                 )}
               </div>
