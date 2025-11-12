@@ -532,7 +532,7 @@ export default function AdminDashboardPage() {
             {/* Stats Cards Grid - 8 cards morados */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Card 1: Generados */}
-              <div className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+              <button onClick={() => setActiveTab('fabricar')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
                     <Package className="w-6 h-6" />
@@ -541,10 +541,10 @@ export default function AdminDashboardPage() {
                 </div>
                 <p className="text-sm font-medium opacity-90 mb-1">Bluko Life Generados</p>
                 <p className="text-4xl font-bold tracking-tight">{stats.generados.toLocaleString()}</p>
-              </div>
+              </button>
 
               {/* Card 2: En Fabricación */}
-              <div className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+              <button onClick={() => setActiveTab('enFabricacion')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
                     <TrendingUp className="w-6 h-6" />
@@ -553,10 +553,10 @@ export default function AdminDashboardPage() {
                 </div>
                 <p className="text-sm font-medium opacity-90 mb-1">Bluko Life En Fabricación</p>
                 <p className="text-4xl font-bold tracking-tight">{stats.enFabricacion.toLocaleString()}</p>
-              </div>
+              </button>
 
               {/* Card 3: Fabricados */}
-              <div className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+              <button onClick={() => setActiveTab('fabricados')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
                     <CheckCircle className="w-6 h-6" />
@@ -565,10 +565,10 @@ export default function AdminDashboardPage() {
                 </div>
                 <p className="text-sm font-medium opacity-90 mb-1">Bluko Life Fabricados</p>
                 <p className="text-4xl font-bold tracking-tight">{stats.fabricados.toLocaleString()}</p>
-              </div>
+              </button>
 
               {/* Card 4: En Stock */}
-              <div className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+              <button onClick={() => setActiveTab('administrar')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
                     <Package className="w-6 h-6" />
@@ -577,10 +577,10 @@ export default function AdminDashboardPage() {
                 </div>
                 <p className="text-sm font-medium opacity-90 mb-1">Bluko Life En Stock</p>
                 <p className="text-4xl font-bold tracking-tight">{stats.enStock.toLocaleString()}</p>
-              </div>
+              </button>
 
               {/* Card 5: Asignados */}
-              <div className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+              <button onClick={() => setActiveTab('administrar')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
                     <Check className="w-6 h-6" />
@@ -589,10 +589,10 @@ export default function AdminDashboardPage() {
                 </div>
                 <p className="text-sm font-medium opacity-90 mb-1">Bluko Life Asignados</p>
                 <p className="text-4xl font-bold tracking-tight">{stats.asignados.toLocaleString()}</p>
-              </div>
+              </button>
 
               {/* Card 6: Suscritos */}
-              <div className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+              <button onClick={() => setActiveTab('administrar')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
                     <Shield className="w-6 h-6" />
@@ -601,10 +601,10 @@ export default function AdminDashboardPage() {
                 </div>
                 <p className="text-sm font-medium opacity-90 mb-1">Bluko Life Suscritos</p>
                 <p className="text-4xl font-bold tracking-tight">{stats.suscritos.toLocaleString()}</p>
-              </div>
+              </button>
 
               {/* Card 7: Por Despachar */}
-              <div className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+              <button onClick={() => setActiveTab('administrar')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
                     <AlertCircle className="w-6 h-6" />
@@ -613,10 +613,10 @@ export default function AdminDashboardPage() {
                 </div>
                 <p className="text-sm font-medium opacity-90 mb-1">Bluko Life Por Despachar</p>
                 <p className="text-4xl font-bold tracking-tight">{stats.porDespachar.toLocaleString()}</p>
-              </div>
+              </button>
 
               {/* Card 8: Despachados */}
-              <div className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+              <button onClick={() => setActiveTab('administrar')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
                     <Truck className="w-6 h-6" />
@@ -625,7 +625,7 @@ export default function AdminDashboardPage() {
                 </div>
                 <p className="text-sm font-medium opacity-90 mb-1">Bluko Life Despachados</p>
                 <p className="text-4xl font-bold tracking-tight">{stats.despachados.toLocaleString()}</p>
-              </div>
+              </button>
             </div>
 
             {/* Menu Options */}
