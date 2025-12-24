@@ -309,7 +309,7 @@ export const profileApi = {
     referencia?: string;
     telefono: string;
   }) =>
-    api.put('/api/contratantes/perfil/direccion', direccionData),
+    api.put('/contratantes/perfil/direccion', direccionData),
 };
 
 // APIs de administrador
