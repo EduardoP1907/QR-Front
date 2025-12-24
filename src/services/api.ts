@@ -298,6 +298,18 @@ export const profileApi = {
     maternalSurname?: string;
   }) =>
     api.put(API_ENDPOINTS.contratantes.profile.update, profileData),
+
+  updateDireccion: (direccionData: {
+    region: string;
+    calle: string;
+    tipoVivienda: string;
+    numero: string;
+    numeroDepto?: string;
+    comuna: string;
+    referencia?: string;
+    telefono: string;
+  }) =>
+    api.put('/api/contratantes/perfil/direccion', direccionData),
 };
 
 // APIs de administrador

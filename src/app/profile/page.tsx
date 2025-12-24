@@ -38,6 +38,14 @@ interface ProfileData {
   subscriptionExpiresAt: string;
   subscriptionPlanType: string;
   createdAt: string;
+  region?: string;
+  calle?: string;
+  tipoVivienda?: string;
+  numero?: string;
+  numeroDepto?: string;
+  comuna?: string;
+  referencia?: string;
+  telefono?: string;
 }
 
 interface ProfileSummary {
@@ -58,6 +66,17 @@ interface ProfileFormData {
   maternalSurname: string;
 }
 
+interface DireccionFormData {
+  region: string;
+  calle: string;
+  tipoVivienda: string;
+  numero: string;
+  numeroDepto?: string;
+  comuna: string;
+  referencia?: string;
+  telefono: string;
+}
+
 function ProfileContent() {
   const router = useRouter();
   const { user, logout } = useAuth();
@@ -66,6 +85,7 @@ function ProfileContent() {
   const [summary, setSummary] = useState<ProfileSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [editingDireccion, setEditingDireccion] = useState(false);
 
   const {
     register,
@@ -73,6 +93,13 @@ function ProfileContent() {
     reset,
     formState: { errors, isSubmitting }
   } = useForm<ProfileFormData>();
+
+  const {
+    register: registerDireccion,
+    handleSubmit: handleSubmitDireccion,
+    reset: resetDireccion,
+    formState: { errors: errorsDireccion, isSubmitting: isSubmittingDireccion }
+  } = useForm<DireccionFormData>();
 
   useEffect(() => {
     fetchProfileData();
@@ -93,6 +120,18 @@ function ProfileContent() {
         firstName: profileResponse.data.firstName || '',
         paternalSurname: profileResponse.data.paternalSurname || '',
         maternalSurname: profileResponse.data.maternalSurname || ''
+      });
+
+      // Resetear el formulario de dirección
+      resetDireccion({
+        region: profileResponse.data.region || '',
+        calle: profileResponse.data.calle || '',
+        tipoVivienda: profileResponse.data.tipoVivienda || '',
+        numero: profileResponse.data.numero || '',
+        numeroDepto: profileResponse.data.numeroDepto || '',
+        comuna: profileResponse.data.comuna || '',
+        referencia: profileResponse.data.referencia || '',
+        telefono: profileResponse.data.telefono || ''
       });
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -119,6 +158,32 @@ function ProfileContent() {
     } catch (error: any) {
       console.error('Error updating profile:', error);
       const errorMessage = error.response?.data?.error || 'Error al actualizar el perfil';
+      toast.error(errorMessage);
+    }
+  };
+
+  const handleUpdateDireccion = async (data: DireccionFormData) => {
+    try {
+      const response = await profileApi.updateDireccion({
+        region: data.region,
+        calle: data.calle,
+        tipoVivienda: data.tipoVivienda,
+        numero: data.numero,
+        numeroDepto: data.numeroDepto || undefined,
+        comuna: data.comuna,
+        referencia: data.referencia || undefined,
+        telefono: data.telefono
+      });
+
+      setProfile(prev => prev ? { ...prev, ...response.data } : null);
+      setEditingDireccion(false);
+      toast.success('Dirección actualizada exitosamente');
+
+      // Refrescar el perfil
+      fetchProfileData();
+    } catch (error: any) {
+      console.error('Error updating address:', error);
+      const errorMessage = error.response?.data?.error || 'Error al actualizar la dirección';
       toast.error(errorMessage);
     }
   };
@@ -361,6 +426,228 @@ function ProfileContent() {
                         <p className="font-medium text-gray-900">{formatDate(profile.createdAt)}</p>
                       </div>
                     </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Dirección de Envío */}
+            <div className="bg-white rounded-2xl shadow-sm border">
+              <div className="p-6 border-b">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">Dirección de Envío</h3>
+                  {!editingDireccion && (
+                    <button
+                      onClick={() => setEditingDireccion(true)}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-100"
+                    >
+                      <Edit className="w-4 h-4" />
+                      <span>Editar</span>
+                    </button>
+                  )}
+                  {editingDireccion && (
+                    <button
+                      onClick={() => {
+                        setEditingDireccion(false);
+                        resetDireccion();
+                      }}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-100"
+                    >
+                      <X className="w-4 h-4" />
+                      <span>Cancelar</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-6">
+                {editingDireccion ? (
+                  <form onSubmit={handleSubmitDireccion(handleUpdateDireccion)} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Región *
+                        </label>
+                        <input
+                          {...registerDireccion('region', {
+                            required: 'La región es requerida'
+                          })}
+                          type="text"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
+                        />
+                        {errorsDireccion.region && (
+                          <p className="text-red-500 text-sm mt-1">{errorsDireccion.region.message}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Comuna *
+                        </label>
+                        <input
+                          {...registerDireccion('comuna', {
+                            required: 'La comuna es requerida'
+                          })}
+                          type="text"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
+                        />
+                        {errorsDireccion.comuna && (
+                          <p className="text-red-500 text-sm mt-1">{errorsDireccion.comuna.message}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Calle *
+                        </label>
+                        <input
+                          {...registerDireccion('calle', {
+                            required: 'La calle es requerida'
+                          })}
+                          type="text"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
+                        />
+                        {errorsDireccion.calle && (
+                          <p className="text-red-500 text-sm mt-1">{errorsDireccion.calle.message}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Tipo de Vivienda *
+                        </label>
+                        <select
+                          {...registerDireccion('tipoVivienda', {
+                            required: 'El tipo de vivienda es requerido'
+                          })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
+                        >
+                          <option value="">Seleccionar...</option>
+                          <option value="Casa">Casa</option>
+                          <option value="Departamento">Departamento</option>
+                          <option value="Oficina">Oficina</option>
+                        </select>
+                        {errorsDireccion.tipoVivienda && (
+                          <p className="text-red-500 text-sm mt-1">{errorsDireccion.tipoVivienda.message}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Número *
+                        </label>
+                        <input
+                          {...registerDireccion('numero', {
+                            required: 'El número es requerido'
+                          })}
+                          type="text"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
+                        />
+                        {errorsDireccion.numero && (
+                          <p className="text-red-500 text-sm mt-1">{errorsDireccion.numero.message}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Número Depto/Oficina
+                        </label>
+                        <input
+                          {...registerDireccion('numeroDepto')}
+                          type="text"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Teléfono *
+                        </label>
+                        <input
+                          {...registerDireccion('telefono', {
+                            required: 'El teléfono es requerido',
+                            pattern: {
+                              value: /^(\+56)?[0-9]{8,9}$/,
+                              message: 'Formato de teléfono inválido'
+                            }
+                          })}
+                          type="tel"
+                          placeholder="+56912345678"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
+                        />
+                        {errorsDireccion.telefono && (
+                          <p className="text-red-500 text-sm mt-1">{errorsDireccion.telefono.message}</p>
+                        )}
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Referencia
+                        </label>
+                        <textarea
+                          {...registerDireccion('referencia')}
+                          rows={2}
+                          placeholder="Ej: Casa color azul, cerca del supermercado"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={isSubmittingDireccion}
+                        className="inline-flex items-center gap-2 px-6 py-2 rounded-lg text-white hover:opacity-90 disabled:opacity-50"
+                        style={{backgroundColor: '#551A8B'}}
+                      >
+                        <Save className="w-4 h-4" />
+                        <span>{isSubmittingDireccion ? 'Guardando...' : 'Guardar Dirección'}</span>
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div>
+                    {profile.region ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <p className="text-sm text-gray-600">Región</p>
+                          <p className="font-medium text-gray-900">{profile.region}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Comuna</p>
+                          <p className="font-medium text-gray-900">{profile.comuna}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Dirección</p>
+                          <p className="font-medium text-gray-900">
+                            {profile.calle} {profile.numero}
+                            {profile.numeroDepto && `, ${profile.tipoVivienda} ${profile.numeroDepto}`}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Teléfono</p>
+                          <p className="font-medium text-gray-900">{profile.telefono}</p>
+                        </div>
+                        {profile.referencia && (
+                          <div className="md:col-span-2">
+                            <p className="text-sm text-gray-600">Referencia</p>
+                            <p className="font-medium text-gray-900">{profile.referencia}</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <p className="text-gray-500 mb-4">No has configurado tu dirección de envío</p>
+                        <button
+                          onClick={() => setEditingDireccion(true)}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white hover:opacity-90"
+                          style={{backgroundColor: '#551A8B'}}
+                        >
+                          <Edit className="w-4 h-4" />
+                          <span>Agregar Dirección</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
