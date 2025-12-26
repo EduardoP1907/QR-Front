@@ -66,6 +66,28 @@ interface Pulsera {
   };
 }
 
+interface Pedido {
+  id: number;
+  contratanteId: number;
+  contratanteNombre: string;
+  contratanteEmail: string;
+  cantidadPulseras: number;
+  region: string;
+  calle: string;
+  tipoVivienda: string;
+  numero: string;
+  numeroDepto: string | null;
+  comuna: string;
+  referencia: string | null;
+  telefono: string;
+  direccionCompleta: string;
+  status: string;
+  pulserasAsignadasCount: number;
+  pulserasAsignadas: any[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function AdminDashboardPage() {
   const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
@@ -82,7 +104,7 @@ export default function AdminDashboardPage() {
   const [inStockPulseras, setInStockPulseras] = useState<Pulsera[]>([]);
   const [asignadosPulseras, setAsignadosPulseras] = useState<Pulsera[]>([]);
   const [suscritosPulseras, setSuscritosPulseras] = useState<Pulsera[]>([]);
-  const [porDespacharPulseras, setPorDespacharPulseras] = useState<Pulsera[]>([]);
+  const [porDespacharPedidos, setPorDespacharPedidos] = useState<Pedido[]>([]);
   const [despachadosPulseras, setDespachadosPulseras] = useState<Pulsera[]>([]);
   const [loadingPulseras, setLoadingPulseras] = useState(false);
   const [selectedForFabrication, setSelectedForFabrication] = useState<Set<number>>(new Set());
@@ -246,11 +268,11 @@ export default function AdminDashboardPage() {
   const loadPorDespacharPulseras = async () => {
     setLoadingPulseras(true);
     try {
-      const response = await adminApi.getPulserasByStatus('PENDING_DISPATCH');
-      setPorDespacharPulseras(response.data.pulseras || []);
+      const response = await adminApi.getPedidosPorDespachar();
+      setPorDespacharPedidos(response.data.pedidos || []);
     } catch (error: any) {
-      console.error('Error loading pending dispatch pulseras:', error);
-      toast.error('Error al cargar QRs por despachar');
+      console.error('Error loading pending dispatch pedidos:', error);
+      toast.error('Error al cargar pedidos por despachar');
     } finally {
       setLoadingPulseras(false);
     }
@@ -1399,8 +1421,8 @@ export default function AdminDashboardPage() {
             </button>
 
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Bluko Life Por Despachar</h2>
-              <p className="text-gray-600">QRs pendientes de envío</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Pedidos Por Despachar</h2>
+              <p className="text-gray-600">Pedidos pendientes de envío a clientes</p>
             </div>
 
             {loadingPulseras ? (
@@ -1413,49 +1435,48 @@ export default function AdminDashboardPage() {
                   <table className="w-full">
                     <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
                       <tr>
-                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
-                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Contratante</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID Pedido</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Cliente</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Dirección de Envío</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Cantidad</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
-                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Imagen QR</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {porDespacharPulseras.map((pulsera) => (
-                        <tr key={pulsera.id} className="hover:bg-gray-50 transition-colors">
+                      {porDespacharPedidos.map((pedido) => (
+                        <tr key={pedido.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-6 py-4">
-                            <span className="text-black font-bold text-lg">{pulsera.customId}</span>
+                            <span className="text-black font-bold text-lg">#{pedido.id}</span>
                           </td>
                           <td className="px-6 py-4">
-                            {pulsera.contratante ? (
-                              <div>
-                                <p className="font-semibold text-gray-900">{pulsera.contratante.firstName} {pulsera.contratante.paternalSurname}</p>
-                                <p className="text-sm text-gray-500">{pulsera.contratante.email}</p>
-                              </div>
-                            ) : (
-                              <span className="text-gray-400">Sin contratante</span>
-                            )}
+                            <div>
+                              <p className="font-semibold text-gray-900">{pedido.contratanteNombre}</p>
+                              <p className="text-sm text-gray-500">{pedido.contratanteEmail}</p>
+                              <p className="text-sm text-gray-500">{pedido.telefono}</p>
+                            </div>
                           </td>
                           <td className="px-6 py-4">
-                            {getStatusBadge(pulsera.status)}
+                            <div className="text-sm">
+                              <p className="font-medium text-gray-900">{pedido.direccionCompleta}</p>
+                            </div>
                           </td>
                           <td className="px-6 py-4">
-                            <button
-                              onClick={() => handleViewQrImage(pulsera.customId)}
-                              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-[#7030A0] hover:bg-[#7030A0]/10 rounded-lg font-semibold transition-colors"
-                            >
-                              <QrCode className="w-5 h-5" />
-                              Ver Imagen
-                            </button>
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
+                              {pedido.cantidadPulseras} {pedido.cantidadPulseras === 1 ? 'pulsera' : 'pulseras'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            {getStatusBadge(pedido.status)}
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
 
-                  {porDespacharPulseras.length === 0 && (
+                  {porDespacharPedidos.length === 0 && (
                     <div className="text-center py-16">
                       <AlertCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <p className="text-gray-500 font-medium text-lg">No hay Bluko Life por despachar</p>
+                      <p className="text-gray-500 font-medium text-lg">No hay pedidos por despachar</p>
                     </div>
                   )}
                 </div>

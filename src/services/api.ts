@@ -361,6 +361,9 @@ export const adminApi = {
 
   getPulserasByStatus: (status: string) =>
     api.get(`/admin/pulseras/by-status/${status}`),
+
+  getPedidosPorDespachar: () =>
+    api.get('/admin/pedidos/por-despachar'),
 };
 
 export default api;
