@@ -59,8 +59,13 @@ function ScanPageContent() {
         console.log('✅ DEBUG - API response:', response.data);
         setPulsera(response.data);
 
-        if (response.data?.status === 'GENERATED') {
-          console.log('🟡 DEBUG - Status is GENERATED, showing claim page');
+        // Manejar estados de pulsera que no están asignadas a portador
+        const status = response.data?.status;
+        if (status === 'GENERATED' ||
+            status === 'IN_FABRICATION' ||
+            status === 'FABRICATED' ||
+            status === 'IN_STOCK') {
+          console.log('🟡 DEBUG - Status is ' + status + ', showing claim/info page');
           setIsGenerated(true);
         }
       } catch (error: any) {
@@ -119,11 +124,12 @@ function ScanPageContent() {
             </div>
 
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              Bluko Life Disponible para Reclamar
+              {pulsera?.status === 'GENERATED' && 'Bluko Life Disponible para Reclamar'}
+              {(pulsera?.status === 'IN_FABRICATION' || pulsera?.status === 'FABRICATED' || pulsera?.status === 'IN_STOCK') && 'Bluko Life en Proceso'}
             </h1>
 
             <p className="text-lg text-gray-600 mb-8">
-              Este Bluko Life ha sido generado pero aún no ha sido reclamado por un contratante.
+              {pulsera?.message || 'Este Bluko Life aún no ha sido asignado a un portador.'}
             </p>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
