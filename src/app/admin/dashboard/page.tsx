@@ -105,7 +105,7 @@ export default function AdminDashboardPage() {
   const [asignadosPulseras, setAsignadosPulseras] = useState<Pulsera[]>([]);
   const [suscritosPulseras, setSuscritosPulseras] = useState<Pulsera[]>([]);
   const [porDespacharPedidos, setPorDespacharPedidos] = useState<Pedido[]>([]);
-  const [despachadosPulseras, setDespachadosPulseras] = useState<Pulsera[]>([]);
+  const [despachadosPedidos, setDespachadosPedidos] = useState<Pedido[]>([]);
   const [loadingPulseras, setLoadingPulseras] = useState(false);
   const [selectedForFabrication, setSelectedForFabrication] = useState<Set<number>>(new Set());
   const [selectedForFabricated, setSelectedForFabricated] = useState<Set<number>>(new Set());
@@ -114,6 +114,7 @@ export default function AdminDashboardPage() {
   const [allContratantes, setAllContratantes] = useState<any[]>([]);
   const [loadingContratantes, setLoadingContratantes] = useState(false);
   const [selectedForDispatch, setSelectedForDispatch] = useState<Set<number>>(new Set());
+  const [selectedPedidosParaDespachar, setSelectedPedidosParaDespachar] = useState<Set<number>>(new Set());
   const [expandedContratante, setExpandedContratante] = useState<number | null>(null);
   const [contratanteDetails, setContratanteDetails] = useState<Map<number, any>>(new Map());
 
@@ -281,11 +282,11 @@ export default function AdminDashboardPage() {
   const loadDespachadosPulseras = async () => {
     setLoadingPulseras(true);
     try {
-      const response = await adminApi.getPulserasByStatus('DISPATCHED');
-      setDespachadosPulseras(response.data.pulseras || []);
+      const response = await adminApi.getPedidosDespachados();
+      setDespachadosPedidos(response.data.pedidos || []);
     } catch (error: any) {
-      console.error('Error loading dispatched pulseras:', error);
-      toast.error('Error al cargar QRs despachados');
+      console.error('Error loading dispatched pedidos:', error);
+      toast.error('Error al cargar pedidos despachados');
     } finally {
       setLoadingPulseras(false);
     }
@@ -539,6 +540,41 @@ export default function AdminDashboardPage() {
       newSet.add(id);
     }
     setSelectedForDispatch(newSet);
+  };
+
+  const handleMarcarPedidosComoDespachados = async () => {
+    if (selectedPedidosParaDespachar.size === 0) {
+      toast.error('Selecciona al menos un pedido');
+      return;
+    }
+
+    try {
+      const pedidoIds = Array.from(selectedPedidosParaDespachar);
+
+      for (const pedidoId of pedidoIds) {
+        await adminApi.cambiarEstadoPedido(pedidoId, 'DESPACHADO');
+      }
+
+      toast.success(`${selectedPedidosParaDespachar.size} pedido(s) marcado(s) como despachado(s)`);
+
+      setSelectedPedidosParaDespachar(new Set());
+
+      await loadPorDespacharPulseras();
+      await loadStats();
+    } catch (error: any) {
+      console.error('Error marcando pedidos como despachados:', error);
+      toast.error('Error al marcar pedidos como despachados');
+    }
+  };
+
+  const togglePedidoSelection = (id: number) => {
+    const newSet = new Set(selectedPedidosParaDespachar);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedPedidosParaDespachar(newSet);
   };
 
   const getStatusLabel = (status: string) => {
@@ -1420,9 +1456,21 @@ export default function AdminDashboardPage() {
               Volver al Dashboard
             </button>
 
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Pedidos Por Despachar</h2>
-              <p className="text-gray-600">Pedidos pendientes de envío a clientes</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Pedidos Por Despachar</h2>
+                <p className="text-gray-600">Pedidos pendientes de envío a clientes</p>
+              </div>
+
+              {selectedPedidosParaDespachar.size > 0 && (
+                <button
+                  onClick={handleMarcarPedidosComoDespachados}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold rounded-xl hover:from-green-700 hover:to-green-800 transition-all shadow-lg hover:shadow-xl"
+                >
+                  <Truck className="w-5 h-5" />
+                  Marcar como Despachado ({selectedPedidosParaDespachar.size})
+                </button>
+              )}
             </div>
 
             {loadingPulseras ? (
@@ -1435,6 +1483,20 @@ export default function AdminDashboardPage() {
                   <table className="w-full">
                     <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
                       <tr>
+                        <th className="px-6 py-5 text-center text-base font-bold text-gray-900 w-16">
+                          <input
+                            type="checkbox"
+                            checked={porDespacharPedidos.length > 0 && selectedPedidosParaDespachar.size === porDespacharPedidos.length}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedPedidosParaDespachar(new Set(porDespacharPedidos.map(p => p.id)));
+                              } else {
+                                setSelectedPedidosParaDespachar(new Set());
+                              }
+                            }}
+                            className="w-5 h-5 rounded border-gray-300 text-[#7030A0] focus:ring-[#7030A0] cursor-pointer"
+                          />
+                        </th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID Pedido</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Cliente</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Dirección de Envío</th>
@@ -1445,6 +1507,14 @@ export default function AdminDashboardPage() {
                     <tbody className="divide-y divide-gray-100">
                       {porDespacharPedidos.map((pedido) => (
                         <tr key={pedido.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 text-center">
+                            <input
+                              type="checkbox"
+                              checked={selectedPedidosParaDespachar.has(pedido.id)}
+                              onChange={() => togglePedidoSelection(pedido.id)}
+                              className="w-5 h-5 rounded border-gray-300 text-[#7030A0] focus:ring-[#7030A0] cursor-pointer"
+                            />
+                          </td>
                           <td className="px-6 py-4">
                             <span className="text-black font-bold text-lg">#{pedido.id}</span>
                           </td>
@@ -1497,8 +1567,8 @@ export default function AdminDashboardPage() {
             </button>
 
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Bluko Life Despachados</h2>
-              <p className="text-gray-600">QRs enviados a contratantes</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Pedidos Despachados</h2>
+              <p className="text-gray-600">Pedidos enviados a clientes</p>
             </div>
 
             {loadingPulseras ? (
@@ -1511,49 +1581,54 @@ export default function AdminDashboardPage() {
                   <table className="w-full">
                     <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
                       <tr>
-                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
-                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Contratante</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID Pedido</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Cliente</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Dirección de Envío</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Cantidad</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
-                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Imagen QR</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Despacho</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {despachadosPulseras.map((pulsera) => (
-                        <tr key={pulsera.id} className="hover:bg-gray-50 transition-colors">
+                      {despachadosPedidos.map((pedido) => (
+                        <tr key={pedido.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-6 py-4">
-                            <span className="text-black font-bold text-lg">{pulsera.customId}</span>
+                            <span className="text-black font-bold text-lg">#{pedido.id}</span>
                           </td>
                           <td className="px-6 py-4">
-                            {pulsera.contratante ? (
-                              <div>
-                                <p className="font-semibold text-gray-900">{pulsera.contratante.firstName} {pulsera.contratante.paternalSurname}</p>
-                                <p className="text-sm text-gray-500">{pulsera.contratante.email}</p>
-                              </div>
-                            ) : (
-                              <span className="text-gray-400">Sin contratante</span>
-                            )}
+                            <div>
+                              <p className="font-semibold text-gray-900">{pedido.contratanteNombre}</p>
+                              <p className="text-sm text-gray-500">{pedido.contratanteEmail}</p>
+                              <p className="text-sm text-gray-500">{pedido.telefono}</p>
+                            </div>
                           </td>
                           <td className="px-6 py-4">
-                            {getStatusBadge(pulsera.status)}
+                            <div className="text-sm">
+                              <p className="font-medium text-gray-900">{pedido.direccionCompleta}</p>
+                            </div>
                           </td>
                           <td className="px-6 py-4">
-                            <button
-                              onClick={() => handleViewQrImage(pulsera.customId)}
-                              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-[#7030A0] hover:bg-[#7030A0]/10 rounded-lg font-semibold transition-colors"
-                            >
-                              <QrCode className="w-5 h-5" />
-                              Ver Imagen
-                            </button>
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
+                              {pedido.cantidadPulseras} {pedido.cantidadPulseras === 1 ? 'pulsera' : 'pulseras'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            {getStatusBadge(pedido.status)}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-sm text-gray-600">
+                              {new Date(pedido.updatedAt).toLocaleDateString('es-CL')}
+                            </span>
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
 
-                  {despachadosPulseras.length === 0 && (
+                  {despachadosPedidos.length === 0 && (
                     <div className="text-center py-16">
                       <Truck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <p className="text-gray-500 font-medium text-lg">No hay Bluko Life despachados</p>
+                      <p className="text-gray-500 font-medium text-lg">No hay pedidos despachados</p>
                     </div>
                   )}
                 </div>

@@ -364,6 +364,12 @@ export const adminApi = {
 
   getPedidosPorDespachar: () =>
     api.get('/admin/pedidos/por-despachar'),
+
+  getPedidosDespachados: () =>
+    api.get('/admin/pedidos/despachados'),
+
+  cambiarEstadoPedido: (pedidoId: number, nuevoEstado: string) =>
+    api.put(`/admin/pedidos/${pedidoId}/status`, { nuevoEstado }),
 };
 
 export default api;
