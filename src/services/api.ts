@@ -176,18 +176,31 @@ export const contratanteApi = {
     return api.post('/contratantes/payment-verification/verify-and-update', payload);
   },
 
-  // Claim QR code
-  claimQr: (qrCode: string, portadorData?: {
+  // Guardar QR escaneado temporalmente (30 minutos)
+  saveScannedQr: (qrCode: string) => {
+    return api.post('/contratantes/save-scanned-qr', { qrCode });
+  },
+
+  // Obtener QR escaneado guardado
+  getScannedQr: () => {
+    return api.get('/contratantes/scanned-qr');
+  },
+
+  // Claim QR code (ahora puede funcionar sin qrCode si hay uno guardado en el backend)
+  claimQr: (qrCode?: string, portadorData?: {
     email?: string;
     rut?: string;
     firstName?: string;
     paternalSurname?: string;
     maternalSurname?: string;
   }) => {
-    const payload = {
-      qrCode,
+    const payload: any = {
       portadorData: portadorData || {}
     };
+    // Solo incluir qrCode si se proporciona
+    if (qrCode) {
+      payload.qrCode = qrCode;
+    }
     return api.post('/contratantes/claim-qr', payload);
   },
 

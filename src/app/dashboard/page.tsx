@@ -230,21 +230,56 @@ function DashboardContent() {
       return;
     }
 
-    let claimQr = searchParams.get('claimQr');
+    const initializeQrClaim = async () => {
+      let claimQr = searchParams.get('claimQr');
 
-    // Check localStorage for pending QR claim after login
-    if (!claimQr && typeof window !== 'undefined') {
-      const pendingQr = localStorage.getItem('pendingClaimQr');
-      if (pendingQr) {
-        claimQr = pendingQr;
-        localStorage.removeItem('pendingClaimQr');
-        // Update URL with the QR code
-        router.replace(`/dashboard?claimQr=${pendingQr}`);
+      // Check localStorage for pending QR claim after login
+      if (!claimQr && typeof window !== 'undefined') {
+        const pendingQr = localStorage.getItem('pendingClaimQr');
+        if (pendingQr) {
+          claimQr = pendingQr;
+          localStorage.removeItem('pendingClaimQr');
+
+          // Guardar en el backend también
+          try {
+            await contratanteApi.saveScannedQr(pendingQr);
+            console.log('💾 QR from localStorage saved to backend');
+          } catch (error) {
+            console.error('Error saving QR to backend:', error);
+          }
+
+          // Update URL with the QR code
+          router.replace(`/dashboard?claimQr=${pendingQr}`);
+        }
       }
-    }
 
-    // Prevent claiming the same QR multiple times
-    if (claimQr && !claimingQr && !claimedQrsRef.current.has(claimQr)) {
+      // Si no hay QR en URL ni en localStorage, intentar obtener del backend
+      if (!claimQr) {
+        try {
+          const response = await contratanteApi.getScannedQr();
+          if (response.data?.qrCode) {
+            claimQr = response.data.qrCode;
+            console.log('📥 QR retrieved from backend:', claimQr);
+            // Update URL with the QR code
+            router.replace(`/dashboard?claimQr=${claimQr}`);
+          }
+        } catch (error: any) {
+          // Si no hay QR guardado en el backend, es normal (404)
+          if (error.response?.status !== 404) {
+            console.error('Error getting scanned QR from backend:', error);
+          }
+        }
+      }
+
+      return claimQr;
+    };
+
+    // Execute async initialization
+    const handleClaimInit = async () => {
+      const claimQr = await initializeQrClaim();
+
+      // Prevent claiming the same QR multiple times
+      if (claimQr && !claimingQr && !claimedQrsRef.current.has(claimQr)) {
       // Mark this QR as being claimed
       claimedQrsRef.current.add(claimQr);
 
@@ -300,8 +335,11 @@ function DashboardContent() {
         }
       };
 
-      handleClaimQr();
-    }
+        handleClaimQr();
+      }
+    };
+
+    handleClaimInit();
   }, [searchParams, claimingQr, router, assignForm, user]);
 
   // Cargar QR codes para todas las pulseras

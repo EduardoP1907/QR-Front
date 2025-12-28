@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Shield, Phone, Heart, AlertTriangle, Home, User, QrCode } from 'lucide-react';
-import { pulseraApi } from '../../services/api';
+import { pulseraApi, contratanteApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 interface PulseraData {
@@ -67,6 +67,18 @@ function ScanPageContent() {
             status === 'IN_STOCK') {
           console.log('🟡 DEBUG - Status is ' + status + ', showing claim/info page');
           setIsGenerated(true);
+
+          // Si el usuario está autenticado, guardar el QR en el backend también
+          if (user) {
+            console.log('💾 DEBUG - User is authenticated, saving QR to backend');
+            try {
+              await contratanteApi.saveScannedQr(qrCode);
+              console.log('✅ DEBUG - QR saved to backend successfully');
+            } catch (saveError) {
+              console.error('❌ DEBUG - Error saving QR to backend:', saveError);
+              // No mostramos error al usuario, el localStorage es el fallback
+            }
+          }
         }
       } catch (error: any) {
         console.log('❌ DEBUG - API error:', error);
@@ -76,6 +88,17 @@ function ScanPageContent() {
         if (errorMsg.includes('no tiene información') || errorMsg.includes('no está asignada')) {
           console.log('🟡 DEBUG - Error indicates GENERATED status');
           setIsGenerated(true);
+
+          // Si el usuario está autenticado, guardar el QR en el backend también
+          if (user) {
+            console.log('💾 DEBUG - User is authenticated, saving QR to backend (from error)');
+            try {
+              await contratanteApi.saveScannedQr(qrCode);
+              console.log('✅ DEBUG - QR saved to backend successfully');
+            } catch (saveError) {
+              console.error('❌ DEBUG - Error saving QR to backend:', saveError);
+            }
+          }
         } else {
           console.log('❌ DEBUG - Setting error:', errorMsg);
           setError(errorMsg);
@@ -86,7 +109,7 @@ function ScanPageContent() {
     };
 
     fetchPulseraData();
-  }, [qrCode]);
+  }, [qrCode, user]);
 
   if (loading) {
     return (
