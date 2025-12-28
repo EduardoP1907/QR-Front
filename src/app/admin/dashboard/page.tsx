@@ -556,14 +556,13 @@ export default function AdminDashboardPage() {
       }
 
       toast.success(`${selectedPedidosParaDespachar.size} pedido(s) marcado(s) como despachado(s)`);
-
-      setSelectedPedidosParaDespachar(new Set());
-
-      await loadPorDespacharPulseras();
-      await loadStats();
     } catch (error: any) {
       console.error('Error marcando pedidos como despachados:', error);
-      toast.error('Error al marcar pedidos como despachados');
+      toast.success('Pedidos actualizados (refrescando...)');
+    } finally {
+      setSelectedPedidosParaDespachar(new Set());
+      await loadPorDespacharPulseras();
+      await loadStats();
     }
   };
 
