@@ -255,9 +255,8 @@ export default function AdminDashboardPage() {
   const loadSuscritosPulseras = async () => {
     setLoadingPulseras(true);
     try {
-      const response = await adminApi.getAllPulseras();
-      const suscritos = response.data.pulseras?.filter((p: Pulsera) => p.subscriptionActive) || [];
-      setSuscritosPulseras(suscritos);
+      const response = await adminApi.getSuscripcionesActivas();
+      setSuscritosPulseras(response.data.pulseras || []);
     } catch (error: any) {
       console.error('Error loading subscribed pulseras:', error);
       toast.error('Error al cargar QRs suscritos');

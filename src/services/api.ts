@@ -354,6 +354,9 @@ export const adminApi = {
   getAllPulseras: () =>
     api.get('/admin/pulseras'),
 
+  getSuscripcionesActivas: () =>
+    api.get('/admin/pulseras/suscripciones-activas'),
+
   deactivatePulseraSubscription: (id: number) =>
     api.post(`/admin/pulseras/${id}/deactivate-subscription`),
 
