@@ -43,7 +43,8 @@ function ScanPageContent() {
   const [pulsera, setPulsera] = useState<PulseraData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isGenerated, setIsGenerated] = useState(false);
+  const [isReadyToClaim, setIsReadyToClaim] = useState(false);
+  const [isNotReady, setIsNotReady] = useState(false);
 
   // Extract QR code from URL on client side
   useEffect(() => {
@@ -65,6 +66,12 @@ function ScanPageContent() {
 
     console.log('🚀 DEBUG - Starting fetch for QR code:', qrCode);
 
+    // Reset error and start loading when we have a valid qrCode
+    setError(null);
+    setLoading(true);
+    setIsReadyToClaim(false);
+    setIsNotReady(false);
+
     const fetchPulseraData = async () => {
       try {
         console.log('📡 DEBUG - Calling API scanQr with:', qrCode);
@@ -72,14 +79,14 @@ function ScanPageContent() {
         console.log('✅ DEBUG - API response:', response.data);
         setPulsera(response.data);
 
-        // Manejar estados de pulsera que no están asignadas a portador
+        // Manejar estados de pulsera según el status
         const status = response.data?.status;
-        if (status === 'GENERATED' ||
-            status === 'IN_FABRICATION' ||
-            status === 'FABRICATED' ||
-            status === 'IN_STOCK') {
-          console.log('🟡 DEBUG - Status is ' + status + ', showing claim/info page');
-          setIsGenerated(true);
+        console.log('📊 DEBUG - Pulsera status:', status);
+
+        // ✅ SOLO IN_STOCK puede ser reclamado
+        if (status === 'IN_STOCK') {
+          console.log('✅ DEBUG - Status is IN_STOCK, ready to claim');
+          setIsReadyToClaim(true);
 
           // Si el usuario está autenticado, guardar el QR en el backend también
           if (user) {
@@ -92,6 +99,24 @@ function ScanPageContent() {
               // No mostramos error al usuario, el localStorage es el fallback
             }
           }
+        }
+        // ⏳ Estados que NO están listos para ser reclamados
+        else if (status === 'GENERATED' || 
+                 status === 'IN_FABRICATION' || 
+                 status === 'FABRICATED') {
+          console.log('⏳ DEBUG - Status is ' + status + ', NOT ready to claim yet');
+          setIsNotReady(true);
+        }
+        // 🏥 Estados que muestran información médica
+        else if (status === 'ACTIVE' || status === 'ASSIGNED' || status === 'CLAIMED') {
+          console.log('🏥 DEBUG - Status is ' + status + ', showing emergency medical info');
+          setIsReadyToClaim(false);
+          setIsNotReady(false);
+          // La vista de emergencia se mostrará por defecto (return al final)
+        }
+        // Cualquier otro estado
+        else {
+          console.log('⚠️ DEBUG - Unknown status: ' + status);
         }
       } catch (error: any) {
         console.log('❌ DEBUG - API error:', error);
@@ -142,7 +167,72 @@ function ScanPageContent() {
     );
   }
 
-  if (isGenerated) {
+
+  // ⏳ Pulsera NO está lista para ser reclamada (GENERATED, IN_FABRICATION, FABRICATED)
+  if (isNotReady) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertTriangle className="w-12 h-12 text-gray-600" />
+            </div>
+
+            <div className="text-6xl mb-4">⏳</div>
+
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              Bluko Life No Disponible
+            </h1>
+
+            <p className="text-lg text-gray-600 mb-8">
+              Este Bluko Life aún no está listo para ser reclamado
+            </p>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
+              <p className="text-yellow-700 mb-4">
+                Tu Bluko Life está siendo procesado. Recibirás una notificación cuando esté listo para ser reclamado y asignado.
+              </p>
+              <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
+                <span className="font-semibold">Estado actual: {pulsera?.status}</span>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+              <h3 className="font-semibold text-blue-900 mb-2">¿Qué puedes hacer mientras tanto?</h3>
+              <ul className="text-left text-blue-700 space-y-2">
+                <li className="flex items-start gap-2">
+                  <span>✓</span>
+                  <span>Espera a que tu Bluko Life esté en stock (IN_STOCK)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span>✓</span>
+                  <span>Recibirás una notificación cuando esté listo</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span>✓</span>
+                  <span>Una vez listo, podrás reclamarlo desde tu dashboard</span>
+                </li>
+              </ul>
+            </div>
+
+            <p className="text-sm text-gray-500 mb-6">
+              Código QR: <span className="font-mono font-semibold">{qrCode}</span>
+            </p>
+
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            >
+              <Home className="w-5 h-5" />
+              Volver al Inicio
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isReadyToClaim) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 py-12 px-4">
         <div className="max-w-2xl mx-auto">
