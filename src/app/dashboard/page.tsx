@@ -342,29 +342,44 @@ function DashboardContent() {
     handleClaimInit();
   }, [searchParams, claimingQr, router, assignForm, user]);
 
-  // Cargar QR codes para todas las pulseras
+  // Cargar QR codes para todas las pulseras (incluyendo las asignadas a portadores)
   useEffect(() => {
     const loadQrCodes = async () => {
       const codes: Record<string, string> = {};
       
-      for (const pulsera of pulseras) {
+      // Crear un Set de IDs de pulseras para evitar duplicados
+      const pulseraIds = new Set<string>();
+      
+      // Agregar pulseras del contratante
+      pulseras.forEach(p => pulseraIds.add(p.id));
+      
+      // Agregar pulseras asignadas a portadores (si tienen)
+      portadores.forEach(portador => {
+        const pulseraAsignada = pulseras.find(p => p.portador?.id === portador.id);
+        if (pulseraAsignada) {
+          pulseraIds.add(pulseraAsignada.id);
+        }
+      });
+      
+      // Cargar QR para cada pulsera única
+      for (const pulseraId of pulseraIds) {
         try {
-          const { data } = await pulseraApi.generateQr(pulsera.id);
+          const { data } = await pulseraApi.generateQr(pulseraId);
           if (data?.qrImage) {
-            codes[pulsera.id] = data.qrImage;
+            codes[pulseraId] = data.qrImage;
           }
         } catch (err) {
-          console.error(`Error loading QR for pulsera ${pulsera.id}:`, err);
+          console.error(`Error loading QR for pulsera ${pulseraId}:`, err);
         }
       }
       
       setQrCodes(codes);
     };
 
-    if (pulseras.length > 0) {
+    if (pulseras.length > 0 || portadores.length > 0) {
       loadQrCodes();
     }
-  }, [pulseras]);
+  }, [pulseras, portadores]);
 
   // Handlers
   const handleLogout = async () => {
