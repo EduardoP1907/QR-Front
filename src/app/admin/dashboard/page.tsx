@@ -941,7 +941,6 @@ export default function AdminDashboardPage() {
                         </th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Código QR (UUID)</th>
-                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Imagen QR</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -962,15 +961,6 @@ export default function AdminDashboardPage() {
                             <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 inline-block">
                               <span className="text-gray-700 font-mono text-sm">{pulsera.qrCode}</span>
                             </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <button
-                              onClick={() => handleViewQrImage(pulsera.customId)}
-                              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-[#7030A0] hover:bg-[#7030A0]/10 rounded-lg font-semibold transition-colors"
-                            >
-                              <QrCode className="w-5 h-5" />
-                              Ver Imagen
-                            </button>
                           </td>
                         </tr>
                       ))}
@@ -1040,7 +1030,6 @@ export default function AdminDashboardPage() {
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Código QR (UUID)</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
-                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Imagen QR</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -1064,15 +1053,6 @@ export default function AdminDashboardPage() {
                           </td>
                           <td className="px-6 py-4">
                             {getStatusBadge(pulsera.status)}
-                          </td>
-                          <td className="px-6 py-4">
-                            <button
-                              onClick={() => handleViewQrImage(pulsera.customId)}
-                              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-[#7030A0] hover:bg-[#7030A0]/10 rounded-lg font-semibold transition-colors"
-                            >
-                              <QrCode className="w-5 h-5" />
-                              Ver Imagen
-                            </button>
                           </td>
                         </tr>
                       ))}
@@ -1142,7 +1122,6 @@ export default function AdminDashboardPage() {
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Código QR (UUID)</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
-                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Imagen QR</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -1166,15 +1145,6 @@ export default function AdminDashboardPage() {
                           </td>
                           <td className="px-6 py-4">
                             {getStatusBadge(pulsera.status)}
-                          </td>
-                          <td className="px-6 py-4">
-                            <button
-                              onClick={() => handleViewQrImage(pulsera.customId)}
-                              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-[#7030A0] hover:bg-[#7030A0]/10 rounded-lg font-semibold transition-colors"
-                            >
-                              <QrCode className="w-5 h-5" />
-                              Ver Imagen
-                            </button>
                           </td>
                         </tr>
                       ))}
