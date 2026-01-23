@@ -120,7 +120,7 @@ function SubscriptionContent() {
           <div className="space-y-6">
             {/* Quantity Selection */}
             <div className="bg-white border rounded-2xl p-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">¿Cuántos Bluko Life's necesitas?</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">¿Cuántos dispositivos necesitas?</h3>
               <div className="flex items-center justify-center gap-4 mb-4">
                 <button
                   type="button"
@@ -143,7 +143,7 @@ function SubscriptionContent() {
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
-              <p className="text-sm text-gray-600 text-center">Máximo 10 Bluko Life's por pedido</p>
+              <p className="text-sm text-gray-600 text-center">Máximo 10 dispositivos por pedido</p>
             </div>
 
             {/* Plan Card */}
@@ -243,7 +243,7 @@ function SubscriptionContent() {
               <div className="pt-2">
                 <div className="space-y-3 mb-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Bluko Life's físicas ({quantity}x):</span>
+                    <span className="text-sm text-gray-600">Habilitación (pago único) ({quantity}x):</span>
                     <span className="font-semibold text-black">${(PULSERA_PRICE * quantity).toLocaleString('es-CL')} CLP</span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -251,7 +251,7 @@ function SubscriptionContent() {
                     <span className="font-semibold text-black">${(SUBSCRIPTION_PRICE * quantity).toLocaleString('es-CL')} CLP</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Cantidad de Bluko Life's:</span>
+                    <span className="text-sm text-gray-600">Cantidad de Bluko Life:</span>
                     <span className="font-semibold text-black">{quantity}</span>
                   </div>
                   <hr />
@@ -297,11 +297,6 @@ function SubscriptionContent() {
                   <CreditCard className="w-5 h-5" />
                   <span>{processing ? 'Redirigiendo...' : 'Proceder al Pago'}</span>
                 </button>
-
-                <p className="text-xs text-gray-500 text-center mt-3">
-                  Tu suscripción se renovará automáticamente cada mes. 
-                  Puedes cancelar en cualquier momento desde tu panel de control.
-                </p>
               </div>
             </form>
           </div>

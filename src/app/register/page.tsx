@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
@@ -130,43 +131,58 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <Shield className="w-12 h-12 text-blue-600" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Crear Cuenta</h1>
-          <p className="text-gray-600">
-            Fase {currentPhase} de 3 - {
-              currentPhase === 1 ? 'Verificación de Email' :
-              currentPhase === 2 ? 'Configurar Contraseña' :
-              'Datos Personales'
-            }
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
+      {/* Franja de identificación Bluko */}
+      <div className="w-full py-3 px-4" style={{background: 'linear-gradient(to right, #3d1158, #481468)'}}>
+        <div className="max-w-md mx-auto flex items-center justify-center gap-3">
+          <Image
+            src="/logo-bluko-small.jpg"
+            alt="Bluko Life"
+            width={32}
+            height={32}
+            className="rounded-full"
+          />
+          <span className="text-white font-bold text-lg">BLUKO LIFE®</span>
         </div>
+      </div>
 
-        {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-blue-600">Progreso</span>
-            <span className="text-sm text-gray-500">{currentPhase}/3</span>
+      <div className="flex items-center justify-center p-4 pt-8">
+        <div className="max-w-md w-full">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center mb-4">
+              <Shield className="w-12 h-12" style={{color: '#481468'}} />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Crear Cuenta</h1>
+            <p className="text-gray-600">
+              Fase {currentPhase} de 3 - {
+                currentPhase === 1 ? 'Verificación de Email' :
+                currentPhase === 2 ? 'Configurar Contraseña' :
+                'Datos Personales'
+              }
+            </p>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${(currentPhase / 3) * 100}%` }}
-            />
+
+          {/* Progress Bar */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium" style={{color: '#481468'}}>Progreso</span>
+              <span className="text-sm text-gray-500">{currentPhase}/3</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="h-2 rounded-full transition-all duration-300"
+                style={{ width: `${(currentPhase / 3) * 100}%`, backgroundColor: '#481468' }}
+              />
+            </div>
           </div>
-        </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* FASE 1: Email */}
           {currentPhase === 1 && (
             <form onSubmit={phase1Form.handleSubmit(handlePhase1Submit)} className="space-y-6">
               <div className="text-center mb-6">
-                <Mail className="w-16 h-16 text-blue-600 mx-auto mb-4" />
+                <Mail className="w-16 h-16 text-[#481468] mx-auto mb-4" />
                 <h2 className="text-xl font-semibold text-gray-900">Ingresa tu Email</h2>
                 <p className="text-gray-600 mt-2">Te enviaremos un código de verificación</p>
               </div>
@@ -184,7 +200,7 @@ export default function RegisterPage() {
                     }
                   })}
                   type="email"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black "
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-[#481468] text-black "
                   placeholder="tu@email.com"
                 />
                 {phase1Form.formState.errors.email && (
@@ -197,7 +213,7 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-[#481468] text-white py-3 px-4 rounded-lg font-semibold hover:bg-[#3d1158] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? 'Enviando...' : 'Enviar Código OTP'}
                 <ArrowRight className="w-4 h-4" />
@@ -209,7 +225,7 @@ export default function RegisterPage() {
           {currentPhase === 2 && (
             <div className="space-y-6">
               <div className="text-center mb-6">
-                <Lock className="w-16 h-16 text-blue-600 mx-auto mb-4" />
+                <Lock className="w-16 h-16 text-[#481468] mx-auto mb-4" />
                 <h2 className="text-xl font-semibold text-gray-900">Verificación y Contraseña</h2>
                 <p className="text-gray-600 mt-2">
                   Revisa tu email: <span className="font-semibold">{email}</span>
@@ -237,7 +253,7 @@ export default function RegisterPage() {
                     })}
                     type="text"
                     maxLength={6}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-[#481468] text-black"
                     placeholder="123456"
                     onChange={(e) => {
                       const value = e.target.value;
@@ -285,7 +301,7 @@ export default function RegisterPage() {
                         }
                       })}
                       type={showPassword ? 'text' : 'password'}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10 text-black"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-[#481468] pr-10 text-black"
                       placeholder="Mínimo 6 caracteres"
                     />
                     <button
@@ -317,7 +333,7 @@ export default function RegisterPage() {
                         }
                       })}
                       type={showConfirmPassword ? 'text' : 'password'}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10 text-black"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-[#481468] pr-10 text-black"
                       placeholder="Repetir contraseña"
                     />
                     <button
@@ -347,7 +363,7 @@ export default function RegisterPage() {
                   <button
                     type="submit"
                     disabled={loading || !otpVerified}
-                    className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="flex-1 bg-[#481468] text-white py-3 px-4 rounded-lg font-semibold hover:bg-[#3d1158] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {loading ? 'Configurando...' : 'Continuar'}
                     <ArrowRight className="w-4 h-4" />
@@ -361,7 +377,7 @@ export default function RegisterPage() {
           {currentPhase === 3 && (
             <form onSubmit={phase3Form.handleSubmit(handlePhase3Submit)} className="space-y-6">
               <div className="text-center mb-6">
-                <User className="w-16 h-16 text-blue-600 mx-auto mb-4" />
+                <User className="w-16 h-16 text-[#481468] mx-auto mb-4" />
                 <h2 className="text-xl font-semibold text-gray-900">Datos Personales</h2>
                 <p className="text-gray-600 mt-2">Completa tu información personal</p>
               </div>
@@ -376,7 +392,7 @@ export default function RegisterPage() {
                       required: 'Nombres son requeridos'
                     })}
                     type="text"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-[#481468] text-black"
                     placeholder="Juan Carlos"
                   />
                   {phase3Form.formState.errors.firstName && (
@@ -395,7 +411,7 @@ export default function RegisterPage() {
                       required: 'Apellido paterno es requerido'
                     })}
                     type="text"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-[#481468] text-black"
                     placeholder="González"
                   />
                   {phase3Form.formState.errors.paternalSurname && (
@@ -412,7 +428,7 @@ export default function RegisterPage() {
                   <input
                     {...phase3Form.register('maternalSurname')}
                     type="text"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-[#481468] text-black"
                     placeholder="López (opcional)"
                   />
                 </div>
@@ -427,7 +443,7 @@ export default function RegisterPage() {
                       validate: validateRutField,
                     })}
                     type="text"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-[#481468] text-black"
                     placeholder="12.345.678-9"
                     onChange={(e) => {
                       let value = e.target.value;
@@ -461,7 +477,7 @@ export default function RegisterPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 bg-[#481468] text-white py-3 px-4 rounded-lg font-semibold hover:bg-[#3d1158] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? 'Completando...' : 'Finalizar Registro'}
                   <CheckCircle className="w-4 h-4" />
@@ -471,14 +487,15 @@ export default function RegisterPage() {
           )}
         </div>
 
-        {/* Footer */}
-        <div className="text-center mt-8">
-          <p className="text-gray-600">
-            ¿Ya tienes cuenta?{' '}
-            <Link href="/login" className="text-blue-600 hover:text-blue-700 font-semibold">
-              Iniciar Sesión
-            </Link>
-          </p>
+          {/* Footer */}
+          <div className="text-center mt-8">
+            <p className="text-gray-600">
+              ¿Ya tienes cuenta?{' '}
+              <Link href="/login" className="text-[#481468] hover:text-[#3d1158] font-semibold">
+                Iniciar Sesión
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

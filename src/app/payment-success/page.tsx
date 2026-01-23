@@ -62,9 +62,9 @@ function PaymentSuccessContent() {
         localStorage.removeItem('pendingPurchase');
 
         if (response.data.pulserasAgregadas) {
-          toast.success(`¡${response.data.pulserasAgregadas} pulseras agregadas! Total disponibles: ${response.data.availablePulseras}`);
+          toast.success(`¡${response.data.pulserasAgregadas} dispositivos agregados! Total disponibles: ${response.data.availablePulseras}`);
         } else {
-          toast.success(`Verificación completa. Pulseras disponibles: ${response.data.availablePulseras}`);
+          toast.success(`Verificación completa. Dispositivos disponibles: ${response.data.availablePulseras}`);
         }
       } catch (error: any) {
         console.error('❌ Error verificando pago:', error);
@@ -114,7 +114,7 @@ function PaymentSuccessContent() {
           </h1>
 
           <p className="text-lg text-gray-600 mb-8">
-            Tu pago ha sido procesado correctamente. Estamos agregando tus pulseras a tu cuenta.
+            Tu pago ha sido procesado correctamente. Estamos agregando tus dispositivos a tu cuenta.
           </p>
 
           {/* Processing Status */}
@@ -150,10 +150,10 @@ function PaymentSuccessContent() {
             <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
               <div className="flex items-center justify-center gap-3 mb-4">
                 <CheckCircle className="w-6 h-6 text-green-600" />
-                <span className="text-green-900 font-semibold">¡Pulseras agregadas!</span>
+                <span className="text-green-900 font-semibold">¡Dispositivos agregados!</span>
               </div>
               <p className="text-sm text-green-700">
-                Tus pulseras están disponibles en tu dashboard.
+                Tus dispositivos están disponibles en tu dashboard.
                 Recibirás un email de confirmación con los detalles de tu compra.
               </p>
             </div>
@@ -170,19 +170,19 @@ function PaymentSuccessContent() {
                 <span className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 text-green-700 font-bold text-xs">
                   1
                 </span>
-                <span>Tus pulseras se han agregado a tu cuenta</span>
+                <span>Podrás asignar tus dispositivos a los portadores</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 text-green-700 font-bold text-xs">
                   2
                 </span>
-                <span>Podrás crear y activar tus pulseras desde el dashboard</span>
+                <span>Te enviaremos la boleta por correo cuando se termine de preparar el pedido</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 text-green-700 font-bold text-xs">
                   3
                 </span>
-                <span>Recibirás tu pulsera física en 3-5 días hábiles</span>
+                <span>Si necesitas ayuda contáctanos por WhatsApp o correo</span>
               </li>
             </ol>
           </div>

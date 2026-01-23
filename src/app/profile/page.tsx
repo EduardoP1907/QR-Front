@@ -14,10 +14,11 @@ import {
   Mail,
   Calendar,
   CreditCard,
-  Heart,
+  QrCode,
   Users,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Package
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { profileApi } from '../../services/api';
@@ -278,10 +279,10 @@ function ProfileContent() {
               <div className="space-y-3">
                 <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
                   <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Heart className="w-5 h-5 text-blue-600" />
+                    <QrCode className="w-5 h-5 text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-blue-900">Pulseras Activas</p>
+                    <p className="text-sm font-medium text-blue-900">Suscripciones activas</p>
                     <p className="text-lg font-bold text-blue-600">{summary.pulserasActivas}</p>
                   </div>
                 </div>
@@ -291,17 +292,17 @@ function ProfileContent() {
                     <Users className="w-5 h-5 text-green-600" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-green-900">Usuarios</p>
+                    <p className="text-sm font-medium text-green-900">Portadores asignados</p>
                     <p className="text-lg font-bold text-green-600">{summary.portadoresCreados}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg">
                   <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                    <CreditCard className="w-5 h-5 text-orange-600" />
+                    <Package className="w-5 h-5 text-orange-600" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-orange-900">Disponibles</p>
+                    <p className="text-sm font-medium text-orange-900">Dispositivos sin asignar</p>
                     <p className="text-lg font-bold text-orange-600">{summary.pulserasDisponibles}</p>
                   </div>
                 </div>
@@ -682,14 +683,14 @@ function ProfileContent() {
 
                 <div className="p-4 rounded-lg bg-blue-50 border-2 border-blue-200">
                   <div className="flex items-center gap-3 mb-2">
-                    <Heart className="w-5 h-5 text-blue-500" />
-                    <p className="font-medium text-gray-900">Pulseras Totales</p>
+                    <QrCode className="w-5 h-5 text-blue-500" />
+                    <p className="font-medium text-gray-900">Total dispositivos</p>
                   </div>
                   <p className="text-sm text-gray-600">
-                    Compradas: {profile.totalPurchasedPulseras}
+                    Comprados: {profile.totalPurchasedPulseras}
                   </p>
                   <p className="text-sm text-gray-600">
-                    Disponibles: {summary.pulserasDisponibles}
+                    Sin asignar: {summary.pulserasDisponibles}
                   </p>
                 </div>
               </div>

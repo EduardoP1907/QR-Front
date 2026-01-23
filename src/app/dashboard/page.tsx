@@ -289,7 +289,7 @@ function DashboardContent() {
         try {
           const response = await contratanteApi.claimQr(claimQr);
 
-          toast.success('¡QR reclamado exitosamente! Ahora puedes asignar el Bluko Life a un usuario.');
+          toast.success('¡QR reclamado exitosamente! Ahora puedes asignar el Bluko Life a un portador.');
 
           // Reload pulseras and available count
           const [pulserasResponse, availableResponse] = await Promise.all([
@@ -478,7 +478,7 @@ function DashboardContent() {
       setAvailablePulseras((prev) => prev - 1);
       setShowCreateModal(false);
       createForm.reset();
-      toast.success('Bluko Life asignado exitosamente al usuario.');
+      toast.success('Bluko Life asignado exitosamente al portador.');
     } catch (err) {
       console.error(err);
       if (err.response?.data?.error?.includes('disponibles') || err.response?.data?.error?.includes('créditos')) {
@@ -549,7 +549,7 @@ function DashboardContent() {
         return;
       }
 
-      const loadingToast = toast.loading('Asignando Bluko Life al usuario...');
+      const loadingToast = toast.loading('Asignando Bluko Life al portador...');
 
       const assignData = {
         portadorEmail: portador.email,
@@ -623,10 +623,10 @@ function DashboardContent() {
       setSearchStatesPatologias([]);
       setFocusStatesPatologias([]);
 
-      toast.success('Usuario creado exitosamente. Ahora puedes asignarle un Bluko Life.');
+      toast.success('Portador creado exitosamente. Ahora puedes asignarle un Bluko Life.');
     } catch (err: any) {
       console.error(err);
-      const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Error al crear el usuario';
+      const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Error al crear el portador';
       toast.error(errorMsg);
     }
   };
@@ -689,16 +689,16 @@ function DashboardContent() {
       setSearchStatesPatologias([]);
       setFocusStatesPatologias([]);
 
-      toast.success('Usuario actualizado exitosamente.');
+      toast.success('Portador actualizado exitosamente.');
     } catch (err: any) {
       console.error(err);
-      const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Error al actualizar el usuario';
+      const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Error al actualizar el portador';
       toast.error(errorMsg);
     }
   };
 
   const handleDeleteUser = async (portador: any) => {
-    if (!confirm(`¿Estás seguro de que deseas eliminar al usuario ${portador.firstName} ${portador.paternalSurname}?`)) {
+    if (!confirm(`¿Estás seguro de que deseas eliminar al portador ${portador.firstName} ${portador.paternalSurname}?`)) {
       return;
     }
 
@@ -708,16 +708,16 @@ function DashboardContent() {
       const portadoresResponse = await contratanteApi.getPortadores();
       setPortadores(Array.isArray(portadoresResponse.data) ? portadoresResponse.data : portadoresResponse.data?.items ?? []);
 
-      toast.success('Usuario eliminado exitosamente.');
+      toast.success('Portador eliminado exitosamente.');
     } catch (err: any) {
       console.error(err);
-      const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Error al eliminar el usuario';
+      const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Error al eliminar el portador';
       toast.error(errorMsg);
     }
   };
 
   const handleAssignSubmit = async (data: AssignFormData) => {
-    // Modo: Crear usuario sin pulsera
+    // Modo: Crear portador sin pulsera
     if (showCreateUserModal) {
       return handleCreateUserSubmit(data);
     }
@@ -783,7 +783,7 @@ function DashboardContent() {
       setPrincipiosActivosDetalle([]);
       setSearchStates({});
       setSelectedPortadorId('');
-      toast.success('Bluko Life asignado exitosamente al usuario.');
+      toast.success('Bluko Life asignado exitosamente al portador.');
     } catch (err) {
       console.error(err);
       toast.error('Error al asignar el Bluko Life.');
@@ -991,13 +991,13 @@ function DashboardContent() {
 
   const FormFields = ({ form }: { form: any }) => (
     <>
-      {/* Datos del Usuario */}
+      {/* Datos del Portador */}
       <div>
-        <h5 className="text-sm font-medium text-gray-900 mb-3">Datos del Usuario</h5>
+        <h5 className="text-sm font-medium text-gray-900 mb-3">Datos del Portador</h5>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email del Usuario *
+              Email del Portador *
             </label>
             <input
               {...form.register('portadorEmail', { 
@@ -1017,7 +1017,7 @@ function DashboardContent() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              RUT del Usuario *
+              RUT del Portador *
             </label>
             <input
               {...form.register('portadorRut', { 
@@ -1240,7 +1240,7 @@ function DashboardContent() {
               <h1 className="text-base font-bold bg-gradient-to-r from-[#481468] to-[#3d1158] bg-clip-text text-transparent">
                 Mi Panel
               </h1>
-              <p className="text-[10px] text-gray-500">Gestión de Dispositivos Médicos</p>
+              <p className="text-[10px] text-gray-500">Gestión de Dispositivos</p>
             </div>
           </div>
 
@@ -1310,16 +1310,16 @@ function DashboardContent() {
                 </span>
               ) : (
                 <span className="bg-gray-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                  Sin créditos
+                  Sin dispositivos
                 </span>
               )}
             </div>
             <h3 className="text-2xl font-bold mb-0.5">{availablePulseras}</h3>
             <p className="text-white/90 text-xs font-medium">
-              {availablePulseras === 1 ? 'Crédito Disponible' : 'Créditos Disponibles'}
+              {availablePulseras === 1 ? 'Dispositivo sin asignar' : 'Dispositivos sin asignar'}
             </p>
             <p className="text-white/70 text-[10px] mt-1">
-              Para reclamar pulseras físicas
+              Para asignar a portadores
             </p>
             {claimingQr && (
               <div className="mt-2 flex items-center gap-1.5 text-xs bg-white/20 backdrop-blur-sm px-2 py-1 rounded-lg">
@@ -1378,7 +1378,7 @@ function DashboardContent() {
               Mis Bluko Life
             </h3>
             <p className="text-xs text-gray-600">
-              Administra tu sistema de Bluko Life médico
+              Administra tu sistema de Bluko Life
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -1387,7 +1387,7 @@ function DashboardContent() {
               className="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-gradient-to-r from-[#481468] to-[#3d1158] text-white font-medium hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
             >
               <ShoppingCart className="w-4 h-4" />
-              <span>Contratar Plan</span>
+              <span>Agregar dispositivos</span>
             </button>
             <button
               onClick={() => {
@@ -1410,22 +1410,22 @@ function DashboardContent() {
               }`}
               title={
                 claimedPulseraForAssignment
-                  ? `Crear nuevo usuario y asignar QR reclamado (${claimedPulseraForAssignment.customId})`
-                  : 'Crear usuario con información médica completa'
+                  ? `Crear nuevo portador y asignar QR reclamado (${claimedPulseraForAssignment.customId})`
+                  : 'Crear portador con información médica completa'
               }
             >
               <User className="w-4 h-4" />
-              <span>{claimedPulseraForAssignment ? 'Crear Usuario con QR Reclamado' : 'Crear Usuario'}</span>
+              <span>{claimedPulseraForAssignment ? 'Crear Portador con QR Reclamado' : 'Crear Portador'}</span>
             </button>
           </div>
         </div>
 
-        {/* Usuarios Creados Section */}
+        {/* Portadores Creados Section */}
         <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 mb-4">
           <div className="bg-gradient-to-r from-[#481468] to-[#3d1158] p-4">
             <h3 className="text-base font-bold text-white flex items-center gap-2">
               <Users className="w-5 h-5" />
-              Usuarios Creados ({portadores.length})
+              Portadores Creados ({portadores.length})
             </h3>
             <p className="text-xs text-white/80 mt-0.5">Lista de todos los portadores registrados</p>
           </div>
@@ -1435,8 +1435,8 @@ function DashboardContent() {
               <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
                 <Users className="w-8 h-8 text-gray-400" />
               </div>
-              <h3 className="text-base font-semibold text-gray-900 mb-1">No hay usuarios creados</h3>
-              <p className="text-sm text-gray-500 mb-4">Crea un usuario para comenzar</p>
+              <h3 className="text-base font-semibold text-gray-900 mb-1">No hay portadores creados</h3>
+              <p className="text-sm text-gray-500 mb-4">Crea un portador para comenzar</p>
             </div>
           ) : (
             <div className="divide-y divide-gray-100">
@@ -1589,10 +1589,10 @@ function DashboardContent() {
                         }`}
                         title={
                           claimedPulseraForAssignment
-                            ? `Asignar QR reclamado (${claimedPulseraForAssignment.customId}) a este usuario`
+                            ? `Asignar QR reclamado (${claimedPulseraForAssignment.customId}) a este portador`
                             : availablePulseras <= 0
                             ? 'No tienes Bluko Life disponibles'
-                            : 'Asignar Bluko Life a este usuario con un click'
+                            : 'Asignar Bluko Life a este portador con un click'
                         }
                       >
                         <UserPlus className="w-3 h-3" />
@@ -1601,7 +1601,7 @@ function DashboardContent() {
                       <button
                         onClick={() => handleEditUser(portador)}
                         className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 hover:border-gray-300 transition-all duration-300"
-                        title="Editar información del usuario"
+                        title="Editar información del portador"
                       >
                         <Edit className="w-3 h-3" />
                         <span>Editar</span>
@@ -1609,7 +1609,7 @@ function DashboardContent() {
                       <button
                         onClick={() => handleDeleteUser(portador)}
                         className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition-all duration-300 shadow-sm hover:shadow-md"
-                        title="Eliminar usuario"
+                        title="Eliminar portador"
                       >
                         <Trash2 className="w-3 h-3" />
                         <span>Eliminar</span>
@@ -1776,7 +1776,7 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* Modal Crear Usuario */}
+      {/* Modal Crear Portador */}
       {showCreateUserModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
           <div className="bg-white rounded-3xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-scaleIn">
@@ -1784,7 +1784,7 @@ function DashboardContent() {
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h4 className="text-2xl font-bold bg-gradient-to-r from-[#481468] to-[#3d1158] bg-clip-text text-transparent">
-                  Crear Nuevo Usuario
+                  Crear Nuevo Portador
                 </h4>
                 <p className="text-sm text-gray-600 mt-1">Registra un nuevo portador con información médica completa</p>
               </div>
@@ -1800,13 +1800,13 @@ function DashboardContent() {
             </div>
 
             <form onSubmit={assignForm.handleSubmit(handleCreateUserSubmit)} className="space-y-6">
-              {/* Datos del Usuario */}
+              {/* Datos del Portador */}
               <div>
-                <h5 className="text-sm font-medium text-gray-900 mb-3">Datos del Usuario</h5>
+                <h5 className="text-sm font-medium text-gray-900 mb-3">Datos del Portador</h5>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email del Usuario *
+                      Email del Portador *
                     </label>
                     <input
                       {...assignForm.register('portadorEmail', {
@@ -1827,7 +1827,7 @@ function DashboardContent() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      RUT del Usuario *
+                      RUT del Portador *
                     </label>
                     <input
                       {...assignForm.register('portadorRut', {
@@ -2293,7 +2293,7 @@ function DashboardContent() {
                       Creando...
                     </span>
                   ) : (
-                    'Crear Usuario'
+                    'Crear Portador'
                   )}
                 </button>
               </div>
@@ -2303,7 +2303,7 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* Modal Editar Usuario */}
+      {/* Modal Editar Portador */}
       {showEditUserModal && editingUser && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
           <div className="bg-white rounded-3xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-scaleIn">
@@ -2311,7 +2311,7 @@ function DashboardContent() {
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h4 className="text-2xl font-bold bg-gradient-to-r from-[#481468] to-[#3d1158] bg-clip-text text-transparent">
-                  Editar Usuario
+                  Editar Portador
                 </h4>
                 <p className="text-sm text-gray-600 mt-1">Actualiza la información del portador {editingUser.firstName} {editingUser.paternalSurname}</p>
               </div>
@@ -2331,13 +2331,13 @@ function DashboardContent() {
             </div>
 
             <form onSubmit={assignForm.handleSubmit(handleEditUserSubmit)} className="space-y-6">
-              {/* Datos del Usuario */}
+              {/* Datos del Portador */}
               <div>
-                <h5 className="text-sm font-medium text-gray-900 mb-3">Datos del Usuario</h5>
+                <h5 className="text-sm font-medium text-gray-900 mb-3">Datos del Portador</h5>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-500 mb-1">
-                      Email del Usuario
+                      Email del Portador
                     </label>
                     <input
                       type="email"
@@ -2352,7 +2352,7 @@ function DashboardContent() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-500 mb-1">
-                      RUT del Usuario
+                      RUT del Portador
                     </label>
                     <input
                       type="text"
@@ -2413,7 +2413,7 @@ function DashboardContent() {
                 </div>
               </div>
 
-              {/* Información Médica - Reutilizar los mismos campos que en crear usuario */}
+              {/* Información Médica - Reutilizar los mismos campos que en crear portador */}
               <div>
                 <h5 className="text-sm font-medium text-gray-900 mb-3">Información Médica</h5>
                 <div className="space-y-4">
@@ -2597,11 +2597,11 @@ function DashboardContent() {
             </div>
 
             <form onSubmit={assignForm.handleSubmit(handleAssignSubmit)} className="space-y-6">
-              {/* Selección de Usuario Existente o Nuevo */}
+              {/* Selección de Portador Existente o Nuevo */}
               {portadores.length > 0 && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <label className="block text-sm font-medium text-gray-900 mb-2">
-                    ¿Asignar a usuario existente o crear nuevo?
+                    ¿Asignar a portador existente o crear nuevo?
                   </label>
                   <select
                     value={selectedPortadorId}
@@ -2622,7 +2622,7 @@ function DashboardContent() {
                     }}
                     className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
                   >
-                    <option value="">Crear nuevo usuario</option>
+                    <option value="">Crear nuevo portador</option>
                     {portadores.map((portador) => (
                       <option key={portador.id} value={portador.id}>
                         {portador.firstName} {portador.paternalSurname} - {portador.email}
@@ -2630,18 +2630,18 @@ function DashboardContent() {
                     ))}
                   </select>
                   <p className="text-xs text-gray-600 mt-2">
-                    Selecciona un usuario existente o deja en "Crear nuevo usuario" para crear uno nuevo.
+                    Selecciona un portador existente o deja en "Crear nuevo portador" para crear uno nuevo.
                   </p>
                 </div>
               )}
 
-              {/* Datos del Usuario */}
+              {/* Datos del Portador */}
               <div>
-                <h5 className="text-sm font-medium text-gray-900 mb-3">Datos del Usuario</h5>
+                <h5 className="text-sm font-medium text-gray-900 mb-3">Datos del Portador</h5>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email del Usuario *
+                      Email del Portador *
                     </label>
                     <input
                       {...assignForm.register('portadorEmail', {
@@ -2663,7 +2663,7 @@ function DashboardContent() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      RUT del Usuario *
+                      RUT del Portador *
                     </label>
                     <input
                       {...assignForm.register('portadorRut', {
@@ -3150,7 +3150,7 @@ function DashboardContent() {
                       {assigningPulsera?.portador ? 'Actualizando...' : 'Asignando...'}
                     </span>
                   ) : (
-                    assigningPulsera?.portador ? 'Actualizar Asignación' : 'Asignar a Usuario'
+                    assigningPulsera?.portador ? 'Actualizar Asignación' : 'Asignar a Portador'
                   )}
                 </button>
               </div>

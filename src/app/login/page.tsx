@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
@@ -93,19 +94,34 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        {/* Back Button */}
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Volver al inicio
-        </Link>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
+      {/* Franja de identificación Bluko */}
+      <div className="w-full py-3 px-4" style={{background: 'linear-gradient(to right, #3d1158, #481468)'}}>
+        <div className="max-w-md mx-auto flex items-center justify-center gap-3">
+          <Image
+            src="/logo-bluko-small.jpg"
+            alt="Bluko Life"
+            width={32}
+            height={32}
+            className="rounded-full"
+          />
+          <span className="text-white font-bold text-lg">BLUKO LIFE®</span>
+        </div>
+      </div>
 
-        {/* Form Container */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+      <div className="flex items-center justify-center p-4 pt-8">
+        <div className="max-w-md w-full">
+          {/* Back Button */}
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Volver al inicio
+          </Link>
+
+          {/* Form Container */}
+          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{backgroundColor: '#f8f4ff'}}>
@@ -172,7 +188,7 @@ export default function LoginPage() {
                       }
                     })}
                     type="email"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors text-black"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-[#481468] transition-colors text-black"
                     placeholder="tu@email.com"
                   />
                 </div>
@@ -194,7 +210,7 @@ export default function LoginPage() {
                       minLength: { value: 6, message: 'Mínimo 6 caracteres' }
                     })}
                     type={showPassword ? 'text' : 'password'}
-                    className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors text-black"
+                    className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-[#481468] transition-colors text-black"
                     placeholder="Tu contraseña"
                   />
                   <button
@@ -265,7 +281,7 @@ export default function LoginPage() {
                           }
                         })}
                         type="email"
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors text-black"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-[#481468] transition-colors text-black"
                         placeholder="tu@email.com"
                       />
                     </div>
@@ -325,7 +341,7 @@ export default function LoginPage() {
                         })}
                         type="text"
                         maxLength={6}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors text-black text-center text-2xl tracking-widest"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-[#481468] transition-colors text-black text-center text-2xl tracking-widest"
                         placeholder="000000"
                       />
                     </div>
@@ -385,18 +401,19 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Demo Note */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="flex items-start gap-3">
-              <Shield className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <h4 className="text-sm font-medium text-blue-900 mb-1">
-                  Demo de la aplicación
-                </h4>
-                <p className="text-xs text-blue-700">
-                  Esta es una demostración del sistema Bluko Life. 
-                  En producción se conectaría a un backend real.
-                </p>
+            {/* Demo Note */}
+            <div className="mt-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="flex items-start gap-3">
+                <Shield className="w-5 h-5 text-[#481468] mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="text-sm font-medium text-purple-900 mb-1">
+                    Demo de la aplicación
+                  </h4>
+                  <p className="text-xs text-purple-700">
+                    Esta es una demostración del sistema Bluko Life.
+                    En producción se conectaría a un backend real.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
