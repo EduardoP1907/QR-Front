@@ -51,10 +51,10 @@ function SubscriptionContent() {
 
   const handleQuantityChange = (increment: boolean) => {
     if (increment) {
-      const newQuantity = Math.min(quantity + 1, 10); // Máximo 10 pulseras
+      const newQuantity = Math.min(quantity + 1, 10); // Máximo 10 dispositivos
       setQuantity(newQuantity);
     } else {
-      const newQuantity = Math.max(quantity - 1, 1); // Mínimo 1 pulsera
+      const newQuantity = Math.max(quantity - 1, 1); // Mínimo 1 dispositivo
       setQuantity(newQuantity);
     }
   };
@@ -108,7 +108,7 @@ function SubscriptionContent() {
             <span>Volver</span>
           </button>
           <div className="flex items-center gap-2">
-            <Shield className="w-6 h-6" style={{color: '#551A8B'}} />
+            <Shield className="w-6 h-6" style={{color: '#481468'}} />
             <h1 className="text-xl font-semibold text-gray-900">Plan Bluko Life</h1>
           </div>
         </div>
@@ -147,7 +147,7 @@ function SubscriptionContent() {
             </div>
 
             {/* Plan Card */}
-            <div className="text-white rounded-2xl p-6" style={{background: 'linear-gradient(to right, #3C0B5A, #551A8B)'}}>
+            <div className="text-white rounded-2xl p-6" style={{background: 'linear-gradient(to right, #3C0B5A, #481468)'}}>
               <div className="flex items-center gap-3 mb-6">
                 <Heart className="w-6 h-6" />
                 <h2 className="text-2xl font-bold">SUSCRIPCIÓN</h2>
@@ -257,7 +257,7 @@ function SubscriptionContent() {
                   <hr />
                   <div className="flex items-center justify-between">
                     <span className="text-lg font-semibold text-gray-900">Total primer pago:</span>
-                    <span className="text-2xl font-bold" style={{color: '#551A8B'}}>
+                    <span className="text-2xl font-bold" style={{color: '#481468'}}>
                       ${(TOTAL_PER_PULSERA * quantity).toLocaleString('es-CL')} CLP
                     </span>
                   </div>
@@ -271,7 +271,7 @@ function SubscriptionContent() {
                       checked={acceptedTerms}
                       onChange={(e) => setAcceptedTerms(e.target.checked)}
                       className="mt-1 w-4 h-4 border-gray-300 rounded focus:ring-2 focus:ring-opacity-75"
-                      style={{color: '#83C341', accentColor: '#83C341'}}
+                      style={{color: '#82c341', accentColor: '#82c341'}}
                     />
                     <span className="text-sm text-gray-600">
                       Acepto los{' '}
@@ -279,7 +279,7 @@ function SubscriptionContent() {
                         type="button"
                         onClick={() => setShowTermsModal(true)}
                         className="underline font-medium hover:opacity-80"
-                        style={{color: '#551A8B'}}
+                        style={{color: '#481468'}}
                       >
                         términos y condiciones
                       </button>{' '}
@@ -292,7 +292,7 @@ function SubscriptionContent() {
                   type="submit"
                   disabled={processing || !acceptedTerms}
                   className="w-full inline-flex items-center justify-center gap-2 text-white px-6 py-3 rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                  style={{backgroundColor: '#83C341'}}
+                  style={{backgroundColor: '#82c341'}}
                 >
                   <CreditCard className="w-5 h-5" />
                   <span>{processing ? 'Redirigiendo...' : 'Proceder al Pago'}</span>
@@ -333,7 +333,7 @@ function SubscriptionContent() {
                   </p>
                 </div>
 
-                <h3 className="text-xl font-bold mb-4" style={{color: '#551A8B'}}>VERSIÓN PROMOCIONAL</h3>
+                <h3 className="text-xl font-bold mb-4" style={{color: '#481468'}}>VERSIÓN PROMOCIONAL</h3>
                 
                 <p className="mb-4">
                   En Santiago de Chile, a la fecha de aceptación electrónica, comparecen:
@@ -348,7 +348,7 @@ function SubscriptionContent() {
                   <strong>Dos)</strong> Don FRANCISCO JAVIER MONROY FERNÁNDEZ, chileno, divorciado, contador auditor, 
                   cédula de identidad número 6.345.154-1, y Don IAN ALEXANDER FODEN SALINAS, chileno, casado y separado totalmente de bienes, 
                   empresario, cédula de identidad número 8.481.837-2, ambos en representación de BLUKO SpA, sociedad del giro confección, 
-                  elaboración y producción de todo tipo de tarjetas y pulseras de información, rol único tributario número 77.934.574-2, 
+                  elaboración y producción de todo tipo de tarjetas y dispositivos de información, rol único tributario número 77.934.574-2, 
                   todos con domicilio en Felix de Amesti 121 Dpto. 131, comuna de Las Condes, Región Metropolitana, 
                   en adelante indistintamente como "Bluko".
                 </p>
@@ -383,10 +383,10 @@ function SubscriptionContent() {
 
                 <h4 className="text-lg font-semibold mb-3">CUARTO. Condiciones Especiales de Contratación</h4>
                 <div className="space-y-2 mb-4">
-                  <p><strong>A) Descripción del Producto:</strong> Bluko Life - Pulsera con código QR que permite acceder a información médica ingresada y administrada por el Usuario.</p>
+                  <p><strong>A) Descripción del Producto:</strong> Bluko Life - Dispositivo con código QR que permite acceder a información médica ingresada y administrada por el Usuario.</p>
                   <p><strong>B) Ingreso de información:</strong> El Usuario será el único responsable de la información ingresada, pudiendo modificarla en cualquier momento.</p>
                   <p><strong>C) Consentimiento:</strong> La aceptación electrónica del contrato equivale a la firma.</p>
-                  <p><strong>D) Utilización y cuidado de la Pulsera:</strong> Debe usarse siguiendo las instrucciones de Bluko.</p>
+                  <p><strong>D) Utilización y cuidado del Dispositivo:</strong> Debe usarse siguiendo las instrucciones de Bluko.</p>
                   <p><strong>E) Acceso a la información:</strong> Mediante escaneo del código QR. Requiere conexión a internet.</p>
                   <p><strong>F) Uso de la información:</strong> Solo para los fines indicados por el Usuario.</p>
                   <p><strong>G) Responsabilidad:</strong> El Usuario es el único responsable de la información ingresada.</p>
@@ -395,7 +395,7 @@ function SubscriptionContent() {
 
                 <h4 className="text-lg font-semibold mb-3">QUINTO. Obligaciones de las Partes</h4>
                 <p className="mb-2"><strong>Bluko:</strong> Mantener operatividad de la web y cumplir con la política de garantía.</p>
-                <p className="mb-4"><strong>Usuario:</strong> Usar la pulsera conforme a este contrato, pagar el servicio, mantener actualizada la información.</p>
+                <p className="mb-4"><strong>Usuario:</strong> Usar el dispositivo conforme a este contrato, pagar el servicio, mantener actualizada la información.</p>
 
                 <div className="grid md:grid-cols-2 gap-4 mb-6">
                   <div>
@@ -454,7 +454,7 @@ function SubscriptionContent() {
 
                 <div className="rounded-lg p-4 mb-6 border" style={{backgroundColor: '#f8f4ff', borderColor: '#d4c5f9'}}>
                   <h4 className="text-lg font-semibold mb-2" style={{color: '#3C0B5A'}}>ARTÍCULO TRANSITORIO – Versión Promocional</h4>
-                  <p className="text-sm" style={{color: '#551A8B'}}>
+                  <p className="text-sm" style={{color: '#481468'}}>
                     Incluye condiciones especiales de periodo gratuito, carácter de agente promocional y condiciones de suscripción presencial.
                   </p>
                 </div>
@@ -467,7 +467,7 @@ function SubscriptionContent() {
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="underline hover:opacity-80"
-                      style={{color: '#551A8B'}}
+                      style={{color: '#481468'}}
                     >
                       https://www.blukolatam.com/términos-y-condiciones
                     </a>
@@ -489,7 +489,7 @@ function SubscriptionContent() {
                   setShowTermsModal(false);
                 }}
                 className="px-6 py-2 text-white rounded-lg hover:opacity-90 transition-all"
-                style={{backgroundColor: '#83C341'}}
+                style={{backgroundColor: '#82c341'}}
               >
                 Acepto los Términos
               </button>

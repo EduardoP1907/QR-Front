@@ -47,12 +47,12 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#481468] via-[#5a1a80] to-[#3d1158] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo / Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-full mb-4">
-            <Shield className="w-12 h-12 text-purple-800" />
+            <Shield className="w-12 h-12 text-[#481468]" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Panel de Administración</h1>
           <p className="text-purple-200">Acceso exclusivo para administradores</p>
@@ -79,7 +79,7 @@ export default function AdminLoginPage() {
                     }
                   })}
                   type="email"
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-[#481468] text-black"
                   placeholder="admin@ejemplo.com"
                 />
               </div>
@@ -102,7 +102,7 @@ export default function AdminLoginPage() {
                     required: 'La contraseña es requerida'
                   })}
                   type={showPassword ? 'text' : 'password'}
-                  className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
+                  className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-[#481468] text-black"
                   placeholder="••••••••"
                 />
                 <button
@@ -126,7 +126,7 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3 px-4 bg-purple-800 hover:bg-purple-900 text-white font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full py-3 px-4 bg-[#481468] hover:bg-[#3d1158] text-white font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-[#481468] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isSubmitting ? 'Iniciando sesión...' : 'Iniciar sesión'}
             </button>
@@ -136,7 +136,7 @@ export default function AdminLoginPage() {
         {/* Footer */}
         <div className="text-center mt-6">
           <p className="text-purple-200 text-sm">
-            Sistema de gestión Pulseras QR
+            Sistema de gestión Dispositivos Bluko Life
           </p>
         </div>
       </div>

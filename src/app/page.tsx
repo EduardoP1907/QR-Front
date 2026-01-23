@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   Shield,
@@ -26,7 +27,7 @@ export default function Home() {
     <div className="min-h-screen">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 opacity-90" style={{background: 'linear-gradient(to right, #3C0B5A, #551A8B)'}}></div>
+        <div className="absolute inset-0 opacity-90" style={{background: 'linear-gradient(to right, #3d1158, #481468)'}}></div>
         <div
           className="absolute inset-0 opacity-20"
           style={{
@@ -40,14 +41,20 @@ export default function Home() {
             <div className="flex justify-center mb-8">
               <div className="relative">
                 <div className="absolute -inset-4 bg-white/20 rounded-full animate-pulse"></div>
-                <div className="relative bg-white/10 backdrop-blur-sm p-6 rounded-full border border-white/20">
-                  <Shield className="w-16 h-16 text-white" />
+                <div className="relative bg-white/10 backdrop-blur-sm p-4 rounded-full border border-white/20">
+                  <Image
+                    src="/logo-bluko.jpg"
+                    alt="Bluko Life"
+                    width={80}
+                    height={80}
+                    className="rounded-full"
+                  />
                 </div>
               </div>
             </div>
 
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 animate-fade-in">
-              Pulseras
+              Dispositivos
               <span className="bg-gradient-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent">
                 {' '}Inteligentes
               </span>
@@ -95,7 +102,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              ¿Por qué elegir nuestras pulseras?
+              ¿Por qué elegir nuestros dispositivos?
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Tecnología innovadora para tu seguridad y tranquilidad
@@ -113,7 +120,7 @@ export default function Home() {
                 Códigos QR Únicos
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                Cada pulsera tiene un código QR único que permite acceso inmediato 
+                Cada dispositivo tiene un código QR único que permite acceso inmediato
                 a la información médica y contactos de emergencia.
               </p>
             </div>
@@ -152,7 +159,7 @@ export default function Home() {
       </div>
 
       {/* CTA Section */}
-      <div className="py-20" style={{background: 'linear-gradient(to right, #3C0B5A, #551A8B)'}}>
+      <div className="py-20" style={{background: 'linear-gradient(to right, #3d1158, #481468)'}}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Comienza hoy mismo
@@ -166,9 +173,9 @@ export default function Home() {
             <Link
               href="/register"
               className="group inline-flex items-center gap-3 bg-white px-10 py-5 rounded-2xl font-bold text-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl"
-              style={{color: '#551A8B'}}
+              style={{color: '#481468'}}
             >
-              Comprar mi primera pulsera
+              Comprar mi primer dispositivo
               <ChevronRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
             </Link>
             
@@ -183,7 +190,7 @@ export default function Home() {
           </div>
           
           <p className="text-white opacity-80 text-sm mt-6">
-            ¿Te asignaron una pulsera? Accede como usuario para gestionar tu información médica
+            ¿Te asignaron un dispositivo? Accede como usuario para gestionar tu información médica
           </p>
         </div>
       </div>
@@ -191,8 +198,14 @@ export default function Home() {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="flex justify-center items-center gap-2 mb-4">
-            <Shield className="w-8 h-8 text-blue-400" />
+          <div className="flex justify-center items-center gap-3 mb-4">
+            <Image
+              src="/logo-bluko-small.jpg"
+              alt="Bluko Life"
+              width={40}
+              height={40}
+              className="rounded-full"
+            />
             <span className="text-2xl font-bold">Bluko Life</span>
           </div>
           <p className="text-gray-400">

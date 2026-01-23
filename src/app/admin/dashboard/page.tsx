@@ -21,7 +21,9 @@ import {
   User,
   Users,
   Mail,
-  CreditCard
+  CreditCard,
+  Search,
+  RefreshCw
 } from 'lucide-react';
 import { adminApi } from '@/services/api';
 
@@ -122,10 +124,56 @@ export default function AdminDashboardPage() {
   const [showQrModal, setShowQrModal] = useState(false);
   const [qrCustomId, setQrCustomId] = useState<string>('');
 
+  // Estado para buscador
+  const [searchTerm, setSearchTerm] = useState<string>('');
+
+  // Función para formatear fecha
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return '-';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('es-CL', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return '-';
+    }
+  };
+
+  // Función para cambiar tab sin afectar el historial del navegador
+  const handleTabChange = (newTab: typeof activeTab) => {
+    setActiveTab(newTab);
+    // Usar replaceState para no agregar al historial
+    window.history.replaceState({ tab: newTab }, '', window.location.pathname);
+  };
+
+  // Función para refrescar datos del dashboard
+  const refreshDashboard = async () => {
+    await loadData();
+    toast.success('Datos actualizados');
+  };
+
   useEffect(() => {
     checkAuth();
     loadData();
-  }, []);
+
+    // Manejar el botón "atrás" del navegador
+    const handlePopState = (event: PopStateEvent) => {
+      // Si estamos en una pestaña diferente a dashboard, volver al dashboard
+      if (activeTab !== 'dashboard') {
+        event.preventDefault();
+        setActiveTab('dashboard');
+        window.history.pushState({ tab: 'dashboard' }, '', window.location.pathname);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [activeTab]);
 
   useEffect(() => {
     const loadTabData = async () => {
@@ -377,14 +425,6 @@ export default function AdminDashboardPage() {
     router.push('/admin/login');
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-CL', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
   const toggleSelectForFabrication = (id: number) => {
     const newSet = new Set(selectedForFabrication);
     if (newSet.has(id)) {
@@ -561,7 +601,7 @@ export default function AdminDashboardPage() {
     } finally {
       setSelectedPedidosParaDespachar(new Set());
       await loadPorDespacharPulseras();
-      await loadStats();
+      await loadData();
     }
   };
 
@@ -621,9 +661,9 @@ export default function AdminDashboardPage() {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
         <div className="text-center">
           <div className="relative">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[#7030A0] mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[#481468] mx-auto mb-4"></div>
             <div className="absolute inset-0 flex items-center justify-center">
-              <Shield className="w-8 h-8 text-[#7030A0] animate-pulse" />
+              <Shield className="w-8 h-8 text-[#481468] animate-pulse" />
             </div>
           </div>
           <p className="text-gray-600 font-medium">Cargando dashboard...</p>
@@ -639,11 +679,11 @@ export default function AdminDashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="p-2.5 bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-xl shadow-lg">
+              <div className="p-2.5 bg-gradient-to-br from-[#481468] to-[#3d1158] rounded-xl shadow-lg">
                 <Shield className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] bg-clip-text text-transparent">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-[#481468] to-[#3d1158] bg-clip-text text-transparent">
                   Administración Plataforma
                 </h1>
                 <p className="text-sm text-gray-500 font-medium">Bluko Life</p>
@@ -666,15 +706,24 @@ export default function AdminDashboardPage() {
         {/* Dashboard Tab */}
         {activeTab === 'dashboard' && stats && (
           <div className="space-y-8 animate-fadeIn">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Panel Principal</h2>
-              <p className="text-gray-600">Vista general del sistema Bluko Life</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Panel Principal</h2>
+                <p className="text-gray-600">Vista general del sistema Bluko Life</p>
+              </div>
+              <button
+                onClick={refreshDashboard}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[#481468] text-white rounded-lg hover:bg-[#3d1158] transition-colors font-semibold"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Actualizar
+              </button>
             </div>
 
             {/* Stats Cards Grid - 8 cards morados */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Card 1: Generados */}
-              <button onClick={() => setActiveTab('fabricar')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
+              <button onClick={() => handleTabChange('fabricar')} className="group bg-gradient-to-br from-[#481468] to-[#3d1158] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
                     <Package className="w-6 h-6" />
@@ -686,19 +735,19 @@ export default function AdminDashboardPage() {
               </button>
 
               {/* Card 2: En Fabricación */}
-              <button onClick={() => setActiveTab('enFabricacion')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
+              <button onClick={() => handleTabChange('enFabricacion')} className="group bg-gradient-to-br from-[#481468] to-[#3d1158] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
                     <TrendingUp className="w-6 h-6" />
                   </div>
                   <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
                 </div>
-                <p className="text-sm font-medium opacity-90 mb-1">Bluko Life En Fabricación</p>
+                <p className="text-sm font-medium opacity-90 mb-1">Bluko Life en Fabricación</p>
                 <p className="text-4xl font-bold tracking-tight">{stats.enFabricacion.toLocaleString()}</p>
               </button>
 
               {/* Card 3: Fabricados */}
-              <button onClick={() => setActiveTab('fabricados')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
+              <button onClick={() => handleTabChange('fabricados')} className="group bg-gradient-to-br from-[#481468] to-[#3d1158] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
                     <CheckCircle className="w-6 h-6" />
@@ -710,19 +759,19 @@ export default function AdminDashboardPage() {
               </button>
 
               {/* Card 4: En Stock */}
-              <button onClick={() => setActiveTab('enStock')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
+              <button onClick={() => handleTabChange('enStock')} className="group bg-gradient-to-br from-[#481468] to-[#3d1158] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
                     <Package className="w-6 h-6" />
                   </div>
                   <Check className="w-5 h-5 opacity-50 group-hover:opacity-100 transition-opacity" />
                 </div>
-                <p className="text-sm font-medium opacity-90 mb-1">Bluko Life En Stock</p>
+                <p className="text-sm font-medium opacity-90 mb-1">Bluko Life en Stock</p>
                 <p className="text-4xl font-bold tracking-tight">{stats.enStock.toLocaleString()}</p>
               </button>
 
               {/* Card 5: Asignados */}
-              <button onClick={() => setActiveTab('asignados')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
+              <button onClick={() => handleTabChange('asignados')} className="group bg-gradient-to-br from-[#481468] to-[#3d1158] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
                     <Check className="w-6 h-6" />
@@ -734,7 +783,7 @@ export default function AdminDashboardPage() {
               </button>
 
               {/* Card 6: Suscritos */}
-              <button onClick={() => setActiveTab('suscritos')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
+              <button onClick={() => handleTabChange('suscritos')} className="group bg-gradient-to-br from-[#481468] to-[#3d1158] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
                     <Shield className="w-6 h-6" />
@@ -746,19 +795,19 @@ export default function AdminDashboardPage() {
               </button>
 
               {/* Card 7: Por Despachar */}
-              <button onClick={() => setActiveTab('porDespachar')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
+              <button onClick={() => handleTabChange('porDespachar')} className="group bg-gradient-to-br from-[#481468] to-[#3d1158] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
                     <AlertCircle className="w-6 h-6" />
                   </div>
                   <TrendingUp className="w-5 h-5 opacity-50 group-hover:opacity-100 transition-opacity" />
                 </div>
-                <p className="text-sm font-medium opacity-90 mb-1">Bluko Life Por Despachar</p>
+                <p className="text-sm font-medium opacity-90 mb-1">Bluko Life por Despachar</p>
                 <p className="text-4xl font-bold tracking-tight">{stats.porDespachar.toLocaleString()}</p>
               </button>
 
               {/* Card 8: Despachados */}
-              <button onClick={() => setActiveTab('despachados')} className="group bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
+              <button onClick={() => handleTabChange('despachados')} className="group bg-gradient-to-br from-[#481468] to-[#3d1158] rounded-2xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
                     <Truck className="w-6 h-6" />
@@ -773,13 +822,13 @@ export default function AdminDashboardPage() {
             {/* Menu Options */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-12">
               <button
-                onClick={() => setActiveTab('generar')}
-                className="group relative overflow-hidden bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-transparent hover:border-[#7030A0]"
+                onClick={() => handleTabChange('generar')}
+                className="group relative overflow-hidden bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-transparent hover:border-[#481468]"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-[#7030A0]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-[#481468]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div className="relative flex items-center gap-4">
-                  <div className="p-3 bg-[#7030A0]/10 rounded-xl group-hover:bg-[#7030A0]/20 transition-colors">
-                    <Package className="w-6 h-6 text-[#7030A0]" />
+                  <div className="p-3 bg-[#481468]/10 rounded-xl group-hover:bg-[#481468]/20 transition-colors">
+                    <Package className="w-6 h-6 text-[#481468]" />
                   </div>
                   <div className="text-left">
                     <p className="font-bold text-gray-900 text-lg">Generar Bluko Life</p>
@@ -789,13 +838,13 @@ export default function AdminDashboardPage() {
               </button>
 
               <button
-                onClick={() => setActiveTab('fabricar')}
-                className="group relative overflow-hidden bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-transparent hover:border-[#7030A0]"
+                onClick={() => handleTabChange('fabricar')}
+                className="group relative overflow-hidden bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-transparent hover:border-[#481468]"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-[#7030A0]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-[#481468]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div className="relative flex items-center gap-4">
-                  <div className="p-3 bg-[#7030A0]/10 rounded-xl group-hover:bg-[#7030A0]/20 transition-colors">
-                    <TrendingUp className="w-6 h-6 text-[#7030A0]" />
+                  <div className="p-3 bg-[#481468]/10 rounded-xl group-hover:bg-[#481468]/20 transition-colors">
+                    <TrendingUp className="w-6 h-6 text-[#481468]" />
                   </div>
                   <div className="text-left">
                     <p className="font-bold text-gray-900 text-lg">Fabricar Bluko Life</p>
@@ -805,13 +854,13 @@ export default function AdminDashboardPage() {
               </button>
 
               <button
-                onClick={() => setActiveTab('enFabricacion')}
-                className="group relative overflow-hidden bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-transparent hover:border-[#7030A0]"
+                onClick={() => handleTabChange('enFabricacion')}
+                className="group relative overflow-hidden bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-transparent hover:border-[#481468]"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-[#7030A0]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-[#481468]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div className="relative flex items-center gap-4">
-                  <div className="p-3 bg-[#7030A0]/10 rounded-xl group-hover:bg-[#7030A0]/20 transition-colors">
-                    <TrendingUp className="w-6 h-6 text-[#7030A0]" />
+                  <div className="p-3 bg-[#481468]/10 rounded-xl group-hover:bg-[#481468]/20 transition-colors">
+                    <TrendingUp className="w-6 h-6 text-[#481468]" />
                   </div>
                   <div className="text-left">
                     <p className="font-bold text-gray-900 text-lg">En Fabricación</p>
@@ -821,13 +870,13 @@ export default function AdminDashboardPage() {
               </button>
 
               <button
-                onClick={() => setActiveTab('administrar')}
-                className="group relative overflow-hidden bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-transparent hover:border-[#7030A0]"
+                onClick={() => handleTabChange('administrar')}
+                className="group relative overflow-hidden bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-transparent hover:border-[#481468]"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-[#7030A0]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-[#481468]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div className="relative flex items-center gap-4">
-                  <div className="p-3 bg-[#7030A0]/10 rounded-xl group-hover:bg-[#7030A0]/20 transition-colors">
-                    <Shield className="w-6 h-6 text-[#7030A0]" />
+                  <div className="p-3 bg-[#481468]/10 rounded-xl group-hover:bg-[#481468]/20 transition-colors">
+                    <Shield className="w-6 h-6 text-[#481468]" />
                   </div>
                   <div className="text-left">
                     <p className="font-bold text-gray-900 text-lg">Administrar Bluko Life</p>
@@ -843,8 +892,8 @@ export default function AdminDashboardPage() {
         {activeTab === 'generar' && stats && (
           <div className="space-y-6 animate-fadeIn">
             <button
-              onClick={() => setActiveTab('dashboard')}
-              className="inline-flex items-center gap-2 text-[#7030A0] hover:text-[#5d2785] font-semibold group transition-colors"
+              onClick={() => handleTabChange('dashboard')}
+              className="inline-flex items-center gap-2 text-[#481468] hover:text-[#3d1158] font-semibold group transition-colors"
             >
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
               Volver al Dashboard
@@ -857,7 +906,7 @@ export default function AdminDashboardPage() {
 
             {/* Último Generado Card */}
             <div className="inline-block">
-              <div className="bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-2xl p-6 text-white shadow-xl">
+              <div className="bg-gradient-to-br from-[#481468] to-[#3d1158] rounded-2xl p-6 text-white shadow-xl">
                 <p className="text-sm font-medium opacity-90 mb-2">Último código generado</p>
                 <p className="text-3xl font-bold tracking-tight">{stats.ultimoGenerado || 'N/A'}</p>
               </div>
@@ -878,14 +927,14 @@ export default function AdminDashboardPage() {
                     value={generateQuantity}
                     onChange={(e) => setGenerateQuantity(parseInt(e.target.value) || 1)}
                     placeholder="Ingrese cantidad"
-                    className="w-full max-w-md px-5 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#7030A0] focus:border-transparent text-black text-lg font-medium transition-all"
+                    className="w-full max-w-md px-5 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#481468] focus:border-transparent text-black text-lg font-medium transition-all"
                   />
                 </div>
 
                 <button
                   onClick={handleGenerateQrs}
                   disabled={isGenerating}
-                  className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#00FF00] to-[#00DD00] text-black font-bold rounded-xl hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
+                  className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#82c341] to-[#6ba832] text-black font-bold rounded-xl hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
                 >
                   {isGenerating ? (
                     <>
@@ -908,21 +957,34 @@ export default function AdminDashboardPage() {
         {activeTab === 'fabricar' && (
           <div className="space-y-6 animate-fadeIn">
             <button
-              onClick={() => setActiveTab('dashboard')}
-              className="inline-flex items-center gap-2 text-[#7030A0] hover:text-[#5d2785] font-semibold group transition-colors"
+              onClick={() => handleTabChange('dashboard')}
+              className="inline-flex items-center gap-2 text-[#481468] hover:text-[#3d1158] font-semibold group transition-colors"
             >
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
               Volver al Dashboard
             </button>
 
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Fabricar Bluko Life Generados</h2>
-              <p className="text-gray-600">Seleccionar códigos QR para fabricación física</p>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Fabricar Bluko Life Generados</h2>
+                <p className="text-gray-600">Seleccionar códigos QR para fabricación física</p>
+              </div>
+              {/* Buscador */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar por ID o UUID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-transparent w-full md:w-80 text-black"
+                />
+              </div>
             </div>
 
             {loadingPulseras ? (
               <div className="flex items-center justify-center py-16">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#7030A0]"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#481468]"></div>
               </div>
             ) : (
               <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden">
@@ -933,25 +995,34 @@ export default function AdminDashboardPage() {
                         <th className="px-6 py-5 text-center">
                           <input
                             type="checkbox"
-                            checked={selectedForFabrication.size === unassignedPulseras.length && unassignedPulseras.length > 0}
+                            checked={selectedForFabrication.size === unassignedPulseras.filter(p =>
+                              p.customId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              p.qrCode.toLowerCase().includes(searchTerm.toLowerCase())
+                            ).length && unassignedPulseras.length > 0}
                             onChange={toggleSelectAllForFabrication}
-                            className="w-5 h-5 rounded border-gray-300 text-[#7030A0] focus:ring-[#7030A0] cursor-pointer"
+                            className="w-5 h-5 rounded border-gray-300 text-[#481468] focus:ring-[#481468] cursor-pointer"
                           />
                           <div className="text-sm font-bold text-gray-900 mt-2">Todos</div>
                         </th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Código QR (UUID)</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Creación</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {unassignedPulseras.map((pulsera) => (
+                      {unassignedPulseras
+                        .filter(p =>
+                          p.customId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          p.qrCode.toLowerCase().includes(searchTerm.toLowerCase())
+                        )
+                        .map((pulsera) => (
                         <tr key={pulsera.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-6 py-4 text-center">
                             <input
                               type="checkbox"
                               checked={selectedForFabrication.has(pulsera.id)}
                               onChange={() => toggleSelectForFabrication(pulsera.id)}
-                              className="w-5 h-5 rounded border-gray-300 text-[#7030A0] focus:ring-[#7030A0] cursor-pointer"
+                              className="w-5 h-5 rounded border-gray-300 text-[#481468] focus:ring-[#481468] cursor-pointer"
                             />
                           </td>
                           <td className="px-6 py-4">
@@ -961,6 +1032,9 @@ export default function AdminDashboardPage() {
                             <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 inline-block">
                               <span className="text-gray-700 font-mono text-sm">{pulsera.qrCode}</span>
                             </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-gray-600 text-sm">{formatDate(pulsera.createdAt)}</span>
                           </td>
                         </tr>
                       ))}
@@ -980,7 +1054,7 @@ export default function AdminDashboardPage() {
                   <div className="p-6 border-t-2 border-gray-100 bg-gray-50">
                     <button
                       onClick={handleDownloadAndFabricate}
-                      className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#00FF00] to-[#00DD00] text-black font-bold rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                      className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#82c341] to-[#6ba832] text-black font-bold rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
                     >
                       <Download className="w-5 h-5" />
                       Descarga para Fabricar ({selectedForFabrication.size})
@@ -996,21 +1070,34 @@ export default function AdminDashboardPage() {
         {activeTab === 'enFabricacion' && (
           <div className="space-y-6 animate-fadeIn">
             <button
-              onClick={() => setActiveTab('dashboard')}
-              className="inline-flex items-center gap-2 text-[#7030A0] hover:text-[#5d2785] font-semibold group transition-colors"
+              onClick={() => handleTabChange('dashboard')}
+              className="inline-flex items-center gap-2 text-[#481468] hover:text-[#3d1158] font-semibold group transition-colors"
             >
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
               Volver al Dashboard
             </button>
 
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Bluko Life En Fabricación</h2>
-              <p className="text-gray-600">Marcar como fabricados los que llegaron físicamente</p>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Bluko Life en Fabricación</h2>
+                <p className="text-gray-600">Marcar como fabricados los que llegaron físicamente</p>
+              </div>
+              {/* Buscador */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar por ID o UUID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-transparent w-full md:w-80 text-black"
+                />
+              </div>
             </div>
 
             {loadingPulseras ? (
               <div className="flex items-center justify-center py-16">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#7030A0]"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#481468]"></div>
               </div>
             ) : (
               <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden">
@@ -1021,26 +1108,35 @@ export default function AdminDashboardPage() {
                         <th className="px-6 py-5 text-center">
                           <input
                             type="checkbox"
-                            checked={selectedForFabricated.size === inFabricationPulseras.length && inFabricationPulseras.length > 0}
+                            checked={selectedForFabricated.size === inFabricationPulseras.filter(p =>
+                              p.customId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              p.qrCode.toLowerCase().includes(searchTerm.toLowerCase())
+                            ).length && inFabricationPulseras.length > 0}
                             onChange={toggleSelectAllForFabricated}
-                            className="w-5 h-5 rounded border-gray-300 text-[#7030A0] focus:ring-[#7030A0] cursor-pointer"
+                            className="w-5 h-5 rounded border-gray-300 text-[#481468] focus:ring-[#481468] cursor-pointer"
                           />
                           <div className="text-sm font-bold text-gray-900 mt-2">Todos</div>
                         </th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Código QR (UUID)</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Creación</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {inFabricationPulseras.map((pulsera) => (
+                      {inFabricationPulseras
+                        .filter(p =>
+                          p.customId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          p.qrCode.toLowerCase().includes(searchTerm.toLowerCase())
+                        )
+                        .map((pulsera) => (
                         <tr key={pulsera.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-6 py-4 text-center">
                             <input
                               type="checkbox"
                               checked={selectedForFabricated.has(pulsera.id)}
                               onChange={() => toggleSelectForFabricated(pulsera.id)}
-                              className="w-5 h-5 rounded border-gray-300 text-[#7030A0] focus:ring-[#7030A0] cursor-pointer"
+                              className="w-5 h-5 rounded border-gray-300 text-[#481468] focus:ring-[#481468] cursor-pointer"
                             />
                           </td>
                           <td className="px-6 py-4">
@@ -1052,6 +1148,9 @@ export default function AdminDashboardPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4">
+                            <span className="text-gray-600 text-sm">{formatDate(pulsera.createdAt)}</span>
+                          </td>
+                          <td className="px-6 py-4">
                             {getStatusBadge(pulsera.status)}
                           </td>
                         </tr>
@@ -1059,7 +1158,10 @@ export default function AdminDashboardPage() {
                     </tbody>
                   </table>
 
-                  {inFabricationPulseras.length === 0 && (
+                  {inFabricationPulseras.filter(p =>
+                    p.customId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    p.qrCode.toLowerCase().includes(searchTerm.toLowerCase())
+                  ).length === 0 && (
                     <div className="text-center py-16">
                       <TrendingUp className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                       <p className="text-gray-500 font-medium text-lg">No hay Bluko Life en fabricación</p>
@@ -1072,7 +1174,7 @@ export default function AdminDashboardPage() {
                   <div className="p-6 border-t-2 border-gray-100 bg-gray-50">
                     <button
                       onClick={handleMarkAsFabricated}
-                      className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#00FF00] to-[#00DD00] text-black font-bold rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                      className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#82c341] to-[#6ba832] text-black font-bold rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
                     >
                       <CheckCircle className="w-5 h-5" />
                       Marcar como Fabricados ({selectedForFabricated.size})
@@ -1088,21 +1190,33 @@ export default function AdminDashboardPage() {
         {activeTab === 'fabricados' && (
           <div className="space-y-6 animate-fadeIn">
             <button
-              onClick={() => setActiveTab('dashboard')}
-              className="inline-flex items-center gap-2 text-[#7030A0] hover:text-[#5d2785] font-semibold group transition-colors"
+              onClick={() => handleTabChange('dashboard')}
+              className="inline-flex items-center gap-2 text-[#481468] hover:text-[#3d1158] font-semibold group transition-colors"
             >
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
               Volver al Dashboard
             </button>
 
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Bluko Life Fabricados</h2>
-              <p className="text-gray-600">Verificar QR y mover a Stock</p>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Bluko Life Fabricados</h2>
+                <p className="text-gray-600">Verificar QR y mover a Stock</p>
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar por ID o código QR..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-transparent w-full md:w-80"
+                />
+              </div>
             </div>
 
             {loadingPulseras ? (
               <div className="flex items-center justify-center py-16">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#7030A0]"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#481468]"></div>
               </div>
             ) : (
               <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden">
@@ -1115,24 +1229,30 @@ export default function AdminDashboardPage() {
                             type="checkbox"
                             checked={selectedForStock.size === fabricatedPulseras.length && fabricatedPulseras.length > 0}
                             onChange={toggleSelectAllForStock}
-                            className="w-5 h-5 rounded border-gray-300 text-[#7030A0] focus:ring-[#7030A0] cursor-pointer"
+                            className="w-5 h-5 rounded border-gray-300 text-[#481468] focus:ring-[#481468] cursor-pointer"
                           />
                           <div className="text-sm font-bold text-gray-900 mt-2">Todos</div>
                         </th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Código QR (UUID)</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Creación</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {fabricatedPulseras.map((pulsera) => (
+                      {fabricatedPulseras
+                        .filter(p =>
+                          p.customId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          p.qrCode.toLowerCase().includes(searchTerm.toLowerCase())
+                        )
+                        .map((pulsera) => (
                         <tr key={pulsera.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-6 py-4 text-center">
                             <input
                               type="checkbox"
                               checked={selectedForStock.has(pulsera.id)}
                               onChange={() => toggleSelectForStock(pulsera.id)}
-                              className="w-5 h-5 rounded border-gray-300 text-[#7030A0] focus:ring-[#7030A0] cursor-pointer"
+                              className="w-5 h-5 rounded border-gray-300 text-[#481468] focus:ring-[#481468] cursor-pointer"
                             />
                           </td>
                           <td className="px-6 py-4">
@@ -1142,6 +1262,9 @@ export default function AdminDashboardPage() {
                             <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 inline-block">
                               <span className="text-gray-700 font-mono text-sm">{pulsera.qrCode}</span>
                             </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-gray-600 text-sm">{formatDate(pulsera.createdAt)}</span>
                           </td>
                           <td className="px-6 py-4">
                             {getStatusBadge(pulsera.status)}
@@ -1164,7 +1287,7 @@ export default function AdminDashboardPage() {
                   <div className="p-6 border-t-2 border-gray-100 bg-gray-50">
                     <button
                       onClick={handleMoveToStock}
-                      className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#00FF00] to-[#00DD00] text-black font-bold rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                      className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#82c341] to-[#6ba832] text-black font-bold rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
                     >
                       <Package className="w-5 h-5" />
                       Mover a Stock ({selectedForStock.size})
@@ -1180,21 +1303,33 @@ export default function AdminDashboardPage() {
         {activeTab === 'enStock' && (
           <div className="space-y-6 animate-fadeIn">
             <button
-              onClick={() => setActiveTab('dashboard')}
-              className="inline-flex items-center gap-2 text-[#7030A0] hover:text-[#5d2785] font-semibold group transition-colors"
+              onClick={() => handleTabChange('dashboard')}
+              className="inline-flex items-center gap-2 text-[#481468] hover:text-[#3d1158] font-semibold group transition-colors"
             >
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
               Volver al Dashboard
             </button>
 
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Bluko Life En Stock</h2>
-              <p className="text-gray-600">QRs verificados y listos para asignar</p>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Bluko Life en Stock</h2>
+                <p className="text-gray-600">QRs verificados y listos para asignar</p>
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar por ID o código QR..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-transparent w-full md:w-80"
+                />
+              </div>
             </div>
 
             {loadingPulseras ? (
               <div className="flex items-center justify-center py-16">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#7030A0]"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#481468]"></div>
               </div>
             ) : (
               <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden">
@@ -1204,12 +1339,18 @@ export default function AdminDashboardPage() {
                       <tr>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Código QR (UUID)</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Creación</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Imagen QR</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {inStockPulseras.map((pulsera) => (
+                      {inStockPulseras
+                        .filter(p =>
+                          p.customId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          p.qrCode.toLowerCase().includes(searchTerm.toLowerCase())
+                        )
+                        .map((pulsera) => (
                         <tr key={pulsera.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-6 py-4">
                             <span className="text-black font-bold text-lg">{pulsera.customId}</span>
@@ -1220,12 +1361,15 @@ export default function AdminDashboardPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4">
+                            <span className="text-gray-600 text-sm">{formatDate(pulsera.createdAt)}</span>
+                          </td>
+                          <td className="px-6 py-4">
                             {getStatusBadge(pulsera.status)}
                           </td>
                           <td className="px-6 py-4">
                             <button
                               onClick={() => handleViewQrImage(pulsera.customId)}
-                              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-[#7030A0] hover:bg-[#7030A0]/10 rounded-lg font-semibold transition-colors"
+                              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-[#481468] hover:bg-[#481468]/10 rounded-lg font-semibold transition-colors"
                             >
                               <QrCode className="w-5 h-5" />
                               Ver Imagen
@@ -1253,21 +1397,33 @@ export default function AdminDashboardPage() {
         {activeTab === 'asignados' && (
           <div className="space-y-6 animate-fadeIn">
             <button
-              onClick={() => setActiveTab('dashboard')}
-              className="inline-flex items-center gap-2 text-[#7030A0] hover:text-[#5d2785] font-semibold group transition-colors"
+              onClick={() => handleTabChange('dashboard')}
+              className="inline-flex items-center gap-2 text-[#481468] hover:text-[#3d1158] font-semibold group transition-colors"
             >
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
               Volver al Dashboard
             </button>
 
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Bluko Life Asignados</h2>
-              <p className="text-gray-600">QRs asignados a portadores</p>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Bluko Life Asignados</h2>
+                <p className="text-gray-600">QRs asignados a portadores</p>
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar por ID, nombre o email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-transparent w-full md:w-80"
+                />
+              </div>
             </div>
 
             {loadingPulseras ? (
               <div className="flex items-center justify-center py-16">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#7030A0]"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#481468]"></div>
               </div>
             ) : (
               <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden">
@@ -1277,12 +1433,21 @@ export default function AdminDashboardPage() {
                       <tr>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Portador</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Creación</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Imagen QR</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {asignadosPulseras.map((pulsera) => (
+                      {asignadosPulseras
+                        .filter(p =>
+                          p.customId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          p.qrCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (p.portador?.firstName?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                          (p.portador?.paternalSurname?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                          (p.portador?.email?.toLowerCase().includes(searchTerm.toLowerCase()))
+                        )
+                        .map((pulsera) => (
                         <tr key={pulsera.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-6 py-4">
                             <span className="text-black font-bold text-lg">{pulsera.customId}</span>
@@ -1298,12 +1463,15 @@ export default function AdminDashboardPage() {
                             )}
                           </td>
                           <td className="px-6 py-4">
+                            <span className="text-gray-600 text-sm">{formatDate(pulsera.createdAt)}</span>
+                          </td>
+                          <td className="px-6 py-4">
                             {getStatusBadge(pulsera.status)}
                           </td>
                           <td className="px-6 py-4">
                             <button
                               onClick={() => handleViewQrImage(pulsera.customId)}
-                              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-[#7030A0] hover:bg-[#7030A0]/10 rounded-lg font-semibold transition-colors"
+                              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-[#481468] hover:bg-[#481468]/10 rounded-lg font-semibold transition-colors"
                             >
                               <QrCode className="w-5 h-5" />
                               Ver Imagen
@@ -1330,21 +1498,33 @@ export default function AdminDashboardPage() {
         {activeTab === 'suscritos' && (
           <div className="space-y-6 animate-fadeIn">
             <button
-              onClick={() => setActiveTab('dashboard')}
-              className="inline-flex items-center gap-2 text-[#7030A0] hover:text-[#5d2785] font-semibold group transition-colors"
+              onClick={() => handleTabChange('dashboard')}
+              className="inline-flex items-center gap-2 text-[#481468] hover:text-[#3d1158] font-semibold group transition-colors"
             >
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
               Volver al Dashboard
             </button>
 
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Bluko Life Suscritos</h2>
-              <p className="text-gray-600">QRs con suscripción activa</p>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Bluko Life Suscritos</h2>
+                <p className="text-gray-600">QRs con suscripción activa</p>
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar por ID, nombre o email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-transparent w-full md:w-80"
+                />
+              </div>
             </div>
 
             {loadingPulseras ? (
               <div className="flex items-center justify-center py-16">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#7030A0]"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#481468]"></div>
               </div>
             ) : (
               <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden">
@@ -1354,12 +1534,21 @@ export default function AdminDashboardPage() {
                       <tr>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Portador</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Creación</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Suscripción</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Imagen QR</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {suscritosPulseras.map((pulsera) => (
+                      {suscritosPulseras
+                        .filter(p =>
+                          p.customId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          p.qrCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (p.portador?.firstName?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                          (p.portador?.paternalSurname?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                          (p.portador?.email?.toLowerCase().includes(searchTerm.toLowerCase()))
+                        )
+                        .map((pulsera) => (
                         <tr key={pulsera.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-6 py-4">
                             <span className="text-black font-bold text-lg">{pulsera.customId}</span>
@@ -1373,6 +1562,9 @@ export default function AdminDashboardPage() {
                             ) : (
                               <span className="text-gray-400">Sin portador</span>
                             )}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-gray-600 text-sm">{formatDate(pulsera.createdAt)}</span>
                           </td>
                           <td className="px-6 py-4">
                             {pulsera.subscriptionActive ? (
@@ -1390,7 +1582,7 @@ export default function AdminDashboardPage() {
                           <td className="px-6 py-4">
                             <button
                               onClick={() => handleViewQrImage(pulsera.customId)}
-                              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-[#7030A0] hover:bg-[#7030A0]/10 rounded-lg font-semibold transition-colors"
+                              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-[#481468] hover:bg-[#481468]/10 rounded-lg font-semibold transition-colors"
                             >
                               <QrCode className="w-5 h-5" />
                               Ver Imagen
@@ -1417,33 +1609,44 @@ export default function AdminDashboardPage() {
         {activeTab === 'porDespachar' && (
           <div className="space-y-6 animate-fadeIn">
             <button
-              onClick={() => setActiveTab('dashboard')}
-              className="inline-flex items-center gap-2 text-[#7030A0] hover:text-[#5d2785] font-semibold group transition-colors"
+              onClick={() => handleTabChange('dashboard')}
+              className="inline-flex items-center gap-2 text-[#481468] hover:text-[#3d1158] font-semibold group transition-colors"
             >
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
               Volver al Dashboard
             </button>
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">Pedidos Por Despachar</h2>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Pedidos por Despachar</h2>
                 <p className="text-gray-600">Pedidos pendientes de envío a clientes</p>
               </div>
-
-              {selectedPedidosParaDespachar.size > 0 && (
-                <button
-                  onClick={handleMarcarPedidosComoDespachados}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold rounded-xl hover:from-green-700 hover:to-green-800 transition-all shadow-lg hover:shadow-xl"
-                >
-                  <Truck className="w-5 h-5" />
-                  Marcar como Despachado ({selectedPedidosParaDespachar.size})
-                </button>
-              )}
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Buscar por cliente, email, teléfono..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-transparent w-full md:w-80"
+                  />
+                </div>
+                {selectedPedidosParaDespachar.size > 0 && (
+                  <button
+                    onClick={handleMarcarPedidosComoDespachados}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold rounded-xl hover:from-green-700 hover:to-green-800 transition-all shadow-lg hover:shadow-xl"
+                  >
+                    <Truck className="w-5 h-5" />
+                    Marcar como Despachado ({selectedPedidosParaDespachar.size})
+                  </button>
+                )}
+              </div>
             </div>
 
             {loadingPulseras ? (
               <div className="flex items-center justify-center py-16">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#7030A0]"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#481468]"></div>
               </div>
             ) : (
               <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden">
@@ -1462,25 +1665,33 @@ export default function AdminDashboardPage() {
                                 setSelectedPedidosParaDespachar(new Set());
                               }
                             }}
-                            className="w-5 h-5 rounded border-gray-300 text-[#7030A0] focus:ring-[#7030A0] cursor-pointer"
+                            className="w-5 h-5 rounded border-gray-300 text-[#481468] focus:ring-[#481468] cursor-pointer"
                           />
                         </th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID Pedido</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Cliente</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Dirección de Envío</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Pedido</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Cantidad</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {porDespacharPedidos.map((pedido) => (
+                      {porDespacharPedidos
+                        .filter(p =>
+                          p.contratanteNombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          p.contratanteEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          p.telefono?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          p.id.toString().includes(searchTerm)
+                        )
+                        .map((pedido) => (
                         <tr key={pedido.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-6 py-4 text-center">
                             <input
                               type="checkbox"
                               checked={selectedPedidosParaDespachar.has(pedido.id)}
                               onChange={() => togglePedidoSelection(pedido.id)}
-                              className="w-5 h-5 rounded border-gray-300 text-[#7030A0] focus:ring-[#7030A0] cursor-pointer"
+                              className="w-5 h-5 rounded border-gray-300 text-[#481468] focus:ring-[#481468] cursor-pointer"
                             />
                           </td>
                           <td className="px-6 py-4">
@@ -1499,8 +1710,11 @@ export default function AdminDashboardPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4">
+                            <span className="text-gray-600 text-sm">{formatDate(pedido.createdAt)}</span>
+                          </td>
+                          <td className="px-6 py-4">
                             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
-                              {pedido.cantidadPulseras} {pedido.cantidadPulseras === 1 ? 'pulsera' : 'pulseras'}
+                              {pedido.cantidadPulseras} {pedido.cantidadPulseras === 1 ? 'dispositivo' : 'dispositivos'}
                             </span>
                           </td>
                           <td className="px-6 py-4">
@@ -1527,21 +1741,33 @@ export default function AdminDashboardPage() {
         {activeTab === 'despachados' && (
           <div className="space-y-6 animate-fadeIn">
             <button
-              onClick={() => setActiveTab('dashboard')}
-              className="inline-flex items-center gap-2 text-[#7030A0] hover:text-[#5d2785] font-semibold group transition-colors"
+              onClick={() => handleTabChange('dashboard')}
+              className="inline-flex items-center gap-2 text-[#481468] hover:text-[#3d1158] font-semibold group transition-colors"
             >
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
               Volver al Dashboard
             </button>
 
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Pedidos Despachados</h2>
-              <p className="text-gray-600">Pedidos enviados a clientes</p>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Pedidos Despachados</h2>
+                <p className="text-gray-600">Pedidos enviados a clientes</p>
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar por cliente, email, teléfono..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-transparent w-full md:w-80"
+                />
+              </div>
             </div>
 
             {loadingPulseras ? (
               <div className="flex items-center justify-center py-16">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#7030A0]"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#481468]"></div>
               </div>
             ) : (
               <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden">
@@ -1558,7 +1784,14 @@ export default function AdminDashboardPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {despachadosPedidos.map((pedido) => (
+                      {despachadosPedidos
+                        .filter(p =>
+                          p.contratanteNombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          p.contratanteEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          p.telefono?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          p.id.toString().includes(searchTerm)
+                        )
+                        .map((pedido) => (
                         <tr key={pedido.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-6 py-4">
                             <span className="text-black font-bold text-lg">#{pedido.id}</span>
@@ -1577,7 +1810,7 @@ export default function AdminDashboardPage() {
                           </td>
                           <td className="px-6 py-4">
                             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
-                              {pedido.cantidadPulseras} {pedido.cantidadPulseras === 1 ? 'pulsera' : 'pulseras'}
+                              {pedido.cantidadPulseras} {pedido.cantidadPulseras === 1 ? 'dispositivo' : 'dispositivos'}
                             </span>
                           </td>
                           <td className="px-6 py-4">
@@ -1585,7 +1818,7 @@ export default function AdminDashboardPage() {
                           </td>
                           <td className="px-6 py-4">
                             <span className="text-sm text-gray-600">
-                              {new Date(pedido.updatedAt).toLocaleDateString('es-CL')}
+                              {formatDate(pedido.updatedAt)}
                             </span>
                           </td>
                         </tr>
@@ -1609,21 +1842,33 @@ export default function AdminDashboardPage() {
         {activeTab === 'administrar' && (
           <div className="space-y-6 animate-fadeIn">
             <button
-              onClick={() => setActiveTab('dashboard')}
-              className="inline-flex items-center gap-2 text-[#7030A0] hover:text-[#5d2785] font-semibold group transition-colors"
+              onClick={() => handleTabChange('dashboard')}
+              className="inline-flex items-center gap-2 text-[#481468] hover:text-[#3d1158] font-semibold group transition-colors"
             >
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
               Volver al Dashboard
             </button>
 
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Administrar Bluko Life</h2>
-              <p className="text-gray-600">Vista completa del inventario y estado de pulseras</p>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Administrar Bluko Life</h2>
+                <p className="text-gray-600">Vista completa del inventario y estado de dispositivos</p>
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre, email, RUT..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-transparent w-full md:w-80"
+                />
+              </div>
             </div>
 
             {loadingContratantes ? (
               <div className="flex items-center justify-center py-16">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#7030A0]"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#481468]"></div>
               </div>
             ) : (
               <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden">
@@ -1632,18 +1877,26 @@ export default function AdminDashboardPage() {
                     <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
                       <tr>
                         <th className="px-4 py-4 text-left w-12">
-                          <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-[#7030A0] focus:ring-[#7030A0] cursor-pointer" />
+                          <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-[#481468] focus:ring-[#481468] cursor-pointer" />
                         </th>
                         <th className="px-6 py-4 text-left font-bold text-gray-900">Contratante</th>
                         <th className="px-6 py-4 text-left font-bold text-gray-900">Email</th>
                         <th className="px-6 py-4 text-left font-bold text-gray-900">RUT</th>
-                        <th className="px-6 py-4 text-left font-bold text-gray-900">Pulseras</th>
+                        <th className="px-6 py-4 text-left font-bold text-gray-900">Fecha Registro</th>
+                        <th className="px-6 py-4 text-left font-bold text-gray-900">Dispositivos</th>
                         <th className="px-6 py-4 text-left font-bold text-gray-900">Suscripción</th>
                         <th className="px-6 py-4 text-left font-bold text-gray-900">Acciones</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {allContratantes.map((contratante) => (
+                      {allContratantes
+                        .filter(c =>
+                          c.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          c.paternalSurname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          c.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          c.rut?.toLowerCase().includes(searchTerm.toLowerCase())
+                        )
+                        .map((contratante) => (
                         <React.Fragment key={contratante.id}>
                           <tr className="hover:bg-gray-50 transition-colors">
                             <td className="px-4 py-4">
@@ -1651,7 +1904,7 @@ export default function AdminDashboardPage() {
                                 type="checkbox"
                                 checked={selectedForDispatch.has(contratante.id)}
                                 onChange={() => toggleSelectForDispatch(contratante.id)}
-                                className="w-4 h-4 rounded border-gray-300 text-[#7030A0] focus:ring-[#7030A0] cursor-pointer"
+                                className="w-4 h-4 rounded border-gray-300 text-[#481468] focus:ring-[#481468] cursor-pointer"
                               />
                             </td>
                             <td className="px-6 py-4">
@@ -1685,6 +1938,9 @@ export default function AdminDashboardPage() {
                               </div>
                             </td>
                             <td className="px-6 py-4">
+                              <span className="text-gray-600 text-sm">{formatDate(contratante.createdAt)}</span>
+                            </td>
+                            <td className="px-6 py-4">
                               <div className="text-sm">
                                 <p className="text-gray-900 font-semibold">{contratante.totalPurchasedPulseras} total</p>
                                 <p className="text-gray-500">{contratante.availablePulseras} disponibles</p>
@@ -1706,7 +1962,7 @@ export default function AdminDashboardPage() {
                             <td className="px-6 py-4">
                               <button
                                 onClick={() => handleToggleExpand(contratante.id)}
-                                className="inline-flex items-center gap-2 px-3 py-1.5 text-xs bg-[#7030A0] text-white rounded-lg hover:bg-[#5d2785] font-semibold transition-colors"
+                                className="inline-flex items-center gap-2 px-3 py-1.5 text-xs bg-[#481468] text-white rounded-lg hover:bg-[#3d1158] font-semibold transition-colors"
                               >
                                 <Users className="w-4 h-4" />
                                 Ver Portadores
@@ -1716,7 +1972,7 @@ export default function AdminDashboardPage() {
 
                           {expandedContratante === contratante.id && contratanteDetails.has(contratante.id) && (
                             <tr>
-                              <td colSpan={7} className="px-6 py-4 bg-gray-50">
+                              <td colSpan={8} className="px-6 py-4 bg-gray-50">
                                 <div className="space-y-4">
                                   <h4 className="font-bold text-gray-900 flex items-center gap-2">
                                     <Users className="w-5 h-5" />
@@ -1728,8 +1984,8 @@ export default function AdminDashboardPage() {
                                       {contratanteDetails.get(contratante.id).portadores.map((portador: any) => (
                                         <div key={portador.id} className="bg-white rounded-xl p-4 shadow border border-gray-200">
                                           <div className="flex items-start gap-3">
-                                            <div className="p-2 bg-[#7030A0]/10 rounded-lg">
-                                              <User className="w-5 h-5 text-[#7030A0]" />
+                                            <div className="p-2 bg-[#481468]/10 rounded-lg">
+                                              <User className="w-5 h-5 text-[#481468]" />
                                             </div>
                                             <div className="flex-1">
                                               <p className="font-bold text-gray-900">{portador.firstName} {portador.paternalSurname}</p>
@@ -1767,7 +2023,7 @@ export default function AdminDashboardPage() {
                   <div className="p-6 border-t-2 border-gray-100 bg-gray-50">
                     <p className="font-bold text-gray-900 mb-4 text-lg">Acciones</p>
                     <button
-                      className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#00FF00] to-[#00DD00] text-black font-bold rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                      className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#82c341] to-[#6ba832] text-black font-bold rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
                     >
                       <Truck className="w-5 h-5" />
                       Despachar ({selectedForDispatch.size})
@@ -1814,7 +2070,7 @@ export default function AdminDashboardPage() {
 
               <button
                 onClick={handleDownloadQrImage}
-                className="w-full inline-flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-[#7030A0] to-[#5d2785] text-white rounded-xl hover:shadow-xl transition-all duration-200 transform hover:scale-105 font-semibold"
+                className="w-full inline-flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-[#481468] to-[#3d1158] text-white rounded-xl hover:shadow-xl transition-all duration-200 transform hover:scale-105 font-semibold"
               >
                 <Download className="w-5 h-5" />
                 Descargar Imagen QR

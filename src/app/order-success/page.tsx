@@ -73,7 +73,7 @@ ${orderData?.customerData.address}
 ${orderData?.customerData.city}, ${orderData?.customerData.department}
 
 Productos:
-- Pulsera Inteligente QR x${orderData?.quantity}
+- Dispositivo Inteligente QR x${orderData?.quantity}
   Precio unitario: ${formatPrice(orderData?.pricePerUnit || 0)}
   Subtotal: ${formatPrice(orderData?.total || 0)}
 
@@ -147,7 +147,7 @@ Método de pago: Tarjeta de crédito
                 <div className="flex justify-between">
                   <span className="text-gray-600">Cantidad:</span>
                   <span className="font-semibold">
-                    {orderData.quantity} {orderData.quantity === 1 ? 'pulsera' : 'pulseras'}
+                    {orderData.quantity} {orderData.quantity === 1 ? 'dispositivo' : 'dispositivos'}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -266,7 +266,7 @@ Método de pago: Tarjeta de crédito
               </div>
               <div>
                 <h4 className="font-semibold text-gray-900">Envío</h4>
-                <p className="text-gray-600 text-sm">Enviamos tus pulseras con instrucciones de configuración</p>
+                <p className="text-gray-600 text-sm">Enviamos tus dispositivos con instrucciones de configuración</p>
               </div>
             </div>
             
@@ -310,8 +310,8 @@ Método de pago: Tarjeta de crédito
             Nuestro equipo de soporte está aquí para ayudarte con cualquier pregunta sobre tu pedido.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center text-sm">
-            <a href="mailto:soporte@pulserasqr.com" className="text-blue-600 hover:text-blue-800">
-              📧 soporte@pulserasqr.com
+            <a href="mailto:soporte@blukolife.cl" className="text-blue-600 hover:text-blue-800">
+              📧 soporte@blukolife.cl
             </a>
             <a href="tel:+573001234567" className="text-blue-600 hover:text-blue-800">
               📞 +57 300 123 4567

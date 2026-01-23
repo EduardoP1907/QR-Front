@@ -109,7 +109,7 @@ export default function LoginPage() {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{backgroundColor: '#f8f4ff'}}>
-              <Shield className="w-8 h-8" style={{color: '#551A8B'}} />
+              <Shield className="w-8 h-8" style={{color: '#481468'}} />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               Iniciar Sesión
@@ -216,7 +216,7 @@ export default function LoginPage() {
                   <input
                     type="checkbox"
                     className="h-4 w-4 border-gray-300 rounded focus:ring-2 focus:ring-opacity-75"
-                    style={{color: '#83C341', accentColor: '#83C341'}}
+                    style={{color: '#82c341', accentColor: '#82c341'}}
                   />
                   <span className="ml-2 block text-sm text-gray-700">
                     Recordarme
@@ -226,7 +226,7 @@ export default function LoginPage() {
                   type="button"
                   onClick={handleRequestOtpFromPassword}
                   className="text-sm hover:opacity-80 transition-all"
-                  style={{color: '#551A8B'}}
+                  style={{color: '#481468'}}
                 >
                   ¿Olvidaste tu contraseña?
                 </button>
@@ -237,7 +237,7 @@ export default function LoginPage() {
                 type="submit"
                 disabled={loading}
                 className="w-full text-white py-3 px-4 rounded-lg font-semibold hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{backgroundColor: '#83C341'}}
+                style={{backgroundColor: '#82c341'}}
               >
                 {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
               </button>
@@ -279,7 +279,7 @@ export default function LoginPage() {
                     type="submit"
                     disabled={loading}
                     className="w-full text-white py-3 px-4 rounded-lg font-semibold hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{backgroundColor: '#83C341'}}
+                style={{backgroundColor: '#82c341'}}
                   >
                     {loading ? 'Enviando código...' : 'Enviar Código de Acceso'}
                   </button>
@@ -339,7 +339,7 @@ export default function LoginPage() {
                     type="submit"
                     disabled={loading}
                     className="w-full text-white py-3 px-4 rounded-lg font-semibold hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{backgroundColor: '#83C341'}}
+                style={{backgroundColor: '#82c341'}}
                   >
                     {loading ? 'Verificando...' : 'Acceder con Código'}
                   </button>
@@ -368,7 +368,7 @@ export default function LoginPage() {
               <Link
                 href="/register"
                 className="font-semibold hover:opacity-80 transition-all"
-                style={{color: '#551A8B'}}
+                style={{color: '#481468'}}
               >
                 Crear Cuenta
               </Link>
@@ -378,7 +378,7 @@ export default function LoginPage() {
               <Link
                 href="/portador/login"
                 className="text-blue-600 hover:text-blue-700 font-semibold transition-colors"
-                style={{color: '#551A8B'}}
+                style={{color: '#481468'}}
               >
                 Acceder aquí
               </Link>

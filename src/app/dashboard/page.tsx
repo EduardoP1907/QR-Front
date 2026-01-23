@@ -1212,13 +1212,13 @@ function DashboardContent() {
           <div className="relative">
             <div className="w-16 h-16 mx-auto mb-4">
               <div className="absolute inset-0 rounded-full border-3 border-gray-200"></div>
-              <div className="absolute inset-0 rounded-full border-3 border-t-[#7030A0] animate-spin"></div>
+              <div className="absolute inset-0 rounded-full border-3 border-t-[#481468] animate-spin"></div>
             </div>
             <div className="mb-3">
-              <Shield className="w-8 h-8 mx-auto text-[#7030A0] animate-pulse" />
+              <Shield className="w-8 h-8 mx-auto text-[#481468] animate-pulse" />
             </div>
           </div>
-          <h2 className="text-lg font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] bg-clip-text text-transparent mb-1">
+          <h2 className="text-lg font-bold bg-gradient-to-r from-[#481468] to-[#3d1158] bg-clip-text text-transparent mb-1">
             Cargando Dashboard
           </h2>
           <p className="text-sm text-gray-600">Preparando tu información médica...</p>
@@ -1233,26 +1233,26 @@ function DashboardContent() {
       <header className="sticky top-0 z-40 backdrop-blur-sm bg-white/95 border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="bg-gradient-to-br from-[#7030A0] to-[#5d2785] p-1.5 rounded-lg shadow-md">
+            <div className="bg-gradient-to-br from-[#481468] to-[#3d1158] p-1.5 rounded-lg shadow-md">
               <Shield className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h1 className="text-base font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] bg-clip-text text-transparent">
+              <h1 className="text-base font-bold bg-gradient-to-r from-[#481468] to-[#3d1158] bg-clip-text text-transparent">
                 Mi Panel
               </h1>
-              <p className="text-[10px] text-gray-500">Gestión de Pulseras Médicas</p>
+              <p className="text-[10px] text-gray-500">Gestión de Dispositivos Médicos</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gray-50">
-              <User className="w-3.5 h-3.5 text-[#7030A0]" />
+              <User className="w-3.5 h-3.5 text-[#481468]" />
               <span className="text-xs font-medium text-gray-700">{user?.email ?? 'Usuario'}</span>
             </div>
 
             <button
               onClick={() => router.push('/profile')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-gradient-to-r from-[#7030A0] to-[#5d2785] text-white hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-gradient-to-r from-[#481468] to-[#3d1158] text-white hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
             >
               <User className="w-3.5 h-3.5" />
               <span className="font-medium">Mi Perfil</span>
@@ -1272,7 +1272,7 @@ function DashboardContent() {
       {/* Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {/* Hero */}
-        <div className="mb-4 rounded-xl p-4 text-white shadow-lg animate-fadeIn relative overflow-hidden" style={{background: 'linear-gradient(135deg, #3C0B5A 0%, #551A8B 50%, #7030A0 100%)'}}>
+        <div className="mb-4 rounded-xl p-4 text-white shadow-lg animate-fadeIn relative overflow-hidden" style={{background: 'linear-gradient(135deg, #3d1158 0%, #481468 50%, #481468 100%)'}}>
           <div className="absolute inset-0 bg-black opacity-10"></div>
           <div className="relative z-10 flex items-center justify-between">
             <div>
@@ -1298,7 +1298,7 @@ function DashboardContent() {
         {/* Status Cards */}
         <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* Available Bracelets */}
-          <div className="bg-gradient-to-br from-[#7030A0] to-[#5d2785] rounded-xl p-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 animate-scaleIn">
+          <div className="bg-gradient-to-br from-[#481468] to-[#3d1158] rounded-xl p-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 animate-scaleIn">
             <div className="flex items-start justify-between mb-2">
               <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
                 <Package className="w-4 h-4" />
@@ -1374,7 +1374,7 @@ function DashboardContent() {
         {/* Actions */}
         <div className="mb-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 bg-white rounded-xl p-4 shadow-md border border-gray-100">
           <div>
-            <h3 className="text-base font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] bg-clip-text text-transparent mb-0.5">
+            <h3 className="text-base font-bold bg-gradient-to-r from-[#481468] to-[#3d1158] bg-clip-text text-transparent mb-0.5">
               Mis Bluko Life
             </h3>
             <p className="text-xs text-gray-600">
@@ -1384,7 +1384,7 @@ function DashboardContent() {
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => router.push('/subscription')}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-gradient-to-r from-[#7030A0] to-[#5d2785] text-white font-medium hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-gradient-to-r from-[#481468] to-[#3d1158] text-white font-medium hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
             >
               <ShoppingCart className="w-4 h-4" />
               <span>Contratar Plan</span>
@@ -1422,7 +1422,7 @@ function DashboardContent() {
 
         {/* Usuarios Creados Section */}
         <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 mb-4">
-          <div className="bg-gradient-to-r from-[#7030A0] to-[#5d2785] p-4">
+          <div className="bg-gradient-to-r from-[#481468] to-[#3d1158] p-4">
             <h3 className="text-base font-bold text-white flex items-center gap-2">
               <Users className="w-5 h-5" />
               Usuarios Creados ({portadores.length})
@@ -1456,7 +1456,7 @@ function DashboardContent() {
                       <div className="flex-shrink-0">
                         {qrCodeAsignado ? (
                           <div
-                            className="w-14 h-14 border-2 border-[#7030A0] rounded-lg overflow-hidden bg-white cursor-pointer hover:ring-2 hover:ring-[#7030A0] transition-all duration-200"
+                            className="w-14 h-14 border-2 border-[#481468] rounded-lg overflow-hidden bg-white cursor-pointer hover:ring-2 hover:ring-[#481468] transition-all duration-200"
                             onClick={() => {
                               setExpandedQrImage(qrCodeAsignado);
                               setExpandedQrUserName(`${portador.firstName} ${portador.paternalSurname}`);
@@ -1471,8 +1471,8 @@ function DashboardContent() {
                             />
                           </div>
                         ) : (
-                          <div className="w-14 h-14 border-2 border-[#7030A0] rounded-full bg-gradient-to-br from-[#7030A0]/10 to-[#5d2785]/10 flex items-center justify-center">
-                            <User className="w-7 h-7 text-[#7030A0]" />
+                          <div className="w-14 h-14 border-2 border-[#481468] rounded-full bg-gradient-to-br from-[#481468]/10 to-[#3d1158]/10 flex items-center justify-center">
+                            <User className="w-7 h-7 text-[#481468]" />
                           </div>
                         )}
                       </div>
@@ -1495,7 +1495,7 @@ function DashboardContent() {
                           )}
                           {pulseraAsignada && (
                             <>
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] text-white shadow-sm">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r from-[#481468] to-[#3d1158] text-white shadow-sm">
                                 <QrCode className="w-2.5 h-2.5" />
                                 QR Asignado
                               </span>
@@ -1520,7 +1520,7 @@ function DashboardContent() {
                           <span className="font-semibold">RUT:</span> {portador.rut}
                         </p>
                         {pulseraAsignada && (
-                          <p className="text-xs text-[#7030A0] font-semibold mt-1">
+                          <p className="text-xs text-[#481468] font-semibold mt-1">
                             <span className="font-semibold">Bluko Life:</span> {pulseraAsignada.customId || pulseraAsignada.name}
                           </p>
                         )}
@@ -1584,7 +1584,7 @@ function DashboardContent() {
                           claimedPulseraForAssignment
                             ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:shadow-lg hover:-translate-y-0.5 ring-2 ring-green-300 animate-pulse'
                             : availablePulseras > 0
-                            ? 'bg-gradient-to-r from-[#7030A0] to-[#5d2785] text-white hover:shadow-lg hover:-translate-y-0.5'
+                            ? 'bg-gradient-to-r from-[#481468] to-[#3d1158] text-white hover:shadow-lg hover:-translate-y-0.5'
                             : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                         }`}
                         title={
@@ -1629,7 +1629,7 @@ function DashboardContent() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
           <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl animate-scaleIn">
             <div className="mb-4">
-              <h4 className="text-lg font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] bg-clip-text text-transparent">
+              <h4 className="text-lg font-bold bg-gradient-to-r from-[#481468] to-[#3d1158] bg-clip-text text-transparent">
                 Código QR
               </h4>
               <p className="text-xs text-gray-600 mt-0.5">Escanea o descarga el código</p>
@@ -1645,7 +1645,7 @@ function DashboardContent() {
             ) : (
               <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-8 rounded-xl mb-4">
                 <div className="text-center">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-3 border-gray-200 border-t-[#7030A0] mb-2"></div>
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-3 border-gray-200 border-t-[#481468] mb-2"></div>
                   <p className="text-sm text-gray-500">Cargando código QR...</p>
                 </div>
               </div>
@@ -1676,7 +1676,7 @@ function DashboardContent() {
           <div className="bg-white rounded-3xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-scaleIn">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h4 className="text-2xl font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] bg-clip-text text-transparent">
+                <h4 className="text-2xl font-bold bg-gradient-to-r from-[#481468] to-[#3d1158] bg-clip-text text-transparent">
                   Asignar Bluko Life Inteligente
                 </h4>
                 <p className="text-sm text-gray-600 mt-1">Complete la información del portador</p>
@@ -1726,7 +1726,7 @@ function DashboardContent() {
           <div className="bg-white rounded-3xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-scaleIn">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h4 className="text-2xl font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] bg-clip-text text-transparent">
+                <h4 className="text-2xl font-bold bg-gradient-to-r from-[#481468] to-[#3d1158] bg-clip-text text-transparent">
                   Editar: {editingPulsera.name || `Bluko Life #${editingPulsera.id}`}
                 </h4>
                 <p className="text-sm text-gray-600 mt-1">Actualiza la información del Bluko Life</p>
@@ -1783,7 +1783,7 @@ function DashboardContent() {
             <div className="overflow-visible">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h4 className="text-2xl font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] bg-clip-text text-transparent">
+                <h4 className="text-2xl font-bold bg-gradient-to-r from-[#481468] to-[#3d1158] bg-clip-text text-transparent">
                   Crear Nuevo Usuario
                 </h4>
                 <p className="text-sm text-gray-600 mt-1">Registra un nuevo portador con información médica completa</p>
@@ -2310,7 +2310,7 @@ function DashboardContent() {
             <div className="overflow-visible">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h4 className="text-2xl font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] bg-clip-text text-transparent">
+                <h4 className="text-2xl font-bold bg-gradient-to-r from-[#481468] to-[#3d1158] bg-clip-text text-transparent">
                   Editar Usuario
                 </h4>
                 <p className="text-sm text-gray-600 mt-1">Actualiza la información del portador {editingUser.firstName} {editingUser.paternalSurname}</p>
@@ -2552,7 +2552,7 @@ function DashboardContent() {
                 <button
                   type="submit"
                   disabled={assignForm.formState.isSubmitting}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-[#7030A0] to-[#5d2785] text-white rounded-xl font-medium hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-[#481468] to-[#3d1158] text-white rounded-xl font-medium hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   {assignForm.formState.isSubmitting ? (
                     <span className="inline-flex items-center gap-2">
@@ -2577,7 +2577,7 @@ function DashboardContent() {
             <div className="overflow-visible">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h4 className="text-2xl font-bold bg-gradient-to-r from-[#7030A0] to-[#5d2785] bg-clip-text text-transparent">
+                <h4 className="text-2xl font-bold bg-gradient-to-r from-[#481468] to-[#3d1158] bg-clip-text text-transparent">
                   {assigningPulsera.portador ? 'Editar Asignación' : 'Asignar Bluko Life'}
                 </h4>
                 <p className="text-sm text-gray-600 mt-1">
@@ -3183,7 +3183,7 @@ function DashboardContent() {
             </div>
 
             <div className="flex flex-col items-center gap-4">
-              <div className="w-full max-w-md aspect-square bg-white border-4 border-[#7030A0] rounded-2xl overflow-hidden p-4">
+              <div className="w-full max-w-md aspect-square bg-white border-4 border-[#481468] rounded-2xl overflow-hidden p-4">
                 <img
                   src={`data:image/png;base64,${expandedQrImage}`}
                   alt={`QR de ${expandedQrUserName}`}
@@ -3197,7 +3197,7 @@ function DashboardContent() {
 
               <button
                 onClick={() => setShowExpandedQrModal(false)}
-                className="w-full px-4 py-2 bg-gradient-to-r from-[#7030A0] to-[#5d2785] text-white rounded-lg font-medium hover:shadow-lg transition-all duration-300"
+                className="w-full px-4 py-2 bg-gradient-to-r from-[#481468] to-[#3d1158] text-white rounded-lg font-medium hover:shadow-lg transition-all duration-300"
               >
                 Cerrar
               </button>

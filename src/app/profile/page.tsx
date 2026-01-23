@@ -233,7 +233,7 @@ function ProfileContent() {
               </button>
 
               <div className="flex items-center gap-2">
-                <Shield className="w-7 h-7" style={{color: '#551A8B'}} />
+                <Shield className="w-7 h-7" style={{color: '#481468'}} />
                 <h1 className="text-xl font-semibold text-gray-900">Mi Perfil</h1>
               </div>
             </div>
@@ -242,7 +242,7 @@ function ProfileContent() {
               <button
                 onClick={() => setEditing(true)}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white hover:opacity-90"
-                style={{backgroundColor: '#551A8B'}}
+                style={{backgroundColor: '#481468'}}
               >
                 <Edit className="w-4 h-4" />
                 <span>Editar Perfil</span>
@@ -386,7 +386,7 @@ function ProfileContent() {
                         type="submit"
                         disabled={isSubmitting}
                         className="inline-flex items-center gap-2 px-6 py-2 rounded-lg text-white hover:opacity-90 disabled:opacity-50"
-                        style={{backgroundColor: '#551A8B'}}
+                        style={{backgroundColor: '#481468'}}
                       >
                         <Save className="w-4 h-4" />
                         <span>{isSubmitting ? 'Guardando...' : 'Guardar Cambios'}</span>
@@ -598,7 +598,7 @@ function ProfileContent() {
                         type="submit"
                         disabled={isSubmittingDireccion}
                         className="inline-flex items-center gap-2 px-6 py-2 rounded-lg text-white hover:opacity-90 disabled:opacity-50"
-                        style={{backgroundColor: '#551A8B'}}
+                        style={{backgroundColor: '#481468'}}
                       >
                         <Save className="w-4 h-4" />
                         <span>{isSubmittingDireccion ? 'Guardando...' : 'Guardar Dirección'}</span>
@@ -641,7 +641,7 @@ function ProfileContent() {
                         <button
                           onClick={() => setEditingDireccion(true)}
                           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white hover:opacity-90"
-                          style={{backgroundColor: '#551A8B'}}
+                          style={{backgroundColor: '#481468'}}
                         >
                           <Edit className="w-4 h-4" />
                           <span>Agregar Dirección</span>

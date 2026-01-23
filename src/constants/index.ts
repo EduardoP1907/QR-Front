@@ -1,7 +1,7 @@
 // Pricing constants
-export const SUBSCRIPTION_PRICE = 2900; // $2.990 CLP monthly per pulsera
-export const PULSERA_PRICE = 9900; // $9.990 CLP per pulsera
-export const TOTAL_PER_PULSERA = PULSERA_PRICE + SUBSCRIPTION_PRICE; // $12.980 CLP per pulsera (pulsera + first month subscription)
+export const SUBSCRIPTION_PRICE = 2900; // $2.990 CLP monthly per dispositivo
+export const PULSERA_PRICE = 9900; // $9.990 CLP per dispositivo
+export const TOTAL_PER_PULSERA = PULSERA_PRICE + SUBSCRIPTION_PRICE; // $12.980 CLP per dispositivo (dispositivo + first month subscription)
 
 // Currency formatting
 export const CURRENCY = {
@@ -29,7 +29,7 @@ export const MAX_QUANTITY = 10;
 
 // Contact information
 export const CONTACT_INFO = {
-  email: 'soporte@pulserasqr.cl',
+  email: 'soporte@blukolife.cl',
   phone: '+56 9 8765 4321',
   whatsapp: 'https://wa.me/56987654321',
   businessHours: 'Lunes a Viernes 9:00 AM - 6:00 PM',
@@ -41,7 +41,7 @@ export const COMPANY_INFO = {
   name: 'Bluko Life',
   description: 'Protegiendo vidas con tecnología en Chile',
   year: 2024,
-  website: 'https://pulserasqr.cl',
+  website: 'https://blukolife.cl',
 };
 
 // API endpoints

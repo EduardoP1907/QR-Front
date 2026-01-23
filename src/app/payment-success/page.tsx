@@ -200,7 +200,7 @@ function PaymentSuccessContent() {
           <button
             onClick={() => router.push('/dashboard')}
             className="inline-flex items-center gap-2 text-white px-8 py-3 rounded-xl hover:opacity-90 transition-all"
-            style={{ backgroundColor: '#83C341' }}
+            style={{ backgroundColor: '#82c341' }}
           >
             <span>Ir al Dashboard Ahora</span>
             <ArrowRight className="w-5 h-5" />
