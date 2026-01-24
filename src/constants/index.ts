@@ -1,7 +1,7 @@
 // Pricing constants
-export const SUBSCRIPTION_PRICE = 2900; // $2.990 CLP monthly per dispositivo
-export const PULSERA_PRICE = 9900; // $9.990 CLP per dispositivo
-export const TOTAL_PER_PULSERA = PULSERA_PRICE + SUBSCRIPTION_PRICE; // $12.980 CLP per dispositivo (dispositivo + first month subscription)
+export const SUBSCRIPTION_PRICE = 3450; // $3.450 CLP monthly per dispositivo
+export const PULSERA_PRICE = 9900; // $9.900 CLP per dispositivo
+export const TOTAL_PER_PULSERA = PULSERA_PRICE + SUBSCRIPTION_PRICE; // $13.350 CLP per dispositivo (dispositivo + first month subscription)
 
 // Currency formatting
 export const CURRENCY = {

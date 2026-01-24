@@ -51,8 +51,7 @@ function SubscriptionContent() {
 
   const handleQuantityChange = (increment: boolean) => {
     if (increment) {
-      const newQuantity = Math.min(quantity + 1, 10); // Máximo 10 dispositivos
-      setQuantity(newQuantity);
+      setQuantity(quantity + 1);
     } else {
       const newQuantity = Math.max(quantity - 1, 1); // Mínimo 1 dispositivo
       setQuantity(newQuantity);
@@ -137,13 +136,11 @@ function SubscriptionContent() {
                 <button
                   type="button"
                   onClick={() => handleQuantityChange(true)}
-                  disabled={quantity >= 10}
-                  className="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-400 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-400 hover:text-gray-800"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
-              <p className="text-sm text-gray-600 text-center">Máximo 10 dispositivos por pedido</p>
             </div>
 
             {/* Plan Card */}
@@ -170,48 +167,7 @@ function SubscriptionContent() {
                 </div>
               </div>
 
-              <div className="mb-6">
-                <h3 className="font-bold text-lg mb-3">INCLUYE</h3>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-green-300 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Bluko Life con QR activado</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-green-300 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Acceso a la plataforma Bluko Life</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-green-300 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Ficha médica editable en tiempo real</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-green-300 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Personalización del diseño de tarjeta digital</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-green-300 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Configuración de contactos de emergencia</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-green-300 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Protección con contraseña</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-green-300 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Instructivo completo en español</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-green-300 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Soporte técnico por WhatsApp y mail</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-green-300 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Garantía por falla o extravío (Algunas restricciones aplican)</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+                          </div>
           </div>
 
           {/* Payment Form */}

@@ -161,13 +161,18 @@ export default function AdminDashboardPage() {
     checkAuth();
     loadData();
 
+    // Agregar entrada inicial al historial para prevenir navegación hacia atrás
+    window.history.pushState({ admin: true, tab: 'dashboard' }, '', window.location.pathname);
+
     // Manejar el botón "atrás" del navegador
     const handlePopState = (event: PopStateEvent) => {
+      event.preventDefault();
+      // Siempre re-agregar al historial para prevenir navegación hacia atrás
+      window.history.pushState({ admin: true, tab: activeTab }, '', window.location.pathname);
+
       // Si estamos en una pestaña diferente a dashboard, volver al dashboard
       if (activeTab !== 'dashboard') {
-        event.preventDefault();
         setActiveTab('dashboard');
-        window.history.pushState({ tab: 'dashboard' }, '', window.location.pathname);
       }
     };
 
@@ -440,6 +445,51 @@ export default function AdminDashboardPage() {
       setSelectedForFabrication(new Set());
     } else {
       setSelectedForFabrication(new Set(unassignedPulseras.map(p => p.id)));
+    }
+  };
+
+  // Función para solo descargar QRs sin cambiar estado
+  const handleDownloadOnlyQrs = async () => {
+    if (selectedForFabrication.size === 0) {
+      toast.error('Selecciona al menos un Bluko Life');
+      return;
+    }
+
+    const selectedPulseras = unassignedPulseras.filter(p => selectedForFabrication.has(p.id));
+
+    try {
+      toast.loading(`Descargando ${selectedPulseras.length} imágenes QR...`);
+
+      // Descargar imágenes QR una por una
+      for (const pulsera of selectedPulseras) {
+        try {
+          const response = await adminApi.getPulseraQrImageByCustomId(pulsera.customId);
+          const qrImage = response.data.qrImage;
+
+          // Descargar imagen
+          const link = document.createElement('a');
+          link.href = qrImage;
+          link.download = `QR-${pulsera.customId}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          // Pequeña pausa entre descargas
+          await new Promise(resolve => setTimeout(resolve, 300));
+        } catch (error) {
+          console.error(`Error descargando QR ${pulsera.customId}:`, error);
+        }
+      }
+
+      toast.dismiss();
+      toast.success(`${selectedPulseras.length} imágenes QR descargadas`);
+
+      // Limpiar selección
+      setSelectedForFabrication(new Set());
+    } catch (error: any) {
+      toast.dismiss();
+      console.error('Error descargando QRs:', error);
+      toast.error('Error al descargar imágenes QR');
     }
   };
 
@@ -1051,13 +1101,20 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {selectedForFabrication.size > 0 && (
-                  <div className="p-6 border-t-2 border-gray-100 bg-gray-50">
+                  <div className="p-6 border-t-2 border-gray-100 bg-gray-50 flex flex-wrap gap-4">
+                    <button
+                      onClick={handleDownloadOnlyQrs}
+                      className="inline-flex items-center gap-3 px-8 py-4 bg-white border-2 border-[#481468] text-[#481468] font-bold rounded-xl hover:bg-[#481468]/5 transition-all duration-200"
+                    >
+                      <Download className="w-5 h-5" />
+                      Solo Descargar ({selectedForFabrication.size})
+                    </button>
                     <button
                       onClick={handleDownloadAndFabricate}
                       className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#82c341] to-[#6ba832] text-black font-bold rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
                     >
                       <Download className="w-5 h-5" />
-                      Descarga para Fabricar ({selectedForFabrication.size})
+                      Descargar y Enviar a Fabricación ({selectedForFabrication.size})
                     </button>
                   </div>
                 )}
