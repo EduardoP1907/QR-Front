@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { Shield, Lock, Mail, Eye, EyeOff } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff } from 'lucide-react';
+import Image from 'next/image';
 import { adminApi } from '@/services/api';
 
 interface LoginFormData {
@@ -51,8 +52,14 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md">
         {/* Logo / Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-full mb-4">
-            <Shield className="w-12 h-12 text-[#481468]" />
+          <div className="inline-flex items-center justify-center w-24 h-24 bg-white rounded-full mb-4 p-2">
+            <Image
+              src="/logo-bluko-icon.png"
+              alt="Bluko Life"
+              width={80}
+              height={80}
+              className="object-contain"
+            />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Panel de Administración</h1>
           <p className="text-purple-200">Acceso exclusivo para administradores</p>

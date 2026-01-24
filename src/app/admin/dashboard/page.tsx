@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import toast from 'react-hot-toast';
 import {
   Shield,
@@ -713,7 +714,13 @@ export default function AdminDashboardPage() {
           <div className="relative">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[#481468] mx-auto mb-4"></div>
             <div className="absolute inset-0 flex items-center justify-center">
-              <Shield className="w-8 h-8 text-[#481468] animate-pulse" />
+              <Image
+                src="/logo-bluko-icon.png"
+                alt="Bluko Life"
+                width={32}
+                height={32}
+                className="animate-pulse"
+              />
             </div>
           </div>
           <p className="text-gray-600 font-medium">Cargando dashboard...</p>
@@ -729,8 +736,14 @@ export default function AdminDashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="p-2.5 bg-gradient-to-br from-[#481468] to-[#3d1158] rounded-xl shadow-lg">
-                <Shield className="w-7 h-7 text-white" />
+              <div className="p-2 bg-white rounded-xl shadow-lg border border-gray-100">
+                <Image
+                  src="/logo-bluko-icon.png"
+                  alt="Bluko Life"
+                  width={40}
+                  height={40}
+                  className="object-contain"
+                />
               </div>
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-[#481468] to-[#3d1158] bg-clip-text text-transparent">
@@ -759,7 +772,7 @@ export default function AdminDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">Panel Principal</h2>
-                <p className="text-gray-600">Vista general del sistema Bluko Life</p>
+                <p className="text-gray-600">Vista General de la plataforma Bluko Life</p>
               </div>
               <button
                 onClick={refreshDashboard}
@@ -1652,7 +1665,13 @@ export default function AdminDashboardPage() {
 
                   {suscritosPulseras.length === 0 && (
                     <div className="text-center py-16">
-                      <Shield className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <Image
+                        src="/logo-bluko-icon.png"
+                        alt="Bluko Life"
+                        width={64}
+                        height={64}
+                        className="mx-auto mb-4 opacity-30"
+                      />
                       <p className="text-gray-500 font-medium text-lg">No hay Bluko Life suscritos</p>
                     </div>
                   )}
@@ -1912,13 +1931,13 @@ export default function AdminDashboardPage() {
                 <p className="text-gray-600">Vista completa del inventario y estado de dispositivos</p>
               </div>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-black" />
                 <input
                   type="text"
                   placeholder="Buscar por nombre, email, RUT..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-transparent w-full md:w-80"
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-transparent w-full md:w-80 text-black"
                 />
               </div>
             </div>
