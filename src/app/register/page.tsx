@@ -134,15 +134,14 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
       {/* Franja de identificación Bluko */}
       <div className="w-full py-3 px-4" style={{background: 'linear-gradient(to right, #3d1158, #481468)'}}>
-        <div className="max-w-md mx-auto flex items-center justify-center gap-3">
+        <div className="max-w-md mx-auto flex items-center justify-center">
           <Image
-            src="/logo-bluko-small.jpg"
+            src="/logo-bluko-horizontal.jpg"
             alt="Bluko Life"
-            width={32}
-            height={32}
-            className="rounded-full"
+            width={160}
+            height={40}
+            className="h-8 w-auto"
           />
-          <span className="text-white font-bold text-lg">BLUKO LIFE®</span>
         </div>
       </div>
 

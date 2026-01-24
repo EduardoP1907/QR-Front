@@ -469,13 +469,30 @@ function ProfileContent() {
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Región *
                         </label>
-                        <input
+                        <select
                           {...registerDireccion('region', {
                             required: 'La región es requerida'
                           })}
-                          type="text"
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
-                        />
+                        >
+                          <option value="">Seleccionar...</option>
+                          <option value="Región de Arica y Parinacota">Región de Arica y Parinacota</option>
+                          <option value="Región de Tarapacá">Región de Tarapacá</option>
+                          <option value="Región de Antofagasta">Región de Antofagasta</option>
+                          <option value="Región de Atacama">Región de Atacama</option>
+                          <option value="Región de Coquimbo">Región de Coquimbo</option>
+                          <option value="Región de Valparaíso">Región de Valparaíso</option>
+                          <option value="Región Metropolitana">Región Metropolitana</option>
+                          <option value="Región del Libertador General Bernardo O'Higgins">Región del Libertador General Bernardo O'Higgins</option>
+                          <option value="Región del Maule">Región del Maule</option>
+                          <option value="Región de Ñuble">Región de Ñuble</option>
+                          <option value="Región del Biobío">Región del Biobío</option>
+                          <option value="Región de La Araucanía">Región de La Araucanía</option>
+                          <option value="Región de Los Ríos">Región de Los Ríos</option>
+                          <option value="Región de Los Lagos">Región de Los Lagos</option>
+                          <option value="Región de Aysén">Región de Aysén</option>
+                          <option value="Región de Magallanes">Región de Magallanes</option>
+                        </select>
                         {errorsDireccion.region && (
                           <p className="text-red-500 text-sm mt-1">{errorsDireccion.region.message}</p>
                         )}
@@ -515,35 +532,37 @@ function ProfileContent() {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Tipo de Vivienda *
+                          Adicional dirección
                         </label>
-                        <select
-                          {...registerDireccion('tipoVivienda', {
-                            required: 'El tipo de vivienda es requerido'
-                          })}
+                        <input
+                          {...registerDireccion('tipoVivienda')}
+                          type="text"
+                          placeholder="Sector Las Animas, Edificio Colon"
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
-                        >
-                          <option value="">Seleccionar...</option>
-                          <option value="Casa">Casa</option>
-                          <option value="Departamento">Departamento</option>
-                          <option value="Oficina">Oficina</option>
-                        </select>
-                        {errorsDireccion.tipoVivienda && (
-                          <p className="text-red-500 text-sm mt-1">{errorsDireccion.tipoVivienda.message}</p>
-                        )}
+                        />
                       </div>
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Número *
                         </label>
-                        <input
-                          {...registerDireccion('numero', {
-                            required: 'El número es requerido'
-                          })}
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
-                        />
+                        <div className="flex items-center gap-3">
+                          <input
+                            {...registerDireccion('numero', {
+                              required: 'El número es requerido'
+                            })}
+                            type="text"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
+                          />
+                          <label className="flex items-center gap-2 text-sm text-gray-600 whitespace-nowrap">
+                            <input type="checkbox" className="rounded border-gray-300" onChange={(e) => {
+                              if (e.target.checked) {
+                                registerDireccion('numero').onChange({ target: { value: 'S/N', name: 'numero' } });
+                              }
+                            }} />
+                            Sin número
+                          </label>
+                        </div>
                         {errorsDireccion.numero && (
                           <p className="text-red-500 text-sm mt-1">{errorsDireccion.numero.message}</p>
                         )}
@@ -551,7 +570,7 @@ function ProfileContent() {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Número Depto/Oficina
+                          Depto/Casa/Oficina/Piso
                         </label>
                         <input
                           {...registerDireccion('numeroDepto')}
@@ -581,9 +600,21 @@ function ProfileContent() {
                         )}
                       </div>
 
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Correo electrónico
+                        </label>
+                        <input
+                          type="email"
+                          value={profile?.email || ''}
+                          disabled
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
+                        />
+                      </div>
+
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Referencia
+                          Referencia de ayuda
                         </label>
                         <textarea
                           {...registerDireccion('referencia')}
@@ -593,6 +624,8 @@ function ProfileContent() {
                         />
                       </div>
                     </div>
+
+                    <p className="text-sm text-red-600">(*) Campo obligatorio</p>
 
                     <div className="flex justify-end">
                       <button

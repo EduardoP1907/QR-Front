@@ -132,7 +132,7 @@ function SubscriptionContent() {
                 </button>
                 <div className="flex flex-col items-center">
                   <span className="text-3xl font-bold text-gray-900">{quantity}</span>
-                  <span className="text-sm text-gray-500">Bluko Life's{quantity > 1 ? 's' : ''}</span>
+                  <span className="text-sm text-gray-500">Bluko Life</span>
                 </div>
                 <button
                   type="button"
@@ -158,15 +158,15 @@ function SubscriptionContent() {
                   <span className="text-3xl font-bold">${SUBSCRIPTION_PRICE.toLocaleString('es-CL')}</span>
                   <span className="text-white opacity-80">/CLP</span>
                 </div>
-                <div className="text-sm text-white opacity-90 mt-1">Mensual por Bluko Life's</div>
+                <div className="text-sm text-white opacity-90 mt-1">Mensual por Bluko Life</div>
               </div>
 
               <div className="mb-6 p-4 bg-white/10 rounded-lg">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">+ ${PULSERA_PRICE.toLocaleString('es-CL')} Bluko Life's física</span>
+                  <span className="text-sm">+ ${PULSERA_PRICE.toLocaleString('es-CL')} Bluko Life física</span>
                 </div>
                 <div className="text-xs text-white opacity-80 mt-1">
-                  (Precio por Bluko Life's)
+                  (Precio por Bluko Life)
                 </div>
               </div>
 
@@ -451,21 +451,6 @@ function SubscriptionContent() {
                   <h4 className="text-lg font-semibold mb-2" style={{color: '#3C0B5A'}}>ARTÍCULO TRANSITORIO – Versión Promocional</h4>
                   <p className="text-sm" style={{color: '#481468'}}>
                     Incluye condiciones especiales de periodo gratuito, carácter de agente promocional y condiciones de suscripción presencial.
-                  </p>
-                </div>
-
-                <div className="bg-gray-50 border rounded-lg p-4">
-                  <p className="text-sm text-gray-600">
-                    También las puedes encontrar en la siguiente página:{' '}
-                    <a 
-                      href="https://www.blukolatam.com/términos-y-condiciones" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="underline hover:opacity-80"
-                      style={{color: '#481468'}}
-                    >
-                      https://www.blukolatam.com/términos-y-condiciones
-                    </a>
                   </p>
                 </div>
               </div>

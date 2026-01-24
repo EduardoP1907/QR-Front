@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
@@ -1233,14 +1234,18 @@ function DashboardContent() {
       <header className="sticky top-0 z-40 backdrop-blur-sm bg-white/95 border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="bg-gradient-to-br from-[#481468] to-[#3d1158] p-1.5 rounded-lg shadow-md">
-              <Shield className="w-4 h-4 text-white" />
-            </div>
+            <Image
+              src="/logo-bluko-icon.png"
+              alt="Bluko Life"
+              width={36}
+              height={36}
+              className="rounded-lg shadow-md"
+            />
             <div>
               <h1 className="text-base font-bold bg-gradient-to-r from-[#481468] to-[#3d1158] bg-clip-text text-transparent">
-                Mi Panel
+                Gestión de Dispositivos
               </h1>
-              <p className="text-[10px] text-gray-500">Gestión de Dispositivos</p>
+              <p className="text-[10px] text-gray-500">Panel de administración</p>
             </div>
           </div>
 
@@ -1296,41 +1301,9 @@ function DashboardContent() {
         </div>
 
         {/* Status Cards */}
-        <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-          {/* Available Bracelets */}
-          <div className="bg-gradient-to-br from-[#481468] to-[#3d1158] rounded-xl p-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 animate-scaleIn">
-            <div className="flex items-start justify-between mb-2">
-              <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
-                <Package className="w-4 h-4" />
-              </div>
-              {availablePulseras > 0 ? (
-                <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <CheckCircle className="w-2.5 h-2.5" />
-                  Activo
-                </span>
-              ) : (
-                <span className="bg-gray-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                  Sin dispositivos
-                </span>
-              )}
-            </div>
-            <h3 className="text-2xl font-bold mb-0.5">{availablePulseras}</h3>
-            <p className="text-white/90 text-xs font-medium">
-              {availablePulseras === 1 ? 'Dispositivo sin asignar' : 'Dispositivos sin asignar'}
-            </p>
-            <p className="text-white/70 text-[10px] mt-1">
-              Para asignar a portadores
-            </p>
-            {claimingQr && (
-              <div className="mt-2 flex items-center gap-1.5 text-xs bg-white/20 backdrop-blur-sm px-2 py-1 rounded-lg">
-                <div className="animate-spin rounded-full h-2.5 w-2.5 border-2 border-white border-t-transparent"></div>
-                <span>Procesando...</span>
-              </div>
-            )}
-          </div>
-
+        <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
           {/* Total Pulseras */}
-          <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 animate-scaleIn" style={{animationDelay: '0.1s'}}>
+          <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 animate-scaleIn">
             <div className="flex items-start justify-between mb-2">
               <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
                 <QrCode className="w-4 h-4" />
@@ -1349,7 +1322,7 @@ function DashboardContent() {
           </div>
 
           {/* Active Subscriptions */}
-          <div className="bg-gradient-to-br from-green-600 to-green-800 rounded-xl p-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 animate-scaleIn" style={{animationDelay: '0.2s'}}>
+          <div className="bg-gradient-to-br from-green-600 to-green-800 rounded-xl p-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 animate-scaleIn" style={{animationDelay: '0.1s'}}>
             <div className="flex items-start justify-between mb-2">
               <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
                 <Activity className="w-4 h-4" />
