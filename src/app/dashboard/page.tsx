@@ -1598,17 +1598,6 @@ function DashboardContent() {
                 forma segura
               </p>
             </div>
-            <div className="hidden md:flex items-center gap-3">
-              <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
-                <Heart className="w-5 h-5" />
-              </div>
-              <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
-                <Phone className="w-5 h-5" />
-              </div>
-              <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
-                <AlertTriangle className="w-5 h-5" />
-              </div>
-            </div>
           </div>
         </div>
 
@@ -1836,7 +1825,7 @@ function DashboardContent() {
                           </p>
                           {pulseraAsignada && (
                             <p className="text-xs text-[#481468] font-semibold mt-1">
-                              <span className="font-semibold"></span>{" "}
+                              <span className="font-semibold">Bluko Life:</span>{" "}
                               {pulseraAsignada.customId || pulseraAsignada.name}
                             </p>
                           )}
