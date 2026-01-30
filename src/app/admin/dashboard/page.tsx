@@ -4,28 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
-import {
-  Shield,
-  LogOut,
-  QrCode,
-  Download,
-  X,
-  Check,
-  TrendingUp,
-  Package,
-  Truck,
-  CheckCircle,
-  AlertCircle,
-  ArrowLeft,
-  ChevronDown,
-  ChevronRight,
-  User,
-  Users,
-  Mail,
-  CreditCard,
-  Search,
-  RefreshCw
-} from 'lucide-react';
+import {Shield,LogOut,QrCode,Download,X,Check,TrendingUp,Package,Truck,CheckCircle,AlertCircle,ArrowLeft,ChevronDown,ChevronRight,User,Users,Mail,CreditCard,Search,RefreshCw,Pause,Play,Trash2,Eye} from 'lucide-react';
 import { adminApi } from '@/services/api';
 
 interface Stats {
@@ -378,6 +357,77 @@ export default function AdminDashboardPage() {
       if (!contratanteDetails.has(id)) {
         await loadContratanteDetail(id);
       }
+    }
+  };
+
+  // Funciones para gestionar pulseras (Pausar, Activar, Eliminar)
+  const handlePausePulsera = async (pulseraId: number, customId: string) => {
+    if (!confirm(`¿Estás seguro de pausar la pulsera ${customId}? La suscripción será desactivada.`)) {
+      return;
+    }
+    try {
+      await adminApi.pausePulsera(pulseraId);
+      toast.success(`Pulsera ${customId} pausada exitosamente`);
+      // Recargar los detalles del contratante
+      if (expandedContratante) {
+        const newDetails = new Map(contratanteDetails);
+        newDetails.delete(expandedContratante);
+        setContratanteDetails(newDetails);
+        await loadContratanteDetail(expandedContratante);
+      }
+      // Recargar estadísticas
+      loadData();
+    } catch (error: any) {
+      console.error('Error pausando pulsera:', error);
+      toast.error('Error al pausar la pulsera');
+    }
+  };
+
+  const handleActivatePulsera = async (pulseraId: number, customId: string) => {
+    if (!confirm(`¿Estás seguro de activar la pulsera ${customId}? Se activará la suscripción por 30 días.`)) {
+      return;
+    }
+    try {
+      await adminApi.activatePulsera(pulseraId);
+      toast.success(`Pulsera ${customId} activada exitosamente`);
+      // Recargar los detalles del contratante
+      if (expandedContratante) {
+        const newDetails = new Map(contratanteDetails);
+        newDetails.delete(expandedContratante);
+        setContratanteDetails(newDetails);
+        await loadContratanteDetail(expandedContratante);
+      }
+      // Recargar estadísticas
+      loadData();
+    } catch (error: any) {
+      console.error('Error activando pulsera:', error);
+      toast.error('Error al activar la pulsera');
+    }
+  };
+
+  const handleDeletePulsera = async (pulseraId: number, customId: string) => {
+    if (!confirm(`¿Estás seguro de ELIMINAR la pulsera ${customId}? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+    // Doble confirmación para eliminar
+    if (!confirm(`CONFIRMACIÓN FINAL: ¿Realmente quieres eliminar ${customId} permanentemente?`)) {
+      return;
+    }
+    try {
+      await adminApi.deletePulsera(pulseraId);
+      toast.success(`Pulsera ${customId} eliminada exitosamente`);
+      // Recargar los detalles del contratante
+      if (expandedContratante) {
+        const newDetails = new Map(contratanteDetails);
+        newDetails.delete(expandedContratante);
+        setContratanteDetails(newDetails);
+        await loadContratanteDetail(expandedContratante);
+      }
+      // Recargar estadísticas
+      loadData();
+    } catch (error: any) {
+      console.error('Error eliminando pulsera:', error);
+      toast.error('Error al eliminar la pulsera');
     }
   };
 
@@ -736,7 +786,7 @@ export default function AdminDashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="p-2 bg-white rounded-xl shadow-lg border border-gray-100">
+              <div className="p-2">
                 <Image
                   src="/logo-bluko-icon.png"
                   alt="Bluko Life"
@@ -2049,35 +2099,139 @@ export default function AdminDashboardPage() {
                           {expandedContratante === contratante.id && contratanteDetails.has(contratante.id) && (
                             <tr>
                               <td colSpan={8} className="px-6 py-4 bg-gray-50">
-                                <div className="space-y-4">
-                                  <h4 className="font-bold text-gray-900 flex items-center gap-2">
-                                    <Users className="w-5 h-5" />
-                                    Portadores Asignados ({contratanteDetails.get(contratante.id).portadores?.length || 0})
-                                  </h4>
+                                <div className="space-y-6">
+                                  {/* Sección de Pulseras */}
+                                  <div>
+                                    <h4 className="font-bold text-gray-900 flex items-center gap-2 mb-4">
+                                      <QrCode className="w-5 h-5" />
+                                      Pulseras / QR ({contratanteDetails.get(contratante.id).pulseras?.length || 0})
+                                    </h4>
 
-                                  {contratanteDetails.get(contratante.id).portadores?.length > 0 ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                      {contratanteDetails.get(contratante.id).portadores.map((portador: any) => (
-                                        <div key={portador.id} className="bg-white rounded-xl p-4 shadow border border-gray-200">
-                                          <div className="flex items-start gap-3">
-                                            <div className="p-2 bg-[#481468]/10 rounded-lg">
-                                              <User className="w-5 h-5 text-[#481468]" />
+                                    {contratanteDetails.get(contratante.id).pulseras?.length > 0 ? (
+                                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                        {contratanteDetails.get(contratante.id).pulseras.map((pulsera: any) => (
+                                          <div key={pulsera.id} className={`bg-white rounded-xl p-4 shadow border-2 ${pulsera.active && pulsera.subscriptionActive ? 'border-green-200' : 'border-red-200'}`}>
+                                            <div className="flex items-start justify-between">
+                                              <div className="flex items-start gap-3">
+                                                <div className={`p-2 rounded-lg ${pulsera.active && pulsera.subscriptionActive ? 'bg-green-100' : 'bg-red-100'}`}>
+                                                  <QrCode className={`w-5 h-5 ${pulsera.active && pulsera.subscriptionActive ? 'text-green-600' : 'text-red-600'}`} />
+                                                </div>
+                                                <div>
+                                                  <p className="font-bold text-gray-900">{pulsera.customId || pulsera.name}</p>
+                                                  <div className="flex items-center gap-2 mt-1">
+                                                    {pulsera.subscriptionActive ? (
+                                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                                        <CheckCircle className="w-3 h-3" />
+                                                        Suscripción Activa
+                                                      </span>
+                                                    ) : (
+                                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                                                        <X className="w-3 h-3" />
+                                                        Suscripción Inactiva
+                                                      </span>
+                                                    )}
+                                                    {pulsera.active ? (
+                                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                                                        Activa
+                                                      </span>
+                                                    ) : (
+                                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">
+                                                        Pausada
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                  {pulsera.portador && (
+                                                    <p className="text-sm text-gray-500 mt-1">
+                                                      Portador: {pulsera.portador.firstName} {pulsera.portador.paternalSurname}
+                                                    </p>
+                                                  )}
+                                                  <p className="text-xs text-gray-400 mt-1">Creado: {formatDate(pulsera.createdAt)}</p>
+                                                </div>
+                                              </div>
                                             </div>
-                                            <div className="flex-1">
-                                              <p className="font-bold text-gray-900">{portador.firstName} {portador.paternalSurname}</p>
-                                              <p className="text-sm text-gray-500">{portador.email}</p>
-                                              <p className="text-xs text-gray-400 mt-1">RUT: {portador.rut}</p>
+
+                                            {/* Botones de acción */}
+                                            <div className="flex items-center gap-2 mt-4 pt-3 border-t border-gray-100">
+                                              <button
+                                                onClick={() => handleViewQrImage(pulsera.customId || pulsera.qrCode)}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-semibold transition-colors"
+                                                title="Ver QR"
+                                              >
+                                                <Eye className="w-3.5 h-3.5" />
+                                                Ver QR
+                                              </button>
+
+                                              {pulsera.active ? (
+                                                <button
+                                                  onClick={() => handlePausePulsera(pulsera.id, pulsera.customId || pulsera.name)}
+                                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 font-semibold transition-colors"
+                                                  title="Pausar pulsera"
+                                                >
+                                                  <Pause className="w-3.5 h-3.5" />
+                                                  Pausar
+                                                </button>
+                                              ) : (
+                                                <button
+                                                  onClick={() => handleActivatePulsera(pulsera.id, pulsera.customId || pulsera.name)}
+                                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-green-100 text-green-700 rounded-lg hover:bg-green-200 font-semibold transition-colors"
+                                                  title="Activar pulsera"
+                                                >
+                                                  <Play className="w-3.5 h-3.5" />
+                                                  Activar
+                                                </button>
+                                              )}
+
+                                              <button
+                                                onClick={() => handleDeletePulsera(pulsera.id, pulsera.customId || pulsera.name)}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-semibold transition-colors"
+                                                title="Eliminar pulsera"
+                                              >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                                Eliminar
+                                              </button>
                                             </div>
                                           </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <div className="text-center py-8 text-gray-500">
-                                      <User className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                                      <p>No hay portadores asignados</p>
-                                    </div>
-                                  )}
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <div className="text-center py-6 text-gray-500 bg-white rounded-xl border border-gray-200">
+                                        <QrCode className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+                                        <p>No hay pulseras asignadas</p>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Sección de Portadores */}
+                                  <div>
+                                    <h4 className="font-bold text-gray-900 flex items-center gap-2 mb-4">
+                                      <Users className="w-5 h-5" />
+                                      Portadores Asignados ({contratanteDetails.get(contratante.id).portadores?.length || 0})
+                                    </h4>
+
+                                    {contratanteDetails.get(contratante.id).portadores?.length > 0 ? (
+                                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {contratanteDetails.get(contratante.id).portadores.map((portador: any) => (
+                                          <div key={portador.id} className="bg-white rounded-xl p-4 shadow border border-gray-200">
+                                            <div className="flex items-start gap-3">
+                                              <div className="p-2 bg-[#481468]/10 rounded-lg">
+                                                <User className="w-5 h-5 text-[#481468]" />
+                                              </div>
+                                              <div className="flex-1">
+                                                <p className="font-bold text-gray-900">{portador.firstName} {portador.paternalSurname}</p>
+                                                <p className="text-sm text-gray-500">{portador.email}</p>
+                                                <p className="text-xs text-gray-400 mt-1">RUT: {portador.rut}</p>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <div className="text-center py-6 text-gray-500 bg-white rounded-xl border border-gray-200">
+                                        <User className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+                                        <p>No hay portadores asignados</p>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </td>
                             </tr>

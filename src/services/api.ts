@@ -378,6 +378,16 @@ export const adminApi = {
   getPulserasByStatus: (status: string) =>
     api.get(`/admin/pulseras/by-status/${status}`),
 
+  // Nuevas funciones para gestión de pulseras
+  pausePulsera: (id: number) =>
+    api.post(`/admin/pulseras/${id}/pause`),
+
+  activatePulsera: (id: number) =>
+    api.post(`/admin/pulseras/${id}/activate`),
+
+  deletePulsera: (id: number) =>
+    api.delete(`/admin/pulseras/${id}`),
+
   getPedidosPorDespachar: () =>
     api.get('/admin/pedidos/por-despachar'),
 
