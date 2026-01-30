@@ -124,7 +124,13 @@ export default function LoginPage() {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{backgroundColor: '#f8f4ff'}}>
-              <Shield className="w-8 h-8" style={{color: '#481468'}} />
+              <Image
+                src="/logo-bluko-icon.png"
+                alt="Bluko Life"
+                width={40}
+                height={40}
+                className="object-contain"
+              />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               Iniciar Sesión

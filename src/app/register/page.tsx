@@ -150,7 +150,13 @@ export default function RegisterPage() {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-4">
-              <Shield className="w-12 h-12" style={{color: '#481468'}} />
+              <Image
+                src="/logo-bluko-icon.png"
+                alt="Bluko Life"
+                width={48}
+                height={48}
+                className="object-contain"
+              />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Crear Cuenta</h1>
             <p className="text-gray-600">
