@@ -815,7 +815,7 @@ export default function AdminDashboardPage() {
       </header>
 
       {/* Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Dashboard Tab */}
         {activeTab === 'dashboard' && stats && (
           <div className="space-y-8 animate-fadeIn">
@@ -2002,15 +2002,11 @@ export default function AdminDashboardPage() {
                   <table className="w-full">
                     <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
                       <tr>
-                        <th className="px-4 py-4 text-left w-12">
-                          <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-[#481468] focus:ring-[#481468] cursor-pointer" />
-                        </th>
                         <th className="px-6 py-4 text-left font-bold text-gray-900">Contratante</th>
                         <th className="px-6 py-4 text-left font-bold text-gray-900">Email</th>
                         <th className="px-6 py-4 text-left font-bold text-gray-900">RUT</th>
                         <th className="px-6 py-4 text-left font-bold text-gray-900">Fecha Registro</th>
                         <th className="px-6 py-4 text-left font-bold text-gray-900">Dispositivos</th>
-                        <th className="px-6 py-4 text-left font-bold text-gray-900">Suscripción</th>
                         <th className="px-6 py-4 text-left font-bold text-gray-900">Acciones</th>
                       </tr>
                     </thead>
@@ -2025,14 +2021,6 @@ export default function AdminDashboardPage() {
                         .map((contratante) => (
                         <React.Fragment key={contratante.id}>
                           <tr className="hover:bg-gray-50 transition-colors">
-                            <td className="px-4 py-4">
-                              <input
-                                type="checkbox"
-                                checked={selectedForDispatch.has(contratante.id)}
-                                onChange={() => toggleSelectForDispatch(contratante.id)}
-                                className="w-4 h-4 rounded border-gray-300 text-[#481468] focus:ring-[#481468] cursor-pointer"
-                              />
-                            </td>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
                                 <button
@@ -2073,19 +2061,6 @@ export default function AdminDashboardPage() {
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              {contratante.subscriptionActive ? (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                                  <CheckCircle className="w-3.5 h-3.5" />
-                                  Activa
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
-                                  <X className="w-3.5 h-3.5" />
-                                  Inactiva
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-6 py-4">
                               <button
                                 onClick={() => handleToggleExpand(contratante.id)}
                                 className="inline-flex items-center gap-2 px-3 py-1.5 text-xs bg-[#481468] text-white rounded-lg hover:bg-[#3d1158] font-semibold transition-colors"
@@ -2098,7 +2073,7 @@ export default function AdminDashboardPage() {
 
                           {expandedContratante === contratante.id && contratanteDetails.has(contratante.id) && (
                             <tr>
-                              <td colSpan={8} className="px-6 py-4 bg-gray-50">
+                              <td colSpan={6} className="px-6 py-4 bg-gray-50">
                                 <div className="space-y-6">
                                   {/* Sección de Pulseras */}
                                   <div>
@@ -2248,18 +2223,6 @@ export default function AdminDashboardPage() {
                     </div>
                   )}
                 </div>
-
-                {selectedForDispatch.size > 0 && (
-                  <div className="p-6 border-t-2 border-gray-100 bg-gray-50">
-                    <p className="font-bold text-gray-900 mb-4 text-lg">Acciones</p>
-                    <button
-                      className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#82c341] to-[#6ba832] text-black font-bold rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
-                    >
-                      <Truck className="w-5 h-5" />
-                      Despachar ({selectedForDispatch.size})
-                    </button>
-                  </div>
-                )}
               </div>
             )}
           </div>
