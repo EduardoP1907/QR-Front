@@ -34,6 +34,11 @@ interface Pulsera {
   createdAt: string;
   active: boolean;
   subscriptionActive: boolean;
+  // Fechas de transición de estado
+  sentToFabricationAt?: string;
+  fabricatedAt?: string;
+  inStockAt?: string;
+  subscribedAt?: string;
   portador?: {
     id: number;
     firstName: string;
@@ -1239,7 +1244,7 @@ export default function AdminDashboardPage() {
                         </th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Código QR (UUID)</th>
-                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Creación</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Enviado a Fabricación</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
                       </tr>
                     </thead>
@@ -1268,7 +1273,7 @@ export default function AdminDashboardPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <span className="text-gray-600 text-sm">{formatDate(pulsera.createdAt)}</span>
+                            <span className="text-gray-600 text-sm">{formatDate(pulsera.sentToFabricationAt || pulsera.createdAt)}</span>
                           </td>
                           <td className="px-6 py-4">
                             {getStatusBadge(pulsera.status)}
@@ -1355,7 +1360,7 @@ export default function AdminDashboardPage() {
                         </th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Código QR (UUID)</th>
-                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Creación</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Fabricación</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
                       </tr>
                     </thead>
@@ -1384,7 +1389,7 @@ export default function AdminDashboardPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <span className="text-gray-600 text-sm">{formatDate(pulsera.createdAt)}</span>
+                            <span className="text-gray-600 text-sm">{formatDate(pulsera.fabricatedAt || pulsera.createdAt)}</span>
                           </td>
                           <td className="px-6 py-4">
                             {getStatusBadge(pulsera.status)}
@@ -1459,7 +1464,7 @@ export default function AdminDashboardPage() {
                       <tr>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Código QR (UUID)</th>
-                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Creación</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Ingreso Stock</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Imagen QR</th>
                       </tr>
@@ -1481,7 +1486,7 @@ export default function AdminDashboardPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <span className="text-gray-600 text-sm">{formatDate(pulsera.createdAt)}</span>
+                            <span className="text-gray-600 text-sm">{formatDate(pulsera.inStockAt || pulsera.createdAt)}</span>
                           </td>
                           <td className="px-6 py-4">
                             {getStatusBadge(pulsera.status)}
@@ -1553,7 +1558,7 @@ export default function AdminDashboardPage() {
                       <tr>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Portador</th>
-                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Creación</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Asignación</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Imagen QR</th>
                       </tr>
@@ -1583,7 +1588,7 @@ export default function AdminDashboardPage() {
                             )}
                           </td>
                           <td className="px-6 py-4">
-                            <span className="text-gray-600 text-sm">{formatDate(pulsera.createdAt)}</span>
+                            <span className="text-gray-600 text-sm">{formatDate(pulsera.subscribedAt || pulsera.createdAt)}</span>
                           </td>
                           <td className="px-6 py-4">
                             {getStatusBadge(pulsera.status)}
@@ -1654,7 +1659,7 @@ export default function AdminDashboardPage() {
                       <tr>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Portador</th>
-                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Creación</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Suscripción</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Suscripción</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Imagen QR</th>
                       </tr>
@@ -1684,7 +1689,7 @@ export default function AdminDashboardPage() {
                             )}
                           </td>
                           <td className="px-6 py-4">
-                            <span className="text-gray-600 text-sm">{formatDate(pulsera.createdAt)}</span>
+                            <span className="text-gray-600 text-sm">{formatDate(pulsera.subscribedAt || pulsera.createdAt)}</span>
                           </td>
                           <td className="px-6 py-4">
                             {pulsera.subscriptionActive ? (
@@ -2023,16 +2028,6 @@ export default function AdminDashboardPage() {
                           <tr className="hover:bg-gray-50 transition-colors">
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
-                                <button
-                                  onClick={() => handleToggleExpand(contratante.id)}
-                                  className="p-1 hover:bg-gray-200 rounded transition-colors"
-                                >
-                                  {expandedContratante === contratante.id ? (
-                                    <ChevronDown className="w-5 h-5 text-gray-600" />
-                                  ) : (
-                                    <ChevronRight className="w-5 h-5 text-gray-600" />
-                                  )}
-                                </button>
                                 <div>
                                   <p className="text-black font-bold">{contratante.firstName} {contratante.paternalSurname}</p>
                                   <p className="text-xs text-gray-500">ID: {contratante.id}</p>
