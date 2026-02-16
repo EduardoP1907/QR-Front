@@ -2478,7 +2478,7 @@ function DashboardContent() {
                       </div>
 
                       {patologiasDetalle.length > 0 && (
-                        <div className="border border-gray-300 rounded-lg overflow-hidden">
+                        <div className="border border-gray-300 rounded-lg overflow-visible">
                           <div className="divide-y divide-gray-200">
                             {patologiasDetalle.map((detalle, index) => (
                               <div key={index} className="p-3 bg-white flex gap-2 items-start">
@@ -2629,7 +2629,7 @@ function DashboardContent() {
                       </div>
 
                       {principiosActivosDetalle.length > 0 && (
-                        <div className="border border-gray-300 rounded-lg overflow-hidden">
+                        <div className="border border-gray-300 rounded-lg overflow-visible">
                           <div className="divide-y divide-gray-200">
                             {principiosActivosDetalle.map(
                               (detalle, index) => (
