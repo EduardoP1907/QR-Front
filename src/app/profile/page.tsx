@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 import {
   User,
   Edit,
@@ -18,11 +18,13 @@ import {
   Users,
   Clock,
   CheckCircle,
-  Package
-} from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { profileApi } from '../../services/api';
-import ProtectedRoute from '../../components/ProtectedRoute';
+  Package,
+  ShoppingCart,
+} from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { profileApi } from "../../services/api";
+import ProtectedRoute from "../../components/ProtectedRoute";
+import { regiones as regionesData, getComunasByRegion, getRegionByNombre } from "../../data/chile-dpa";
 
 interface ProfileData {
   id: number;
@@ -78,39 +80,96 @@ interface DireccionFormData {
   telefono: string;
 }
 
+interface Region {
+  codigo: string;
+  nombre: string;
+}
+
+interface Comuna {
+  codigo: string;
+  nombre: string;
+}
+
 function ProfileContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, logout } = useAuth();
+
+  const fromSubscription = searchParams.get('from') === 'subscription';
+  const sectionParam = searchParams.get('section');
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [summary, setSummary] = useState<ProfileSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [editingDireccion, setEditingDireccion] = useState(false);
+  const [regiones, setRegiones] = useState<Region[]>([])
+  const [comunas, setComunas] = useState<Comuna[]>([])
+  const [regionSeleccionada, setRegionSeleccionada] = useState<string>('')
+
+
+  // Cargar regiones desde datos locales
+  useEffect(() => {
+    setRegiones(regionesData);
+  }, []);
+
+  // Cargar comunas cuando cambia la región seleccionada
+  useEffect(() => {
+    if (!regionSeleccionada) {
+      setComunas([]);
+      return;
+    }
+
+    const comunasDeRegion = getComunasByRegion(regionSeleccionada);
+    setComunas(comunasDeRegion);
+  }, [regionSeleccionada]);
+
+  // Cargar comunas cuando se abre el formulario de edición con una región existente
+  useEffect(() => {
+    if (editingDireccion && profile?.region && regiones.length > 0) {
+      const regionEncontrada = getRegionByNombre(profile.region);
+      if (regionEncontrada && regionSeleccionada !== regionEncontrada.codigo) {
+        setRegionSeleccionada(regionEncontrada.codigo);
+      }
+    }
+  }, [editingDireccion, profile?.region, regiones]);
 
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting }
+    formState: { errors, isSubmitting },
   } = useForm<ProfileFormData>();
 
   const {
     register: registerDireccion,
     handleSubmit: handleSubmitDireccion,
     reset: resetDireccion,
-    formState: { errors: errorsDireccion, isSubmitting: isSubmittingDireccion }
+    formState: { errors: errorsDireccion, isSubmitting: isSubmittingDireccion },
   } = useForm<DireccionFormData>();
+
+  const direccionRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchProfileData();
   }, []);
 
+  // Auto-abrir sección de dirección si viene desde subscription
+  useEffect(() => {
+    if (sectionParam === 'direccion' && !loading && profile) {
+      setEditingDireccion(true);
+      // Scroll a la sección de dirección
+      setTimeout(() => {
+        direccionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    }
+  }, [sectionParam, loading, profile]);
+
   const fetchProfileData = async () => {
     try {
       const [profileResponse, summaryResponse] = await Promise.all([
         profileApi.getProfile(),
-        profileApi.getProfileSummary()
+        profileApi.getProfileSummary(),
       ]);
 
       setProfile(profileResponse.data);
@@ -118,25 +177,25 @@ function ProfileContent() {
 
       // Resetear el formulario con los datos actuales
       reset({
-        firstName: profileResponse.data.firstName || '',
-        paternalSurname: profileResponse.data.paternalSurname || '',
-        maternalSurname: profileResponse.data.maternalSurname || ''
+        firstName: profileResponse.data.firstName || "",
+        paternalSurname: profileResponse.data.paternalSurname || "",
+        maternalSurname: profileResponse.data.maternalSurname || "",
       });
 
       // Resetear el formulario de dirección
       resetDireccion({
-        region: profileResponse.data.region || '',
-        calle: profileResponse.data.calle || '',
-        tipoVivienda: profileResponse.data.tipoVivienda || '',
-        numero: profileResponse.data.numero || '',
-        numeroDepto: profileResponse.data.numeroDepto || '',
-        comuna: profileResponse.data.comuna || '',
-        referencia: profileResponse.data.referencia || '',
-        telefono: profileResponse.data.telefono || ''
+        region: profileResponse.data.region || "",
+        calle: profileResponse.data.calle || "",
+        tipoVivienda: profileResponse.data.tipoVivienda || "",
+        numero: profileResponse.data.numero || "",
+        numeroDepto: profileResponse.data.numeroDepto || "",
+        comuna: profileResponse.data.comuna || "",
+        referencia: profileResponse.data.referencia || "",
+        telefono: profileResponse.data.telefono || "",
       });
     } catch (error) {
-      console.error('Error loading profile:', error);
-      toast.error('Error al cargar el perfil');
+      console.error("Error loading profile:", error);
+      toast.error("Error al cargar el perfil");
     } finally {
       setLoading(false);
     }
@@ -147,18 +206,19 @@ function ProfileContent() {
       const response = await profileApi.updateProfile({
         firstName: data.firstName,
         paternalSurname: data.paternalSurname,
-        maternalSurname: data.maternalSurname || undefined
+        maternalSurname: data.maternalSurname || undefined,
       });
 
-      setProfile(prev => prev ? { ...prev, ...response.data } : null);
+      setProfile((prev) => (prev ? { ...prev, ...response.data } : null));
       setEditing(false);
-      toast.success('Perfil actualizado exitosamente');
+      toast.success("Perfil actualizado exitosamente");
 
       // Refrescar el resumen
       fetchProfileData();
     } catch (error: any) {
-      console.error('Error updating profile:', error);
-      const errorMessage = error.response?.data?.error || 'Error al actualizar el perfil';
+      console.error("Error updating profile:", error);
+      const errorMessage =
+        error.response?.data?.error || "Error al actualizar el perfil";
       toast.error(errorMessage);
     }
   };
@@ -173,27 +233,37 @@ function ProfileContent() {
         numeroDepto: data.numeroDepto || undefined,
         comuna: data.comuna,
         referencia: data.referencia || undefined,
-        telefono: data.telefono
+        telefono: data.telefono,
       });
 
-      setProfile(prev => prev ? { ...prev, ...response.data } : null);
+      setProfile((prev) => (prev ? { ...prev, ...response.data } : null));
       setEditingDireccion(false);
-      toast.success('Dirección actualizada exitosamente');
+      toast.success("Dirección actualizada exitosamente");
+
+      // Si viene desde subscription, redirigir de vuelta
+      if (fromSubscription) {
+        toast.success("Ahora puedes continuar con tu compra");
+        setTimeout(() => {
+          router.push('/subscription');
+        }, 1500);
+        return;
+      }
 
       // Refrescar el perfil
       fetchProfileData();
     } catch (error: any) {
-      console.error('Error updating address:', error);
-      const errorMessage = error.response?.data?.error || 'Error al actualizar la dirección';
+      console.error("Error updating address:", error);
+      const errorMessage =
+        error.response?.data?.error || "Error al actualizar la dirección";
       toast.error(errorMessage);
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-CL', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("es-CL", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -226,7 +296,7 @@ function ProfileContent() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => router.push('/dashboard')}
+                onClick={() => router.push("/dashboard")}
                 className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-100"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -234,8 +304,10 @@ function ProfileContent() {
               </button>
 
               <div className="flex items-center gap-2">
-                <Shield className="w-7 h-7" style={{color: '#481468'}} />
-                <h1 className="text-xl font-semibold text-gray-900">Mi Perfil</h1>
+                <Shield className="w-7 h-7" style={{ color: "#481468" }} />
+                <h1 className="text-xl font-semibold text-gray-900">
+                  Mi Perfil
+                </h1>
               </div>
             </div>
 
@@ -243,7 +315,7 @@ function ProfileContent() {
               <button
                 onClick={() => setEditing(true)}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white hover:opacity-90"
-                style={{backgroundColor: '#481468'}}
+                style={{ backgroundColor: "#481468" }}
               >
                 <Edit className="w-4 h-4" />
                 <span>Editar Perfil</span>
@@ -252,6 +324,27 @@ function ProfileContent() {
           </div>
         </div>
       </header>
+
+      {/* Banner de retorno a compra */}
+      {fromSubscription && (
+        <div className="bg-amber-50 border-b border-amber-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-amber-800">
+                Ingresa tu dirección de envío para continuar con tu compra.
+              </p>
+              <button
+                onClick={() => router.push('/subscription')}
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium text-white hover:opacity-90 transition-colors"
+                style={{ backgroundColor: '#82c341' }}
+              >
+                <ShoppingCart className="w-4 h-4" />
+                <span>Volver a la compra</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -263,14 +356,18 @@ function ProfileContent() {
                 <div className="w-24 h-24 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <User className="w-12 h-12 text-purple-600" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900">{profile.nombreCompleto}</h2>
+                <h2 className="text-xl font-bold text-gray-900">
+                  {profile.nombreCompleto}
+                </h2>
                 <p className="text-gray-600">{profile.email}</p>
                 <div className="flex items-center justify-center gap-2 mt-2">
                   {profile.verified && (
                     <CheckCircle className="w-4 h-4 text-green-500" />
                   )}
                   <span className="text-sm text-gray-500">
-                    {profile.verified ? 'Cuenta verificada' : 'Cuenta no verificada'}
+                    {profile.verified
+                      ? "Cuenta verificada"
+                      : "Cuenta no verificada"}
                   </span>
                 </div>
               </div>
@@ -282,8 +379,12 @@ function ProfileContent() {
                     <QrCode className="w-5 h-5 text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-blue-900">Suscripciones activas</p>
-                    <p className="text-lg font-bold text-blue-600">{summary.pulserasActivas}</p>
+                    <p className="text-sm font-medium text-blue-900">
+                      Suscripciones activas
+                    </p>
+                    <p className="text-lg font-bold text-blue-600">
+                      {summary.pulserasActivas}
+                    </p>
                   </div>
                 </div>
 
@@ -292,8 +393,12 @@ function ProfileContent() {
                     <Users className="w-5 h-5 text-green-600" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-green-900">Portadores asignados</p>
-                    <p className="text-lg font-bold text-green-600">{summary.portadoresCreados}</p>
+                    <p className="text-sm font-medium text-green-900">
+                      Portadores asignados
+                    </p>
+                    <p className="text-lg font-bold text-green-600">
+                      {summary.portadoresCreados}
+                    </p>
                   </div>
                 </div>
 
@@ -302,8 +407,12 @@ function ProfileContent() {
                     <Package className="w-5 h-5 text-orange-600" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-orange-900">Dispositivos sin asignar</p>
-                    <p className="text-lg font-bold text-orange-600">{summary.pulserasDisponibles}</p>
+                    <p className="text-sm font-medium text-orange-900">
+                      Dispositivos sin asignar
+                    </p>
+                    <p className="text-lg font-bold text-orange-600">
+                      {summary.pulserasDisponibles}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -316,7 +425,9 @@ function ProfileContent() {
             <div className="bg-white rounded-2xl shadow-sm border">
               <div className="p-6 border-b">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">Información Personal</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Información Personal
+                  </h3>
                   {editing && (
                     <button
                       onClick={() => {
@@ -334,22 +445,31 @@ function ProfileContent() {
 
               <div className="p-6">
                 {editing ? (
-                  <form onSubmit={handleSubmit(handleUpdateProfile)} className="space-y-6">
+                  <form
+                    onSubmit={handleSubmit(handleUpdateProfile)}
+                    className="space-y-6"
+                  >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Nombre *
                         </label>
                         <input
-                          {...register('firstName', {
-                            required: 'El nombre es requerido',
-                            minLength: { value: 2, message: 'El nombre debe tener al menos 2 caracteres' }
+                          {...register("firstName", {
+                            required: "El nombre es requerido",
+                            minLength: {
+                              value: 2,
+                              message:
+                                "El nombre debe tener al menos 2 caracteres",
+                            },
                           })}
                           type="text"
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
                         />
                         {errors.firstName && (
-                          <p className="text-red-500 text-sm mt-1">{errors.firstName.message}</p>
+                          <p className="text-red-500 text-sm mt-1">
+                            {errors.firstName.message}
+                          </p>
                         )}
                       </div>
 
@@ -358,15 +478,21 @@ function ProfileContent() {
                           Apellido Paterno *
                         </label>
                         <input
-                          {...register('paternalSurname', {
-                            required: 'El apellido paterno es requerido',
-                            minLength: { value: 2, message: 'El apellido debe tener al menos 2 caracteres' }
+                          {...register("paternalSurname", {
+                            required: "El apellido paterno es requerido",
+                            minLength: {
+                              value: 2,
+                              message:
+                                "El apellido debe tener al menos 2 caracteres",
+                            },
                           })}
                           type="text"
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
                         />
                         {errors.paternalSurname && (
-                          <p className="text-red-500 text-sm mt-1">{errors.paternalSurname.message}</p>
+                          <p className="text-red-500 text-sm mt-1">
+                            {errors.paternalSurname.message}
+                          </p>
                         )}
                       </div>
 
@@ -375,7 +501,7 @@ function ProfileContent() {
                           Apellido Materno
                         </label>
                         <input
-                          {...register('maternalSurname')}
+                          {...register("maternalSurname")}
                           type="text"
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
                         />
@@ -387,10 +513,12 @@ function ProfileContent() {
                         type="submit"
                         disabled={isSubmitting}
                         className="inline-flex items-center gap-2 px-6 py-2 rounded-lg text-white hover:opacity-90 disabled:opacity-50"
-                        style={{backgroundColor: '#481468'}}
+                        style={{ backgroundColor: "#481468" }}
                       >
                         <Save className="w-4 h-4" />
-                        <span>{isSubmitting ? 'Guardando...' : 'Guardar Cambios'}</span>
+                        <span>
+                          {isSubmitting ? "Guardando..." : "Guardar Cambios"}
+                        </span>
                       </button>
                     </div>
                   </form>
@@ -400,7 +528,9 @@ function ProfileContent() {
                       <User className="w-5 h-5 text-gray-400" />
                       <div>
                         <p className="text-sm text-gray-600">Nombre completo</p>
-                        <p className="font-medium text-gray-900">{profile.nombreCompleto}</p>
+                        <p className="font-medium text-gray-900">
+                          {profile.nombreCompleto}
+                        </p>
                       </div>
                     </div>
 
@@ -408,7 +538,9 @@ function ProfileContent() {
                       <Mail className="w-5 h-5 text-gray-400" />
                       <div>
                         <p className="text-sm text-gray-600">Email</p>
-                        <p className="font-medium text-gray-900">{profile.email}</p>
+                        <p className="font-medium text-gray-900">
+                          {profile.email}
+                        </p>
                       </div>
                     </div>
 
@@ -416,7 +548,9 @@ function ProfileContent() {
                       <CreditCard className="w-5 h-5 text-gray-400" />
                       <div>
                         <p className="text-sm text-gray-600">RUT</p>
-                        <p className="font-medium text-gray-900">{profile.rut}</p>
+                        <p className="font-medium text-gray-900">
+                          {profile.rut}
+                        </p>
                       </div>
                     </div>
 
@@ -424,7 +558,9 @@ function ProfileContent() {
                       <Calendar className="w-5 h-5 text-gray-400" />
                       <div>
                         <p className="text-sm text-gray-600">Miembro desde</p>
-                        <p className="font-medium text-gray-900">{formatDate(profile.createdAt)}</p>
+                        <p className="font-medium text-gray-900">
+                          {formatDate(profile.createdAt)}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -433,10 +569,12 @@ function ProfileContent() {
             </div>
 
             {/* Dirección de Envío */}
-            <div className="bg-white rounded-2xl shadow-sm border">
+            <div ref={direccionRef} className="bg-white rounded-2xl shadow-sm border">
               <div className="p-6 border-b">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">Dirección de Envío</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Dirección de Envío
+                  </h3>
                   {!editingDireccion && (
                     <button
                       onClick={() => setEditingDireccion(true)}
@@ -463,38 +601,43 @@ function ProfileContent() {
 
               <div className="p-6">
                 {editingDireccion ? (
-                  <form onSubmit={handleSubmitDireccion(handleUpdateDireccion)} className="space-y-6">
+                  <form
+                    onSubmit={handleSubmitDireccion(handleUpdateDireccion)}
+                    className="space-y-6"
+                  >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Región *
                         </label>
+
                         <select
-                          {...registerDireccion('region', {
-                            required: 'La región es requerida'
+                          {...registerDireccion("region", {
+                            required: "La región es requerida",
+                            onChange: (e) => {
+                              // Buscar el código de la región seleccionada para cargar comunas
+                              const regionSeleccionadaObj = getRegionByNombre(e.target.value);
+                              if (regionSeleccionadaObj) {
+                                setRegionSeleccionada(regionSeleccionadaObj.codigo);
+                              } else {
+                                setRegionSeleccionada("");
+                              }
+                            },
                           })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
                         >
                           <option value="">Seleccionar...</option>
-                          <option value="Región de Arica y Parinacota">Región de Arica y Parinacota</option>
-                          <option value="Región de Tarapacá">Región de Tarapacá</option>
-                          <option value="Región de Antofagasta">Región de Antofagasta</option>
-                          <option value="Región de Atacama">Región de Atacama</option>
-                          <option value="Región de Coquimbo">Región de Coquimbo</option>
-                          <option value="Región de Valparaíso">Región de Valparaíso</option>
-                          <option value="Región Metropolitana">Región Metropolitana</option>
-                          <option value="Región del Libertador General Bernardo O'Higgins">Región del Libertador General Bernardo O'Higgins</option>
-                          <option value="Región del Maule">Región del Maule</option>
-                          <option value="Región de Ñuble">Región de Ñuble</option>
-                          <option value="Región del Biobío">Región del Biobío</option>
-                          <option value="Región de La Araucanía">Región de La Araucanía</option>
-                          <option value="Región de Los Ríos">Región de Los Ríos</option>
-                          <option value="Región de Los Lagos">Región de Los Lagos</option>
-                          <option value="Región de Aysén">Región de Aysén</option>
-                          <option value="Región de Magallanes">Región de Magallanes</option>
+                          {regiones.map((region) => (
+                            <option key={region.codigo} value={region.nombre}>
+                              {region.nombre}
+                            </option>
+                          ))}
                         </select>
+
                         {errorsDireccion.region && (
-                          <p className="text-red-500 text-sm mt-1">{errorsDireccion.region.message}</p>
+                          <p className="text-red-500 text-sm mt-1">
+                            {errorsDireccion.region.message}
+                          </p>
                         )}
                       </div>
 
@@ -502,15 +645,26 @@ function ProfileContent() {
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Comuna *
                         </label>
-                        <input
-                          {...registerDireccion('comuna', {
-                            required: 'La comuna es requerida'
+
+                        <select
+                          {...registerDireccion("comuna", {
+                            required: "La comuna es requerida",
                           })}
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
-                        />
+                          disabled={!comunas.length}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black disabled:bg-gray-100"
+                        >
+                          <option value="">Seleccionar...</option>
+                          {comunas.map((comuna) => (
+                            <option key={comuna.codigo} value={comuna.nombre}>
+                              {comuna.nombre}
+                            </option>
+                          ))}
+                        </select>
+
                         {errorsDireccion.comuna && (
-                          <p className="text-red-500 text-sm mt-1">{errorsDireccion.comuna.message}</p>
+                          <p className="text-red-500 text-sm mt-1">
+                            {errorsDireccion.comuna.message}
+                          </p>
                         )}
                       </div>
 
@@ -519,14 +673,16 @@ function ProfileContent() {
                           Calle *
                         </label>
                         <input
-                          {...registerDireccion('calle', {
-                            required: 'La calle es requerida'
+                          {...registerDireccion("calle", {
+                            required: "La calle es requerida",
                           })}
                           type="text"
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
                         />
                         {errorsDireccion.calle && (
-                          <p className="text-red-500 text-sm mt-1">{errorsDireccion.calle.message}</p>
+                          <p className="text-red-500 text-sm mt-1">
+                            {errorsDireccion.calle.message}
+                          </p>
                         )}
                       </div>
 
@@ -535,7 +691,7 @@ function ProfileContent() {
                           Adicional dirección
                         </label>
                         <input
-                          {...registerDireccion('tipoVivienda')}
+                          {...registerDireccion("tipoVivienda")}
                           type="text"
                           placeholder="Sector Las Animas, Edificio Colon"
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
@@ -546,25 +702,33 @@ function ProfileContent() {
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Número *
                         </label>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                           <input
-                            {...registerDireccion('numero', {
-                              required: 'El número es requerido'
+                            {...registerDireccion("numero", {
+                              required: "El número es requerido",
                             })}
                             type="text"
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
+                            className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
                           />
-                          <label className="flex items-center gap-2 text-sm text-gray-600 whitespace-nowrap">
-                            <input type="checkbox" className="rounded border-gray-300" onChange={(e) => {
-                              if (e.target.checked) {
-                                registerDireccion('numero').onChange({ target: { value: 'S/N', name: 'numero' } });
-                              }
-                            }} />
+                          <label className="flex items-center gap-2 text-sm text-gray-600 shrink-0">
+                            <input
+                              type="checkbox"
+                              className="rounded border-gray-300"
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  registerDireccion("numero").onChange({
+                                    target: { value: "S/N", name: "numero" },
+                                  });
+                                }
+                              }}
+                            />
                             Sin número
                           </label>
                         </div>
                         {errorsDireccion.numero && (
-                          <p className="text-red-500 text-sm mt-1">{errorsDireccion.numero.message}</p>
+                          <p className="text-red-500 text-sm mt-1">
+                            {errorsDireccion.numero.message}
+                          </p>
                         )}
                       </div>
 
@@ -573,7 +737,7 @@ function ProfileContent() {
                           Depto/Casa/Oficina/Piso
                         </label>
                         <input
-                          {...registerDireccion('numeroDepto')}
+                          {...registerDireccion("numeroDepto")}
                           type="text"
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
                         />
@@ -584,19 +748,21 @@ function ProfileContent() {
                           Teléfono *
                         </label>
                         <input
-                          {...registerDireccion('telefono', {
-                            required: 'El teléfono es requerido',
+                          {...registerDireccion("telefono", {
+                            required: "El teléfono es requerido",
                             pattern: {
                               value: /^(\+56)?[0-9]{8,9}$/,
-                              message: 'Formato de teléfono inválido'
-                            }
+                              message: "Formato de teléfono inválido",
+                            },
                           })}
                           type="tel"
                           placeholder="+56912345678"
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
                         />
                         {errorsDireccion.telefono && (
-                          <p className="text-red-500 text-sm mt-1">{errorsDireccion.telefono.message}</p>
+                          <p className="text-red-500 text-sm mt-1">
+                            {errorsDireccion.telefono.message}
+                          </p>
                         )}
                       </div>
 
@@ -606,7 +772,7 @@ function ProfileContent() {
                         </label>
                         <input
                           type="email"
-                          value={profile?.email || ''}
+                          value={profile?.email || ""}
                           disabled
                           className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
                         />
@@ -617,7 +783,7 @@ function ProfileContent() {
                           Referencia de ayuda
                         </label>
                         <textarea
-                          {...registerDireccion('referencia')}
+                          {...registerDireccion("referencia")}
                           rows={2}
                           placeholder="Ej: Casa color azul, cerca del supermercado"
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
@@ -625,17 +791,23 @@ function ProfileContent() {
                       </div>
                     </div>
 
-                    <p className="text-sm text-red-600">(*) Campo obligatorio</p>
+                    <p className="text-sm text-red-600">
+                      (*) Campo obligatorio
+                    </p>
 
                     <div className="flex justify-end">
                       <button
                         type="submit"
                         disabled={isSubmittingDireccion}
                         className="inline-flex items-center gap-2 px-6 py-2 rounded-lg text-white hover:opacity-90 disabled:opacity-50"
-                        style={{backgroundColor: '#481468'}}
+                        style={{ backgroundColor: "#481468" }}
                       >
                         <Save className="w-4 h-4" />
-                        <span>{isSubmittingDireccion ? 'Guardando...' : 'Guardar Dirección'}</span>
+                        <span>
+                          {isSubmittingDireccion
+                            ? "Guardando..."
+                            : "Guardar Dirección"}
+                        </span>
                       </button>
                     </div>
                   </form>
@@ -645,37 +817,48 @@ function ProfileContent() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                           <p className="text-sm text-gray-600">Región</p>
-                          <p className="font-medium text-gray-900">{profile.region}</p>
+                          <p className="font-medium text-gray-900">
+                            {profile.region}
+                          </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Comuna</p>
-                          <p className="font-medium text-gray-900">{profile.comuna}</p>
+                          <p className="font-medium text-gray-900">
+                            {profile.comuna}
+                          </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Dirección</p>
                           <p className="font-medium text-gray-900">
                             {profile.calle} {profile.numero}
-                            {profile.numeroDepto && `, ${profile.tipoVivienda} ${profile.numeroDepto}`}
+                            {profile.numeroDepto &&
+                              `, ${profile.tipoVivienda} ${profile.numeroDepto}`}
                           </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Teléfono</p>
-                          <p className="font-medium text-gray-900">{profile.telefono}</p>
+                          <p className="font-medium text-gray-900">
+                            {profile.telefono}
+                          </p>
                         </div>
                         {profile.referencia && (
                           <div className="md:col-span-2">
                             <p className="text-sm text-gray-600">Referencia</p>
-                            <p className="font-medium text-gray-900">{profile.referencia}</p>
+                            <p className="font-medium text-gray-900">
+                              {profile.referencia}
+                            </p>
                           </div>
                         )}
                       </div>
                     ) : (
                       <div className="text-center py-8">
-                        <p className="text-gray-500 mb-4">No has configurado tu dirección de envío</p>
+                        <p className="text-gray-500 mb-4">
+                          No has configurado tu dirección de envío
+                        </p>
                         <button
                           onClick={() => setEditingDireccion(true)}
                           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white hover:opacity-90"
-                          style={{backgroundColor: '#481468'}}
+                          style={{ backgroundColor: "#481468" }}
                         >
                           <Edit className="w-4 h-4" />
                           <span>Agregar Dirección</span>
@@ -689,35 +872,48 @@ function ProfileContent() {
 
             {/* Subscription Status */}
             <div className="bg-white rounded-2xl shadow-sm border p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Estado de Suscripción</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Estado de Suscripción
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className={`p-4 rounded-lg border-2 ${
-                  profile.subscriptionActive
-                    ? 'border-green-200 bg-green-50'
-                    : 'border-red-200 bg-red-50'
-                }`}>
+                <div
+                  className={`p-4 rounded-lg border-2 ${
+                    profile.subscriptionActive
+                      ? "border-green-200 bg-green-50"
+                      : "border-red-200 bg-red-50"
+                  }`}
+                >
                   <div className="flex items-center gap-3 mb-2">
-                    <div className={`w-3 h-3 rounded-full ${
-                      profile.subscriptionActive ? 'bg-green-500' : 'bg-red-500'
-                    }`}></div>
+                    <div
+                      className={`w-3 h-3 rounded-full ${
+                        profile.subscriptionActive
+                          ? "bg-green-500"
+                          : "bg-red-500"
+                      }`}
+                    ></div>
                     <p className="font-medium text-gray-900">
-                      {profile.subscriptionActive ? 'Suscripción Activa' : 'Sin Suscripción'}
+                      {profile.subscriptionActive
+                        ? "Suscripción Activa"
+                        : "Sin Suscripción"}
                     </p>
                   </div>
                   <p className="text-sm text-gray-600">
-                    Plan: {profile.subscriptionPlanType || 'Ninguno'}
+                    Plan: {profile.subscriptionPlanType || "Ninguno"}
                   </p>
-                  {profile.subscriptionActive && summary.tiempoSuscripcion > 0 && (
-                    <p className="text-sm text-gray-600">
-                      {summary.tiempoSuscripcion} días restantes
-                    </p>
-                  )}
+                  {profile.subscriptionActive &&
+                    summary.tiempoSuscripcion > 0 && (
+                      <p className="text-sm text-gray-600">
+                        {summary.tiempoSuscripcion} días restantes
+                      </p>
+                    )}
                 </div>
 
                 <div className="p-4 rounded-lg bg-blue-50 border-2 border-blue-200">
                   <div className="flex items-center gap-3 mb-2">
                     <QrCode className="w-5 h-5 text-blue-500" />
-                    <p className="font-medium text-gray-900">Total dispositivos</p>
+                    <p className="font-medium text-gray-900">
+                      Total dispositivos
+                    </p>
                   </div>
                   <p className="text-sm text-gray-600">
                     Comprados: {profile.totalPurchasedPulseras}
@@ -735,10 +931,20 @@ function ProfileContent() {
   );
 }
 
-export default function ProfilePage() {
+import { Suspense } from "react";
+
+function ProfilePageInner() {
   return (
     <ProtectedRoute>
       <ProfileContent />
     </ProtectedRoute>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense>
+      <ProfilePageInner />
+    </Suspense>
   );
 }

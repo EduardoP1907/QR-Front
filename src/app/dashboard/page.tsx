@@ -1513,7 +1513,13 @@ function DashboardContent() {
               <div className="absolute inset-0 rounded-full border-3 border-t-[#481468] animate-spin"></div>
             </div>
             <div className="mb-3">
-              <Shield className="w-8 h-8 mx-auto text-[#481468] animate-pulse" />
+              <Image
+                src="/logo-bluko-icon.png"
+                alt="Bluko"
+                width={32}
+                height={32}
+                className="mx-auto animate-pulse"
+              />
             </div>
           </div>
           <h2 className="text-lg font-bold bg-gradient-to-r from-[#481468] to-[#3d1158] bg-clip-text text-transparent mb-1">
@@ -2386,8 +2392,8 @@ function DashboardContent() {
                         </button>
                       </div>
 
-                      <div className="border border-gray-300 rounded-lg overflow-visible">
-                        <table className="w-full text-sm">
+                      <div className="border border-gray-300 rounded-lg overflow-x-auto">
+                        <table className="w-full text-sm min-w-[400px]">
                           <thead className="bg-gray-50">
                             <tr>
                               <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -2396,8 +2402,7 @@ function DashboardContent() {
                               <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Teléfono
                               </th>
-                              <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-                                Acción
+                              <th className="w-12">
                               </th>
                             </tr>
                           </thead>
@@ -2498,15 +2503,14 @@ function DashboardContent() {
                       </div>
 
                       {patologiasDetalle.length > 0 && (
-                        <div className="border border-gray-300 rounded-lg overflow-visible">
-                          <table className="w-full text-sm">
+                        <div className="border border-gray-300 rounded-lg overflow-x-auto">
+                          <table className="w-full text-sm min-w-[400px]">
                             <thead className="bg-gray-50">
                               <tr>
                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                   Patología
                                 </th>
-                                <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-                                  Acción
+                                <th className="w-12">
                                 </th>
                               </tr>
                             </thead>
@@ -2665,8 +2669,8 @@ function DashboardContent() {
                       </div>
 
                       {principiosActivosDetalle.length > 0 && (
-                        <div className="border border-gray-300 rounded-lg overflow-visible">
-                          <table className="w-full text-sm">
+                        <div className="border border-gray-300 rounded-lg overflow-x-auto">
+                          <table className="w-full text-sm min-w-[400px]">
                             <thead className="bg-gray-50">
                               <tr>
                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -2678,8 +2682,7 @@ function DashboardContent() {
                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                   Dosis
                                 </th>
-                                <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-                                  Acción
+                                <th className="w-12">
                                 </th>
                               </tr>
                             </thead>
@@ -3155,8 +3158,8 @@ function DashboardContent() {
                         </button>
                       </div>
 
-                      <div className="border border-gray-300 rounded-lg overflow-visible">
-                        <table className="w-full text-sm">
+                      <div className="border border-gray-300 rounded-lg overflow-x-auto">
+                        <table className="w-full text-sm min-w-[400px]">
                           <thead className="bg-gray-50">
                             <tr>
                               <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -3165,8 +3168,7 @@ function DashboardContent() {
                               <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Teléfono
                               </th>
-                              <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-                                Acción
+                              <th className="w-12">
                               </th>
                             </tr>
                           </thead>
@@ -3273,15 +3275,14 @@ function DashboardContent() {
                           </div>
 
                           {patologiasDetalle.length > 0 && (
-                            <div className="border border-gray-300 rounded-lg overflow-visible">
-                              <table className="w-full text-sm">
+                            <div className="border border-gray-300 rounded-lg overflow-x-auto">
+                              <table className="w-full text-sm min-w-[400px]">
                                 <thead className="bg-gray-50">
                                   <tr>
                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                       Patología
                                     </th>
-                                    <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-                                      Acción
+                                    <th className="w-12">
                                     </th>
                                   </tr>
                                 </thead>
@@ -3460,8 +3461,8 @@ function DashboardContent() {
                           </div>
 
                           {principiosActivosDetalle.length > 0 && (
-                            <div className="border border-gray-300 rounded-lg overflow-visible">
-                              <table className="w-full text-sm">
+                            <div className="border border-gray-300 rounded-lg overflow-x-auto">
+                              <table className="w-full text-sm min-w-[400px]">
                                 <thead className="bg-gray-50">
                                   <tr>
                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -3473,8 +3474,7 @@ function DashboardContent() {
                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                       Dosis
                                     </th>
-                                    <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-                                      Acción
+                                    <th className="w-12">
                                     </th>
                                   </tr>
                                 </thead>
