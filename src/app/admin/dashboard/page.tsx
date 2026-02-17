@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
-import {Shield,LogOut,QrCode,Download,X,Check,TrendingUp,Package,Truck,CheckCircle,AlertCircle,ArrowLeft,ChevronDown,ChevronRight,User,Users,Mail,CreditCard,Search,RefreshCw,Pause,Play,Trash2,Eye} from 'lucide-react';
+import {Shield,LogOut,QrCode,Download,X,Check,TrendingUp,Package,Truck,CheckCircle,AlertCircle,ArrowLeft,ChevronDown,ChevronRight,User,Users,Mail,CreditCard,Search,RefreshCw,Pause,Play,Trash2,Eye,Tag,Plus,Edit,Calendar,Percent} from 'lucide-react';
 import { adminApi } from '@/services/api';
 
 interface Stats {
@@ -80,7 +80,7 @@ export default function AdminDashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'generar' | 'fabricar' | 'enFabricacion' | 'fabricados' | 'enStock' | 'asignados' | 'suscritos' | 'porDespachar' | 'despachados' | 'administrar'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'generar' | 'fabricar' | 'enFabricacion' | 'fabricados' | 'enStock' | 'asignados' | 'suscritos' | 'porDespachar' | 'despachados' | 'administrar' | 'cupones'>('dashboard');
 
   const [generateQuantity, setGenerateQuantity] = useState<number>(1);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -111,6 +111,20 @@ export default function AdminDashboardPage() {
 
   // Estado para buscador
   const [searchTerm, setSearchTerm] = useState<string>('');
+
+  // Estados para cupones
+  const [cupones, setCupones] = useState<any[]>([]);
+  const [loadingCupones, setLoadingCupones] = useState(false);
+  const [showCuponModal, setShowCuponModal] = useState(false);
+  const [editingCupon, setEditingCupon] = useState<any | null>(null);
+  const [selectedCupones, setSelectedCupones] = useState<number[]>([]);
+  const [deletingCupones, setDeletingCupones] = useState(false);
+  const [cuponForm, setCuponForm] = useState({
+    nombre: '',
+    porcentajeDescuento: 10,
+    fechaInicio: new Date().toISOString().split('T')[0],
+    fechaFin: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  });
 
   // Función para formatear fecha
   const formatDate = (dateString: string | undefined) => {
@@ -185,6 +199,8 @@ export default function AdminDashboardPage() {
         await loadDespachadosPulseras();
       } else if (activeTab === 'administrar') {
         await loadAllContratantes();
+      } else if (activeTab === 'cupones') {
+        await loadCupones();
       }
     };
 
@@ -362,6 +378,165 @@ export default function AdminDashboardPage() {
       if (!contratanteDetails.has(id)) {
         await loadContratanteDetail(id);
       }
+    }
+  };
+
+  // Funciones para gestión de cupones
+  const loadCupones = async () => {
+    setLoadingCupones(true);
+    try {
+      const response = await adminApi.getCupones();
+      setCupones(response.data || []);
+    } catch (error: any) {
+      console.error('Error loading cupones:', error);
+      toast.error('Error al cargar cupones');
+    } finally {
+      setLoadingCupones(false);
+    }
+  };
+
+  const handleCreateCupon = async () => {
+    try {
+      if (!cuponForm.nombre.trim()) {
+        toast.error('El nombre del cupón es requerido');
+        return;
+      }
+      if (cuponForm.porcentajeDescuento < 1 || cuponForm.porcentajeDescuento > 100) {
+        toast.error('El porcentaje debe estar entre 1 y 100');
+        return;
+      }
+
+      await adminApi.createCupon({
+        nombre: cuponForm.nombre.toUpperCase().trim(),
+        porcentajeDescuento: cuponForm.porcentajeDescuento,
+        fechaInicio: cuponForm.fechaInicio,
+        fechaFin: cuponForm.fechaFin
+      });
+
+      toast.success('Cupón creado exitosamente');
+      setShowCuponModal(false);
+      resetCuponForm();
+      await loadCupones();
+    } catch (error: any) {
+      console.error('Error creating cupon:', error);
+      const errorMsg = error.response?.data?.error || 'Error al crear el cupón';
+      toast.error(errorMsg);
+    }
+  };
+
+  const handleUpdateCupon = async () => {
+    if (!editingCupon) return;
+
+    try {
+      if (cuponForm.porcentajeDescuento < 1 || cuponForm.porcentajeDescuento > 100) {
+        toast.error('El porcentaje debe estar entre 1 y 100');
+        return;
+      }
+
+      await adminApi.updateCupon(editingCupon.id, {
+        porcentajeDescuento: cuponForm.porcentajeDescuento,
+        fechaInicio: cuponForm.fechaInicio,
+        fechaFin: cuponForm.fechaFin
+      });
+
+      toast.success('Cupón actualizado exitosamente');
+      setShowCuponModal(false);
+      setEditingCupon(null);
+      resetCuponForm();
+      await loadCupones();
+    } catch (error: any) {
+      console.error('Error updating cupon:', error);
+      const errorMsg = error.response?.data?.error || 'Error al actualizar el cupón';
+      toast.error(errorMsg);
+    }
+  };
+
+  const handleToggleCuponActivo = async (id: number) => {
+    try {
+      await adminApi.toggleCuponActivo(id);
+      toast.success('Estado del cupón actualizado');
+      await loadCupones();
+    } catch (error: any) {
+      console.error('Error toggling cupon:', error);
+      toast.error('Error al cambiar estado del cupón');
+    }
+  };
+
+  const handleDeleteCupones = async () => {
+    if (selectedCupones.length === 0) {
+      toast.error('Selecciona al menos un cupón para eliminar');
+      return;
+    }
+
+    const confirmDelete = window.confirm(
+      `¿Estás seguro de eliminar ${selectedCupones.length} cupón(es)? Esta acción no se puede deshacer.`
+    );
+
+    if (!confirmDelete) return;
+
+    setDeletingCupones(true);
+    try {
+      await adminApi.deleteCupones(selectedCupones);
+      toast.success(`${selectedCupones.length} cupón(es) eliminado(s) exitosamente`);
+      setSelectedCupones([]);
+      await loadCupones();
+    } catch (error: any) {
+      console.error('Error deleting cupones:', error);
+      const errorMsg = error.response?.data?.error || 'Error al eliminar cupones';
+      toast.error(errorMsg);
+    } finally {
+      setDeletingCupones(false);
+    }
+  };
+
+  const toggleCuponSelection = (id: number) => {
+    setSelectedCupones(prev =>
+      prev.includes(id)
+        ? prev.filter(cuponId => cuponId !== id)
+        : [...prev, id]
+    );
+  };
+
+  const toggleAllCupones = () => {
+    if (selectedCupones.length === cupones.length) {
+      setSelectedCupones([]);
+    } else {
+      setSelectedCupones(cupones.map(c => c.id));
+    }
+  };
+
+  const openEditCuponModal = (cupon: any) => {
+    setEditingCupon(cupon);
+    setCuponForm({
+      nombre: cupon.nombre,
+      porcentajeDescuento: cupon.porcentajeDescuento,
+      fechaInicio: cupon.fechaInicio,
+      fechaFin: cupon.fechaFin
+    });
+    setShowCuponModal(true);
+  };
+
+  const resetCuponForm = () => {
+    setCuponForm({
+      nombre: '',
+      porcentajeDescuento: 10,
+      fechaInicio: new Date().toISOString().split('T')[0],
+      fechaFin: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    });
+  };
+
+  const getEstadoBadge = (estado: string) => {
+    switch (estado) {
+      case 'VIGENTE':
+        return 'bg-green-100 text-green-800';
+      case 'VENCIDO':
+        return 'bg-red-100 text-red-800';
+      case 'INACTIVO':
+        return 'bg-gray-100 text-gray-800';
+      case 'PENDIENTE':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -1002,6 +1177,22 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
               </button>
+
+              <button
+                onClick={() => handleTabChange('cupones')}
+                className="group relative overflow-hidden bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-transparent hover:border-[#82c341]"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-[#82c341]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="relative flex items-center gap-4">
+                  <div className="p-3 bg-[#82c341]/10 rounded-xl group-hover:bg-[#82c341]/20 transition-colors">
+                    <Tag className="w-6 h-6 text-[#82c341]" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-gray-900 text-lg">Cupones de Descuento</p>
+                    <p className="text-sm text-gray-500">Gestionar códigos promocionales</p>
+                  </div>
+                </div>
+              </button>
             </div>
           </div>
         )}
@@ -1124,7 +1315,7 @@ export default function AdminDashboardPage() {
                         </th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Código QR (UUID)</th>
-                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Creación</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Generado</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -1244,7 +1435,7 @@ export default function AdminDashboardPage() {
                         </th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Código QR (UUID)</th>
-                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Enviado a Fabricación</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha de Generación</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
                       </tr>
                     </thead>
@@ -1273,7 +1464,7 @@ export default function AdminDashboardPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <span className="text-gray-600 text-sm">{formatDate(pulsera.sentToFabricationAt || pulsera.createdAt)}</span>
+                            <span className="text-gray-600 text-sm">{formatDate(pulsera.createdAt)}</span>
                           </td>
                           <td className="px-6 py-4">
                             {getStatusBadge(pulsera.status)}
@@ -1302,7 +1493,7 @@ export default function AdminDashboardPage() {
                       className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#82c341] to-[#6ba832] text-black font-bold rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
                     >
                       <CheckCircle className="w-5 h-5" />
-                      Marcar como Fabricados ({selectedForFabricated.size})
+                      Enviar a Fabricados ({selectedForFabricated.size})
                     </button>
                   </div>
                 )}
@@ -1360,7 +1551,7 @@ export default function AdminDashboardPage() {
                         </th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">ID</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Código QR (UUID)</th>
-                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Fabricación</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha enviado a Fabricación</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
                       </tr>
                     </thead>
@@ -1389,7 +1580,7 @@ export default function AdminDashboardPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <span className="text-gray-600 text-sm">{formatDate(pulsera.fabricatedAt || pulsera.createdAt)}</span>
+                            <span className="text-gray-600 text-sm">{formatDate(pulsera.sentToFabricationAt || pulsera.createdAt)}</span>
                           </td>
                           <td className="px-6 py-4">
                             {getStatusBadge(pulsera.status)}
@@ -1804,6 +1995,7 @@ export default function AdminDashboardPage() {
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Dirección de Envío</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Pedido</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Cantidad</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Pago</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
                       </tr>
                     </thead>
@@ -1847,6 +2039,17 @@ export default function AdminDashboardPage() {
                             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
                               {pedido.cantidadPulseras} {pedido.cantidadPulseras === 1 ? 'dispositivo' : 'dispositivos'}
                             </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            {pedido.pagado ? (
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                                Pagado
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
+                                No pagado
+                              </span>
+                            )}
                           </td>
                           <td className="px-6 py-4">
                             {getStatusBadge(pedido.status)}
@@ -1910,6 +2113,7 @@ export default function AdminDashboardPage() {
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Cliente</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Dirección de Envío</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Cantidad</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Pago</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Despacho</th>
                       </tr>
@@ -1943,6 +2147,17 @@ export default function AdminDashboardPage() {
                             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
                               {pedido.cantidadPulseras} {pedido.cantidadPulseras === 1 ? 'dispositivo' : 'dispositivos'}
                             </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            {pedido.pagado ? (
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                                Pagado
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
+                                No pagado
+                              </span>
+                            )}
                           </td>
                           <td className="px-6 py-4">
                             {getStatusBadge(pedido.status)}
@@ -2170,38 +2385,6 @@ export default function AdminDashboardPage() {
                                       </div>
                                     )}
                                   </div>
-
-                                  {/* Sección de Portadores */}
-                                  <div>
-                                    <h4 className="font-bold text-gray-900 flex items-center gap-2 mb-4">
-                                      <Users className="w-5 h-5" />
-                                      Portadores Asignados ({contratanteDetails.get(contratante.id).portadores?.length || 0})
-                                    </h4>
-
-                                    {contratanteDetails.get(contratante.id).portadores?.length > 0 ? (
-                                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {contratanteDetails.get(contratante.id).portadores.map((portador: any) => (
-                                          <div key={portador.id} className="bg-white rounded-xl p-4 shadow border border-gray-200">
-                                            <div className="flex items-start gap-3">
-                                              <div className="p-2 bg-[#481468]/10 rounded-lg">
-                                                <User className="w-5 h-5 text-[#481468]" />
-                                              </div>
-                                              <div className="flex-1">
-                                                <p className="font-bold text-gray-900">{portador.firstName} {portador.paternalSurname}</p>
-                                                <p className="text-sm text-gray-500">{portador.email}</p>
-                                                <p className="text-xs text-gray-400 mt-1">RUT: {portador.rut}</p>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    ) : (
-                                      <div className="text-center py-6 text-gray-500 bg-white rounded-xl border border-gray-200">
-                                        <User className="w-10 h-10 mx-auto mb-2 text-gray-300" />
-                                        <p>No hay portadores asignados</p>
-                                      </div>
-                                    )}
-                                  </div>
                                 </div>
                               </td>
                             </tr>
@@ -2222,7 +2405,307 @@ export default function AdminDashboardPage() {
             )}
           </div>
         )}
+
+        {/* Cupones Tab */}
+        {activeTab === 'cupones' && (
+          <div className="space-y-6 animate-fadeIn">
+            <button
+              onClick={() => handleTabChange('dashboard')}
+              className="inline-flex items-center gap-2 text-[#481468] hover:text-[#3d1158] font-semibold group transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              Volver al Dashboard
+            </button>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Cupones de Descuento</h2>
+                <p className="text-gray-600">Gestiona códigos promocionales para descuentos en habilitación</p>
+              </div>
+              <div className="flex items-center gap-3">
+                {selectedCupones.length > 0 && (
+                  <button
+                    onClick={handleDeleteCupones}
+                    disabled={deletingCupones}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 font-semibold transition-colors shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {deletingCupones ? (
+                      <>
+                        <RefreshCw className="w-5 h-5 animate-spin" />
+                        Eliminando...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="w-5 h-5" />
+                        Eliminar ({selectedCupones.length})
+                      </>
+                    )}
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setEditingCupon(null);
+                    resetCuponForm();
+                    setShowCuponModal(true);
+                  }}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-[#82c341] text-white rounded-xl hover:bg-[#6fa832] font-semibold transition-colors shadow-lg hover:shadow-xl"
+                >
+                  <Plus className="w-5 h-5" />
+                  Crear Cupón
+                </button>
+              </div>
+            </div>
+
+            {/* Lista de cupones */}
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+              {loadingCupones ? (
+                <div className="p-12 text-center">
+                  <RefreshCw className="w-8 h-8 animate-spin text-[#481468] mx-auto mb-4" />
+                  <p className="text-gray-500 font-medium">Cargando cupones...</p>
+                </div>
+              ) : cupones.length === 0 ? (
+                <div className="p-12 text-center">
+                  <Tag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500 font-medium text-lg">No hay cupones creados</p>
+                  <p className="text-gray-400 mt-1">Crea tu primer cupón de descuento</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="px-4 py-4 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedCupones.length === cupones.length && cupones.length > 0}
+                            onChange={toggleAllCupones}
+                            className="w-4 h-4 text-[#481468] border-gray-300 rounded focus:ring-[#481468] cursor-pointer"
+                          />
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Código</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Descuento</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Vigencia</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Estado</th>
+                        <th className="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {cupones.map((cupon) => (
+                        <tr key={cupon.id} className={`hover:bg-gray-50 transition-colors ${selectedCupones.includes(cupon.id) ? 'bg-purple-50' : ''}`}>
+                          <td className="px-4 py-4 text-center">
+                            <input
+                              type="checkbox"
+                              checked={selectedCupones.includes(cupon.id)}
+                              onChange={() => toggleCuponSelection(cupon.id)}
+                              className="w-4 h-4 text-[#481468] border-gray-300 rounded focus:ring-[#481468] cursor-pointer"
+                            />
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-[#82c341]/10 rounded-lg">
+                                <Tag className="w-5 h-5 text-[#82c341]" />
+                              </div>
+                              <span className="font-bold text-gray-900 text-lg">{cupon.nombre}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <Percent className="w-4 h-4 text-gray-400" />
+                              <span className="font-bold text-[#481468] text-xl">{cupon.porcentajeDescuento}%</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Calendar className="w-4 h-4 text-gray-400" />
+                              <span>{cupon.fechaInicio} - {cupon.fechaFin}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${getEstadoBadge(cupon.estado)}`}>
+                              {cupon.estado}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => openEditCuponModal(cupon)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-semibold transition-colors"
+                                title="Editar cupón"
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                                Editar
+                              </button>
+                              <button
+                                onClick={() => handleToggleCuponActivo(cupon.id)}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg font-semibold transition-colors ${
+                                  cupon.activo
+                                    ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                                    : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                }`}
+                                title={cupon.activo ? 'Desactivar' : 'Activar'}
+                              >
+                                {cupon.activo ? (
+                                  <>
+                                    <Pause className="w-3.5 h-3.5" />
+                                    Desactivar
+                                  </>
+                                ) : (
+                                  <>
+                                    <Play className="w-3.5 h-3.5" />
+                                    Activar
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Info de ayuda */}
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+              <h3 className="font-bold text-blue-900 mb-2">Información sobre cupones</h3>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li>• El descuento se aplica <strong>sobre el precio de la pulsera</strong> ($9.900 CLP), no sobre la habilitación ($3.450 CLP)</li>
+                <li>• El código del cupón no se puede cambiar después de creado</li>
+                <li>• Los cupones vencidos o inactivos no podrán ser usados en el checkout</li>
+                <li>• Los usuarios pueden ingresar el código en la página de suscripción</li>
+              </ul>
+            </div>
+          </div>
+        )}
       </main>
+
+      {/* Modal Crear/Editar Cupón */}
+      {showCuponModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl transform animate-scaleIn">
+            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">
+                  {editingCupon ? 'Editar Cupón' : 'Crear Nuevo Cupón'}
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  {editingCupon ? `Editando: ${editingCupon.nombre}` : 'Configura los detalles del cupón'}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowCuponModal(false);
+                  setEditingCupon(null);
+                  resetCuponForm();
+                }}
+                className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Nombre del cupón */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Código del cupón
+                </label>
+                <input
+                  type="text"
+                  value={cuponForm.nombre}
+                  onChange={(e) => setCuponForm({ ...cuponForm, nombre: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })}
+                  placeholder="Ej: MAMA20, PROMO50"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#481468] focus:border-transparent text-black font-medium uppercase"
+                  disabled={!!editingCupon}
+                  maxLength={50}
+                />
+                {editingCupon && (
+                  <p className="mt-1 text-xs text-gray-500">El código no se puede modificar</p>
+                )}
+              </div>
+
+              {/* Porcentaje de descuento */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Porcentaje de descuento
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={cuponForm.porcentajeDescuento}
+                    onChange={(e) => setCuponForm({ ...cuponForm, porcentajeDescuento: parseInt(e.target.value) || 0 })}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#481468] focus:border-transparent text-black font-medium pr-12"
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">%</span>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Este descuento se aplicará sobre la habilitación ($3.450 CLP por pulsera)
+                </p>
+              </div>
+
+              {/* Fechas */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Fecha inicio
+                  </label>
+                  <input
+                    type="date"
+                    value={cuponForm.fechaInicio}
+                    onChange={(e) => setCuponForm({ ...cuponForm, fechaInicio: e.target.value })}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#481468] focus:border-transparent text-black"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Fecha fin
+                  </label>
+                  <input
+                    type="date"
+                    value={cuponForm.fechaFin}
+                    onChange={(e) => setCuponForm({ ...cuponForm, fechaFin: e.target.value })}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#481468] focus:border-transparent text-black"
+                  />
+                </div>
+              </div>
+
+              {/* Preview del descuento */}
+              <div className="bg-gray-50 rounded-xl p-4">
+                <h4 className="font-bold text-gray-700 mb-2">Vista previa del descuento</h4>
+                <div className="text-sm text-gray-600 space-y-1">
+                  <p>Pulsera original: $9.900 CLP</p>
+                  <p>Descuento ({cuponForm.porcentajeDescuento}%): -${Math.floor(9900 * cuponForm.porcentajeDescuento / 100).toLocaleString('es-CL')} CLP</p>
+                  <p className="font-bold text-[#481468]">
+                    Pulsera final: ${(9900 - Math.floor(9900 * cuponForm.porcentajeDescuento / 100)).toLocaleString('es-CL')} CLP
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-gray-200 flex gap-3">
+              <button
+                onClick={() => {
+                  setShowCuponModal(false);
+                  setEditingCupon(null);
+                  resetCuponForm();
+                }}
+                className="flex-1 px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={editingCupon ? handleUpdateCupon : handleCreateCupon}
+                className="flex-1 px-6 py-3 bg-[#82c341] text-white rounded-xl hover:bg-[#6fa832] font-semibold transition-colors"
+              >
+                {editingCupon ? 'Guardar Cambios' : 'Crear Cupón'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* QR Image Modal */}
       {showQrModal && selectedQrImage && (

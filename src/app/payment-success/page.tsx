@@ -2,34 +2,32 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { CheckCircle, Loader2, ArrowRight, Package, AlertCircle } from 'lucide-react';
+import { CheckCircle, Loader2, ArrowRight, Package, AlertCircle, XCircle, RefreshCw } from 'lucide-react';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { contratanteApi } from '../../services/api';
 import toast from 'react-hot-toast';
+
+type PaymentStatus = 'verifying' | 'confirmed' | 'not_confirmed' | 'error';
 
 function PaymentSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [countdown, setCountdown] = useState(5);
-  const [verifying, setVerifying] = useState(true);
-  const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('verifying');
+  const [retryCount, setRetryCount] = useState(0);
   const hasVerified = useRef(false);
+  const maxRetries = 3;
 
   useEffect(() => {
-    // Evitar verificaciones duplicadas (React Strict Mode ejecuta efectos 2 veces en dev)
     if (hasVerified.current) {
-      console.log('⏭️ Verificación ya realizada, saltando...');
       return;
     }
 
     hasVerified.current = true;
 
-    // Verificar el estado del pago con el backend
     const verifyPayment = async () => {
       try {
-        console.log('🔍 Verificando estado de pulseras después del pago...');
-
-        // Obtener quantity del localStorage (guardado antes de redirigir a VirtualPos)
+        // Obtener quantity del localStorage
         const pendingPurchaseStr = localStorage.getItem('pendingPurchase');
         let quantity = null;
 
@@ -37,39 +35,53 @@ function PaymentSuccessContent() {
           try {
             const pendingPurchase = JSON.parse(pendingPurchaseStr);
             quantity = pendingPurchase.quantity;
-            console.log('📦 Cantidad de pulseras del pedido pendiente:', quantity);
           } catch (e) {
             console.error('Error parseando pendingPurchase:', e);
           }
         }
 
-        // También intentar obtener del query param como fallback
+        // Fallback al query param
         const quantityParam = searchParams.get('quantity');
         if (quantityParam && !quantity) {
           quantity = parseInt(quantityParam);
-          console.log('📦 Cantidad de pulseras del query param:', quantity);
         }
 
-        // Esperar un poco para dar tiempo al callback de VirtualPos
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Intentar verificar con reintentos (el callback puede tardar)
+        let pagado = false;
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
+          setRetryCount(attempt + 1);
 
-        const response = await contratanteApi.verifyPaymentAndUpdate(quantity);
+          // Esperar antes de verificar (dar tiempo al callback de VirtualPos)
+          const waitTime = attempt === 0 ? 2000 : 3000;
+          await new Promise(resolve => setTimeout(resolve, waitTime));
 
-        console.log('✅ Verificación completada:', response.data);
-        setVerifying(false);
+          const response = await contratanteApi.verifyPaymentAndUpdate(quantity);
 
-        // Limpiar el localStorage
-        localStorage.removeItem('pendingPurchase');
+          if (response.data.pagado === true) {
+            pagado = true;
 
-        if (response.data.pulserasAgregadas) {
-          toast.success(`¡${response.data.pulserasAgregadas} dispositivos agregados! Total disponibles: ${response.data.availablePulseras}`);
-        } else {
-          toast.success(`Verificación completa. Dispositivos disponibles: ${response.data.availablePulseras}`);
+            // Limpiar localStorage
+            localStorage.removeItem('pendingPurchase');
+
+            setPaymentStatus('confirmed');
+
+            if (response.data.pulserasAgregadas) {
+              toast.success(`¡${response.data.pulserasAgregadas} dispositivos agregados! Total disponibles: ${response.data.availablePulseras}`);
+            } else {
+              toast.success(`Verificación completa. Dispositivos disponibles: ${response.data.availablePulseras}`);
+            }
+            break;
+          }
+        }
+
+        if (!pagado) {
+          // Después de todos los reintentos, el pago no fue confirmado
+          setPaymentStatus('not_confirmed');
+          localStorage.removeItem('pendingPurchase');
         }
       } catch (error: any) {
-        console.error('❌ Error verificando pago:', error);
-        setVerifying(false);
-        setVerificationError(error.response?.data?.error || 'Error al verificar el pago');
+        console.error('Error verificando pago:', error);
+        setPaymentStatus('error');
       }
     };
 
@@ -77,134 +89,218 @@ function PaymentSuccessContent() {
   }, []);
 
   useEffect(() => {
-    // Solo iniciar countdown cuando la verificación esté completa
-    if (!verifying && !verificationError) {
+    // Solo iniciar countdown cuando el pago esté confirmado
+    if (paymentStatus === 'confirmed') {
       const timer = setInterval(() => {
         setCountdown((prev) => {
-          if (prev <= 1) {
-            return 0;
-          }
+          if (prev <= 1) return 0;
           return prev - 1;
         });
       }, 1000);
-
       return () => clearInterval(timer);
     }
-  }, [verifying, verificationError]);
+  }, [paymentStatus]);
 
   useEffect(() => {
-    // Redirigir cuando el countdown llegue a 0
-    if (countdown === 0 && !verifying && !verificationError) {
+    if (countdown === 0 && paymentStatus === 'confirmed') {
       router.push('/dashboard');
     }
-  }, [countdown, verifying, verificationError, router]);
+  }, [countdown, paymentStatus, router]);
+
+  // Pago NO confirmado - mostrar mensaje apropiado
+  if (paymentStatus === 'not_confirmed') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-orange-50">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+            <div className="mx-auto mb-6 w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center">
+              <AlertCircle className="w-12 h-12 text-yellow-600" />
+            </div>
+
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Pago No Confirmado
+            </h1>
+
+            <p className="text-lg text-gray-600 mb-8">
+              No pudimos confirmar tu pago. Si completaste el pago en VirtualPos,
+              es posible que la confirmación esté tardando. Por favor verifica en tu dashboard
+              en unos minutos.
+            </p>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <AlertCircle className="w-6 h-6 text-yellow-600" />
+                <span className="text-yellow-900 font-semibold">¿Qué puedo hacer?</span>
+              </div>
+              <ul className="text-sm text-yellow-700 text-left space-y-2">
+                <li>Si <strong>completaste</strong> el pago, espera unos minutos y revisa tu dashboard</li>
+                <li>Si <strong>cancelaste</strong> el pago o hiciste click en volver, puedes intentar nuevamente</li>
+                <li>Si tienes dudas, contacta a soporte</li>
+              </ul>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="inline-flex items-center justify-center gap-2 text-white px-6 py-3 rounded-xl hover:opacity-90 transition-all"
+                style={{ backgroundColor: '#481468' }}
+              >
+                <ArrowRight className="w-5 h-5" />
+                <span>Ir al Dashboard</span>
+              </button>
+              <button
+                onClick={() => router.push('/subscription')}
+                className="inline-flex items-center justify-center gap-2 border-2 px-6 py-3 rounded-xl hover:bg-gray-50 transition-all"
+                style={{ borderColor: '#481468', color: '#481468' }}
+              >
+                <RefreshCw className="w-5 h-5" />
+                <span>Intentar de Nuevo</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error de verificación
+  if (paymentStatus === 'error') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+            <div className="mx-auto mb-6 w-20 h-20 bg-red-100 rounded-full flex items-center justify-center">
+              <XCircle className="w-12 h-12 text-red-600" />
+            </div>
+
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Error de Verificación
+            </h1>
+
+            <p className="text-lg text-gray-600 mb-8">
+              Ocurrió un error al verificar tu pago. Por favor revisa tu dashboard
+              o contacta a soporte.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="inline-flex items-center justify-center gap-2 text-white px-6 py-3 rounded-xl hover:opacity-90 transition-all"
+                style={{ backgroundColor: '#481468' }}
+              >
+                <ArrowRight className="w-5 h-5" />
+                <span>Ir al Dashboard</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
-          {/* Success Icon */}
+          {/* Icon */}
           <div className="mx-auto mb-6 w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
-            <CheckCircle className="w-12 h-12 text-green-600" />
+            {paymentStatus === 'verifying' ? (
+              <Loader2 className="w-12 h-12 text-green-600 animate-spin" />
+            ) : (
+              <CheckCircle className="w-12 h-12 text-green-600" />
+            )}
           </div>
 
           {/* Title */}
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            ¡Pago Exitoso!
+            {paymentStatus === 'verifying' ? 'Verificando Pago...' : '¡Pago Exitoso!'}
           </h1>
 
           <p className="text-lg text-gray-600 mb-8">
-            Tu pago ha sido procesado correctamente. Estamos agregando tus dispositivos a tu cuenta.
+            {paymentStatus === 'verifying'
+              ? 'Estamos confirmando tu pago con el procesador. Esto solo tomará unos segundos.'
+              : 'Tu pago ha sido procesado correctamente.'}
           </p>
 
-          {/* Processing Status */}
-          {verifying && (
+          {/* Verifying Status */}
+          {paymentStatus === 'verifying' && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
               <div className="flex items-center justify-center gap-3 mb-4">
                 <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
-                <span className="text-blue-900 font-semibold">Verificando tu pago...</span>
+                <span className="text-blue-900 font-semibold">
+                  Verificando tu pago... (intento {retryCount}/{maxRetries})
+                </span>
               </div>
               <p className="text-sm text-blue-700">
                 Estamos confirmando tu compra con nuestro procesador de pagos.
-                Esto solo tomará unos segundos.
-              </p>
-            </div>
-          )}
-
-          {/* Error Status */}
-          {verificationError && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
-              <div className="flex items-center justify-center gap-3 mb-4">
-                <AlertCircle className="w-6 h-6 text-yellow-600" />
-                <span className="text-yellow-900 font-semibold">Verificación Pendiente</span>
-              </div>
-              <p className="text-sm text-yellow-700">
-                Tu pago fue recibido, pero necesitamos un momento más para actualizar tu cuenta.
-                Por favor, recarga tu dashboard en unos minutos.
               </p>
             </div>
           )}
 
           {/* Success Status */}
-          {!verifying && !verificationError && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
-              <div className="flex items-center justify-center gap-3 mb-4">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-                <span className="text-green-900 font-semibold">¡Dispositivos agregados!</span>
+          {paymentStatus === 'confirmed' && (
+            <>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                  <span className="text-green-900 font-semibold">¡Dispositivos agregados!</span>
+                </div>
+                <p className="text-sm text-green-700">
+                  Tus dispositivos están disponibles en tu dashboard.
+                  Recibirás un email de confirmación con los detalles de tu compra.
+                </p>
               </div>
-              <p className="text-sm text-green-700">
-                Tus dispositivos están disponibles en tu dashboard.
-                Recibirás un email de confirmación con los detalles de tu compra.
-              </p>
-            </div>
+
+              {/* What's Next */}
+              <div className="bg-gray-50 rounded-lg p-6 mb-8 text-left">
+                <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Package className="w-5 h-5" />
+                  ¿Qué sigue?
+                </h3>
+                <ol className="space-y-3 text-sm text-gray-700">
+                  <li className="flex items-start gap-2">
+                    <span className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 text-green-700 font-bold text-xs">
+                      1
+                    </span>
+                    <span>Podrás asignar tus dispositivos a los portadores</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 text-green-700 font-bold text-xs">
+                      2
+                    </span>
+                    <span>Te enviaremos la boleta por correo cuando se termine de preparar el pedido</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 text-green-700 font-bold text-xs">
+                      3
+                    </span>
+                    <span>Si necesitas ayuda contáctanos por WhatsApp o correo</span>
+                  </li>
+                </ol>
+              </div>
+
+              {/* Auto-redirect notice */}
+              <div className="mb-6">
+                <p className="text-sm text-gray-500">
+                  Serás redirigido al dashboard en{' '}
+                  <span className="font-bold text-gray-900">{countdown}</span>{' '}
+                  segundos...
+                </p>
+              </div>
+            </>
           )}
 
-          {/* What's Next */}
-          <div className="bg-gray-50 rounded-lg p-6 mb-8 text-left">
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Package className="w-5 h-5" />
-              ¿Qué sigue?
-            </h3>
-            <ol className="space-y-3 text-sm text-gray-700">
-              <li className="flex items-start gap-2">
-                <span className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 text-green-700 font-bold text-xs">
-                  1
-                </span>
-                <span>Podrás asignar tus dispositivos a los portadores</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 text-green-700 font-bold text-xs">
-                  2
-                </span>
-                <span>Te enviaremos la boleta por correo cuando se termine de preparar el pedido</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 text-green-700 font-bold text-xs">
-                  3
-                </span>
-                <span>Si necesitas ayuda contáctanos por WhatsApp o correo</span>
-              </li>
-            </ol>
-          </div>
-
-          {/* Auto-redirect notice */}
-          <div className="mb-6">
-            <p className="text-sm text-gray-500">
-              Serás redirigido al dashboard en{' '}
-              <span className="font-bold text-gray-900">{countdown}</span>{' '}
-              segundos...
-            </p>
-          </div>
-
           {/* Manual redirect button */}
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="inline-flex items-center gap-2 text-white px-8 py-3 rounded-xl hover:opacity-90 transition-all"
-            style={{ backgroundColor: '#82c341' }}
-          >
-            <span>Ir al Dashboard Ahora</span>
-            <ArrowRight className="w-5 h-5" />
-          </button>
+          {paymentStatus === 'confirmed' && (
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="inline-flex items-center gap-2 text-white px-8 py-3 rounded-xl hover:opacity-90 transition-all"
+              style={{ backgroundColor: '#82c341' }}
+            >
+              <span>Ir al Dashboard Ahora</span>
+              <ArrowRight className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
     </div>
