@@ -1191,9 +1191,11 @@ function DashboardContent() {
   };
 
   const updatePatologia = (index: number, field: string, value: any) => {
-    const nuevosDetalles = [...patologiasDetalle];
-    nuevosDetalles[index] = { ...nuevosDetalles[index], [field]: value };
-    setPatologiasDetalle(nuevosDetalles);
+    setPatologiasDetalle((prev) => {
+      const nuevosDetalles = [...prev];
+      nuevosDetalles[index] = { ...nuevosDetalles[index], [field]: value };
+      return nuevosDetalles;
+    });
   };
 
   const updateSearchStatePatologia = (index: number, searchTerm: string) => {
@@ -1261,9 +1263,11 @@ function DashboardContent() {
   };
 
   const updatePrincipioActivo = (index: number, field: string, value: any) => {
-    const nuevosDetalles = [...principiosActivosDetalle];
-    nuevosDetalles[index] = { ...nuevosDetalles[index], [field]: value };
-    setPrincipiosActivosDetalle(nuevosDetalles);
+    setPrincipiosActivosDetalle((prev) => {
+      const nuevosDetalles = [...prev];
+      nuevosDetalles[index] = { ...nuevosDetalles[index], [field]: value };
+      return nuevosDetalles;
+    });
   };
 
   const updateSearchState = (index: number, searchTerm: string) => {
