@@ -161,6 +161,7 @@ function DashboardContent() {
   const [patologiasDetalle, setPatologiasDetalle] = useState<
     Array<{
       enfermedadId: number;
+      nombreCustom?: string;
     }>
   >([]);
 
@@ -172,6 +173,7 @@ function DashboardContent() {
       dosis: string;
       observaciones?: string;
       searchTerm?: string;
+      nombreCustom?: string;
     }>
   >([]);
 
@@ -687,9 +689,21 @@ function DashboardContent() {
         medicalInfo: data.medicalInfo,
         medicamentos: data.medicamentos || "",
         enfermedadIds: patologiasDetalle
-          .map((p) => p.enfermedadId)
-          .filter((id) => id > 0),
-        principiosActivos: principiosActivosDetalle,
+          .filter((p) => !p.nombreCustom && p.enfermedadId > 0)
+          .map((p) => p.enfermedadId),
+        enfermedadesCustom: patologiasDetalle
+          .filter((p) => p.nombreCustom)
+          .map((p) => p.nombreCustom!),
+        principiosActivos: principiosActivosDetalle
+          .filter((p) => !p.nombreCustom && p.principioActivoId > 0),
+        principiosActivosCustom: principiosActivosDetalle
+          .filter((p) => p.nombreCustom)
+          .map((p) => ({
+            nombre: p.nombreCustom!,
+            concentracion: p.concentracion,
+            dosis: p.dosis,
+            observaciones: p.observaciones,
+          })),
         contactosEmergencia: contactosEmergenciaDetalle.filter(
           (c) => c.nombre && c.telefono,
         ),
@@ -744,18 +758,34 @@ function DashboardContent() {
       medicamentos: portador.medicamentos || "",
     });
 
-    setPatologiasDetalle(
-      portador.enfermedades?.map((e: any) => ({ enfermedadId: e.id })) || [],
-    );
+    const enfermedadesCustom: string[] = JSON.parse(portador.enfermedadesCustomJson || "[]");
+    const principiosActivosCustom: any[] = JSON.parse(portador.principiosActivosCustomJson || "[]");
 
-    setPrincipiosActivosDetalle(
-      portador.principiosActivos?.map((p: any) => ({
+    setSearchStatesPatologias({});
+    setFocusStatesPatologias({});
+    setSearchStates({});
+    setFocusStates({});
+
+    setPatologiasDetalle([
+      ...(portador.enfermedades?.map((e: any) => ({ enfermedadId: e.id })) || []),
+      ...enfermedadesCustom.map((nombre: string) => ({ enfermedadId: 0, nombreCustom: nombre })),
+    ]);
+
+    setPrincipiosActivosDetalle([
+      ...(portador.principiosActivos?.map((p: any) => ({
         principioActivoId: p.principioActivo?.id || p.id,
         concentracion: p.concentracion || "",
         dosis: p.dosis || "",
         observaciones: p.observaciones || "",
-      })) || [],
-    );
+      })) || []),
+      ...principiosActivosCustom.map((p: any) => ({
+        principioActivoId: 0,
+        concentracion: p.concentracion || "",
+        dosis: p.dosis || "",
+        observaciones: p.observaciones || "",
+        nombreCustom: p.nombre,
+      })),
+    ]);
 
     setContactosEmergenciaDetalle(
       portador.contactosEmergencia?.map((c: any) => ({
@@ -902,9 +932,21 @@ function DashboardContent() {
         medicalInfo: data.medicalInfo,
         medicamentos: data.medicamentos || "",
         enfermedadIds: patologiasDetalle
-          .map((p) => p.enfermedadId)
-          .filter((id) => id > 0),
-        principiosActivos: principiosActivosDetalle,
+          .filter((p) => !p.nombreCustom && p.enfermedadId > 0)
+          .map((p) => p.enfermedadId),
+        enfermedadesCustom: patologiasDetalle
+          .filter((p) => p.nombreCustom)
+          .map((p) => p.nombreCustom!),
+        principiosActivos: principiosActivosDetalle
+          .filter((p) => !p.nombreCustom && p.principioActivoId > 0),
+        principiosActivosCustom: principiosActivosDetalle
+          .filter((p) => p.nombreCustom)
+          .map((p) => ({
+            nombre: p.nombreCustom!,
+            concentracion: p.concentracion,
+            dosis: p.dosis,
+            observaciones: p.observaciones,
+          })),
         contactosEmergencia: contactosEmergenciaDetalle.filter(
           (c) => c.nombre && c.telefono,
         ),
@@ -957,9 +999,21 @@ function DashboardContent() {
       medicalInfo: data.medicalInfo,
       medicamentos: data.medicamentos || "",
       enfermedadIds: patologiasDetalle
-        .map((p) => p.enfermedadId)
-        .filter((id) => id > 0),
-      principiosActivos: principiosActivosDetalle,
+        .filter((p) => !p.nombreCustom && p.enfermedadId > 0)
+        .map((p) => p.enfermedadId),
+      enfermedadesCustom: patologiasDetalle
+        .filter((p) => p.nombreCustom)
+        .map((p) => p.nombreCustom!),
+      principiosActivos: principiosActivosDetalle
+        .filter((p) => !p.nombreCustom && p.principioActivoId > 0),
+      principiosActivosCustom: principiosActivosDetalle
+        .filter((p) => p.nombreCustom)
+        .map((p) => ({
+          nombre: p.nombreCustom!,
+          concentracion: p.concentracion,
+          dosis: p.dosis,
+          observaciones: p.observaciones,
+        })),
       contactosEmergencia: contactosEmergenciaDetalle.filter(
         (c) => c.nombre && c.telefono,
       ),
@@ -2486,7 +2540,9 @@ function DashboardContent() {
                                   <input
                                     type="text"
                                     value={
-                                      detalle.enfermedadId
+                                      detalle.nombreCustom
+                                        ? detalle.nombreCustom
+                                        : detalle.enfermedadId
                                         ? enfermedades.find(
                                             (e) =>
                                               e.id === detalle.enfermedadId,
@@ -2504,7 +2560,17 @@ function DashboardContent() {
                                     }
                                     onFocus={() => {
                                       setFocusStatePatologia(index, true);
-                                      if (detalle.enfermedadId) {
+                                      if (detalle.nombreCustom) {
+                                        updateSearchStatePatologia(
+                                          index,
+                                          detalle.nombreCustom,
+                                        );
+                                        updatePatologia(
+                                          index,
+                                          "nombreCustom",
+                                          undefined,
+                                        );
+                                      } else if (detalle.enfermedadId) {
                                         updatePatologia(
                                           index,
                                           "enfermedadId",
@@ -2578,6 +2644,18 @@ function DashboardContent() {
                                             que coincidan con "
                                             {searchStatesPatologias[index]}"
                                           </div>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              updatePatologia(index, "nombreCustom", searchStatesPatologias[index]);
+                                              updatePatologia(index, "enfermedadId", 0);
+                                              updateSearchStatePatologia(index, "");
+                                              setFocusStatePatologia(index, false);
+                                            }}
+                                            className="mt-2 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                                          >
+                                            Agregar &quot;{searchStatesPatologias[index]}&quot; como personalizado
+                                          </button>
                                         </div>
                                       ) : (
                                         enfermedades.length === 0 && (
@@ -2639,7 +2717,9 @@ function DashboardContent() {
                                       <input
                                         type="text"
                                         value={
-                                          detalle.principioActivoId
+                                          detalle.nombreCustom
+                                            ? detalle.nombreCustom
+                                            : detalle.principioActivoId
                                             ? principiosActivos.find(
                                                 (p) =>
                                                   p.id ===
@@ -2657,7 +2737,10 @@ function DashboardContent() {
                                         }
                                         onFocus={() => {
                                           setFocusState(index, true);
-                                          if (detalle.principioActivoId) {
+                                          if (detalle.nombreCustom) {
+                                            updateSearchState(index, detalle.nombreCustom);
+                                            updatePrincipioActivo(index, "nombreCustom", undefined);
+                                          } else if (detalle.principioActivoId) {
                                             updatePrincipioActivo(
                                               index,
                                               "principioActivoId",
@@ -2741,6 +2824,18 @@ function DashboardContent() {
                                                 que coincidan con "
                                                 {searchStates[index]}"
                                               </div>
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  updatePrincipioActivo(index, "nombreCustom", searchStates[index]);
+                                                  updatePrincipioActivo(index, "principioActivoId", 0);
+                                                  updateSearchState(index, "");
+                                                  setFocusState(index, false);
+                                                }}
+                                                className="mt-2 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                                              >
+                                                Agregar &quot;{searchStates[index]}&quot; como personalizado
+                                              </button>
                                             </div>
                                           ) : (
                                             principiosActivos.length ===
@@ -3208,7 +3303,9 @@ function DashboardContent() {
                                           <input
                                             type="text"
                                             value={
-                                              detalle.enfermedadId
+                                              detalle.nombreCustom
+                                                ? detalle.nombreCustom
+                                                : detalle.enfermedadId
                                                 ? enfermedades.find(
                                                     (e) =>
                                                       e.id ===
@@ -3233,7 +3330,10 @@ function DashboardContent() {
                                                 index,
                                                 true,
                                               );
-                                              if (detalle.enfermedadId) {
+                                              if (detalle.nombreCustom) {
+                                                updateSearchStatePatologia(index, detalle.nombreCustom);
+                                                updatePatologia(index, "nombreCustom", undefined);
+                                              } else if (detalle.enfermedadId) {
                                                 updatePatologia(
                                                   index,
                                                   "enfermedadId",
@@ -3318,6 +3418,18 @@ function DashboardContent() {
                                                     }
                                                     "
                                                   </div>
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                      updatePatologia(index, "nombreCustom", searchStatesPatologias[index]);
+                                                      updatePatologia(index, "enfermedadId", 0);
+                                                      updateSearchStatePatologia(index, "");
+                                                      setFocusStatePatologia(index, false);
+                                                    }}
+                                                    className="mt-2 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                                                  >
+                                                    Agregar &quot;{searchStatesPatologias[index]}&quot; como personalizado
+                                                  </button>
                                                 </div>
                                               ) : (
                                                 enfermedades.length === 0 && (
@@ -3401,7 +3513,9 @@ function DashboardContent() {
                                             <input
                                               type="text"
                                               value={
-                                                detalle.principioActivoId
+                                                detalle.nombreCustom
+                                                  ? detalle.nombreCustom
+                                                  : detalle.principioActivoId
                                                   ? principiosActivos.find(
                                                       (p) =>
                                                         p.id ===
@@ -3419,7 +3533,10 @@ function DashboardContent() {
                                               }
                                               onFocus={() => {
                                                 setFocusState(index, true);
-                                                if (detalle.principioActivoId) {
+                                                if (detalle.nombreCustom) {
+                                                  updateSearchState(index, detalle.nombreCustom);
+                                                  updatePrincipioActivo(index, "nombreCustom", undefined);
+                                                } else if (detalle.principioActivoId) {
                                                   updatePrincipioActivo(
                                                     index,
                                                     "principioActivoId",
@@ -3506,6 +3623,18 @@ function DashboardContent() {
                                                       que coincidan con "
                                                       {searchStates[index]}"
                                                     </div>
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => {
+                                                        updatePrincipioActivo(index, "nombreCustom", searchStates[index]);
+                                                        updatePrincipioActivo(index, "principioActivoId", 0);
+                                                        updateSearchState(index, "");
+                                                        setFocusState(index, false);
+                                                      }}
+                                                      className="mt-2 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                                                    >
+                                                      Agregar &quot;{searchStates[index]}&quot; como personalizado
+                                                    </button>
                                                   </div>
                                                 ) : (
                                                   principiosActivos.length ===
