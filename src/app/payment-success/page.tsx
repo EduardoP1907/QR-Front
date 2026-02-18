@@ -13,6 +13,7 @@ function PaymentSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [countdown, setCountdown] = useState(5);
+  const [notConfirmedCountdown, setNotConfirmedCountdown] = useState(8);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('verifying');
   const [retryCount, setRetryCount] = useState(0);
   const hasVerified = useRef(false);
@@ -107,6 +108,24 @@ function PaymentSuccessContent() {
     }
   }, [countdown, paymentStatus, router]);
 
+  useEffect(() => {
+    if (paymentStatus === 'not_confirmed') {
+      const timer = setInterval(() => {
+        setNotConfirmedCountdown((prev) => {
+          if (prev <= 1) return 0;
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [paymentStatus]);
+
+  useEffect(() => {
+    if (notConfirmedCountdown === 0 && paymentStatus === 'not_confirmed') {
+      router.push('/subscription');
+    }
+  }, [notConfirmedCountdown, paymentStatus, router]);
+
   // Pago NO confirmado - mostrar mensaje apropiado
   if (paymentStatus === 'not_confirmed') {
     return (
@@ -138,6 +157,12 @@ function PaymentSuccessContent() {
                 <li>Si tienes dudas, contacta a soporte</li>
               </ul>
             </div>
+
+            <p className="text-sm text-gray-500 mb-4">
+              Serás redirigido para intentar de nuevo en{' '}
+              <span className="font-bold text-gray-900">{notConfirmedCountdown}</span>{' '}
+              segundos...
+            </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
