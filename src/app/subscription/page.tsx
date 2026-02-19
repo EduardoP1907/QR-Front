@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
+import Image from 'next/image';
 import {
   Shield,
   Check,
@@ -18,7 +19,14 @@ import {
   Heart,
   QrCode,
   Phone,
-  Users
+  Users,
+  Tag,
+  Loader2,
+  CheckCircle,
+  XCircle,
+  ChevronDown,
+  ChevronUp,
+  MapPin
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { contratanteApi } from '../../services/api';
@@ -30,6 +38,16 @@ interface LocalFormData {
   quantity: number;
 }
 
+interface CuponValidation {
+  valido: boolean;
+  mensaje: string;
+  codigo?: string;
+  porcentajeDescuento?: number;
+  precioOriginalPulsera?: number;
+  descuento?: number;
+  precioFinalPulsera?: number;
+}
+
 function SubscriptionContent() {
   const router = useRouter();
   const { user } = useAuth();
@@ -37,6 +55,15 @@ function SubscriptionContent() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [quantity, setQuantity] = useState(1);
+
+  // Estado para error de dirección faltante
+  const [showAddressError, setShowAddressError] = useState(false);
+
+  // Estados para cupón de descuento
+  const [showCuponField, setShowCuponField] = useState(false);
+  const [cuponCode, setCuponCode] = useState('');
+  const [cuponValidation, setCuponValidation] = useState<CuponValidation | null>(null);
+  const [validatingCupon, setValidatingCupon] = useState(false);
 
   const form = useForm<LocalFormData>({
     defaultValues: {
@@ -58,14 +85,72 @@ function SubscriptionContent() {
     }
   };
 
+  // Validar cupón de descuento
+  const handleValidateCupon = async () => {
+    if (!cuponCode.trim()) {
+      toast.error('Ingresa un código de cupón');
+      return;
+    }
+
+    setValidatingCupon(true);
+    try {
+      const response = await contratanteApi.validateCupon(cuponCode.trim().toUpperCase());
+      setCuponValidation(response.data);
+
+      if (response.data.valido) {
+        toast.success(`¡Cupón válido! ${response.data.porcentajeDescuento}% de descuento en la pulsera`);
+      } else {
+        toast.error(response.data.mensaje);
+      }
+    } catch (err: any) {
+      console.error('Error validating cupon:', err);
+      const errorMessage = err.response?.data?.error || 'Error al validar el cupón';
+      toast.error(errorMessage);
+      setCuponValidation({ valido: false, mensaje: errorMessage });
+    } finally {
+      setValidatingCupon(false);
+    }
+  };
+
+  // Limpiar cupón
+  const handleClearCupon = () => {
+    setCuponCode('');
+    setCuponValidation(null);
+  };
+
+  // Calcular totales con descuento (el descuento se aplica sobre las pulseras)
+  const calcularTotales = () => {
+    const totalPulserasSinDescuento = PULSERA_PRICE * quantity;
+    const totalHabilitacion = SUBSCRIPTION_PRICE * quantity;
+    let descuento = 0;
+
+    if (cuponValidation?.valido && cuponValidation.porcentajeDescuento) {
+      descuento = Math.floor((totalPulserasSinDescuento * cuponValidation.porcentajeDescuento) / 100);
+    }
+
+    const totalPulserasConDescuento = totalPulserasSinDescuento - descuento;
+    const totalFinal = totalPulserasConDescuento + totalHabilitacion;
+
+    return {
+      totalPulserasSinDescuento,
+      totalPulserasConDescuento,
+      totalHabilitacion,
+      descuento,
+      totalFinal
+    };
+  };
+
+  const totales = calcularTotales();
+
   const handleSubmit = async (data: LocalFormData) => {
     setProcessing(true);
 
     try {
-      console.log('Initiating protection plan payment:', { quantity });
+      const cuponAplicado = cuponValidation?.valido ? cuponCode.trim().toUpperCase() : undefined;
+      console.log('Initiating protection plan payment:', { quantity, cupon: cuponAplicado });
 
       // Iniciar pago - obtener URL del checkout de VirtualPos
-      const response = await contratanteApi.initiateProtectionPlan(quantity);
+      const response = await contratanteApi.initiateProtectionPlan(quantity, undefined, cuponAplicado);
 
       if (response.data.checkoutUrl) {
         // Guardar información del pedido en localStorage para verificación posterior
@@ -89,6 +174,14 @@ function SubscriptionContent() {
                           err.message ||
                           'Error al iniciar el pago. Inténtalo de nuevo.';
 
+      // Detectar si el error es por dirección faltante
+      const isAddressError = errorMessage.toLowerCase().includes('dirección') ||
+                             errorMessage.toLowerCase().includes('direccion');
+
+      if (isAddressError) {
+        setShowAddressError(true);
+      }
+
       toast.error(errorMessage);
       setProcessing(false);
     }
@@ -107,7 +200,13 @@ function SubscriptionContent() {
             <span>Volver</span>
           </button>
           <div className="flex items-center gap-2">
-            <Shield className="w-6 h-6" style={{color: '#481468'}} />
+            <Image
+              src="/logo-bluko-icon.png"
+              alt="Bluko"
+              width={28}
+              height={28}
+              className="object-contain"
+            />
             <h1 className="text-xl font-semibold text-gray-900">Plan Bluko Life</h1>
           </div>
         </div>
@@ -155,7 +254,7 @@ function SubscriptionContent() {
                   <span className="text-3xl font-bold">${SUBSCRIPTION_PRICE.toLocaleString('es-CL')}</span>
                   <span className="text-white opacity-80">/CLP</span>
                 </div>
-                <div className="text-sm text-white opacity-90 mt-1">Mensual por Bluko Life</div>
+                <div className="text-sm text-white opacity-90 mt-1">Plan de protección Mensual</div>
               </div>
 
               <div className="mb-6 p-4 bg-white/10 rounded-lg">
@@ -163,7 +262,7 @@ function SubscriptionContent() {
                   <span className="text-sm">+ ${PULSERA_PRICE.toLocaleString('es-CL')} Bluko Life física</span>
                 </div>
                 <div className="text-xs text-white opacity-80 mt-1">
-                  (Precio por Bluko Life)
+                  (pago unico al momento de contratación)
                 </div>
               </div>
 
@@ -195,17 +294,152 @@ function SubscriptionContent() {
                 </div>
               </div>
 
+              {/* Alerta de dirección faltante */}
+              {showAddressError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-red-900 mb-1">Dirección de envío requerida</h4>
+                      <p className="text-sm text-red-700 mb-3">
+                        Debes configurar tu dirección de envío antes de realizar la compra.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => router.push('/profile?section=direccion&from=subscription')}
+                        className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg text-sm hover:opacity-90 transition-colors"
+                        style={{ backgroundColor: '#481468' }}
+                      >
+                        <MapPin className="w-4 h-4" />
+                        <span>Ingresar dirección de envío</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Cupón de descuento */}
+              <div className="border rounded-lg overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setShowCuponField(!showCuponField)}
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Tag className="w-5 h-5 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700">
+                      {cuponValidation?.valido
+                        ? `Cupón aplicado: ${cuponValidation.codigo} (-${cuponValidation.porcentajeDescuento}%)`
+                        : '¿Tienes un cupón de descuento?'}
+                    </span>
+                  </div>
+                  {showCuponField ? (
+                    <ChevronUp className="w-5 h-5 text-black" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-black" />
+                  )}
+                </button>
+
+                {showCuponField && (
+                  <div className="p-4 border-t bg-gray-50">
+                    <div className="flex gap-2">
+                      <div className="flex-1 relative">
+                        <input
+                          type="text"
+                          value={cuponCode}
+                          onChange={(e) => {
+                            setCuponCode(e.target.value.toUpperCase());
+                            if (cuponValidation) setCuponValidation(null);
+                          }}
+                          placeholder="Ingresa tu código (ej: MAMA20)"
+                          className="w-full px-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-opacity-50 uppercase text-black"
+                          style={{ focusRing: '#481468' }}
+                          disabled={validatingCupon || cuponValidation?.valido}
+                        />
+                        {cuponValidation && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            {cuponValidation.valido ? (
+                              <CheckCircle className="w-5 h-5 text-green-500" />
+                            ) : (
+                              <XCircle className="w-5 h-5 text-red-500" />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      {cuponValidation?.valido ? (
+                        <button
+                          type="button"
+                          onClick={handleClearCupon}
+                          className="px-4 py-2 border border-red-300 text-red-600 rounded-lg text-sm hover:bg-red-50 transition-colors"
+                        >
+                          Quitar
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleValidateCupon}
+                          disabled={validatingCupon || !cuponCode.trim()}
+                          className="px-4 py-2 text-white rounded-lg text-sm hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                          style={{ backgroundColor: '#481468' }}
+                        >
+                          {validatingCupon ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>Validando...</span>
+                            </>
+                          ) : (
+                            'Aplicar'
+                          )}
+                        </button>
+                      )}
+                    </div>
+                    {cuponValidation && !cuponValidation.valido && (
+                      <p className="mt-2 text-sm text-red-600">{cuponValidation.mensaje}</p>
+                    )}
+                    {cuponValidation?.valido && (
+                      <p className="mt-2 text-sm text-green-600">
+                        ¡{cuponValidation.porcentajeDescuento}% de descuento aplicado en tu Bluko Life!
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* Submit */}
               <div className="pt-2">
                 <div className="space-y-3 mb-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Habilitación (pago único) ({quantity}x):</span>
-                    <span className="font-semibold text-black">${(PULSERA_PRICE * quantity).toLocaleString('es-CL')} CLP</span>
+                    <span className="text-sm text-gray-600">Pago único al momento de contratación:</span>
+                    {totales.descuento > 0 ? (
+                      <div className="text-right">
+                        <span className="text-sm text-gray-400 line-through mr-2">
+                          ${totales.totalPulserasSinDescuento.toLocaleString('es-CL')}
+                        </span>
+                        <span className="font-semibold text-black">
+                          ${totales.totalPulserasConDescuento.toLocaleString('es-CL')} CLP
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="font-semibold text-black">
+                        ${totales.totalPulserasSinDescuento.toLocaleString('es-CL')} CLP
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Suscripciones ({quantity}x):</span>
-                    <span className="font-semibold text-black">${(SUBSCRIPTION_PRICE * quantity).toLocaleString('es-CL')} CLP</span>
+                    <span className="text-sm text-gray-600">Plan de protección Mensual:</span>
+                    <span className="font-semibold text-black">
+                      ${totales.totalHabilitacion.toLocaleString('es-CL')} CLP
+                    </span>
                   </div>
+                  {totales.descuento > 0 && (
+                    <div className="flex items-center justify-between text-green-600">
+                      <span className="text-sm flex items-center gap-1">
+                        <Tag className="w-4 h-4" />
+                        Descuento cupón ({cuponValidation?.porcentajeDescuento}%):
+                      </span>
+                      <span className="font-semibold">-${totales.descuento.toLocaleString('es-CL')} CLP</span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Cantidad de Bluko Life:</span>
                     <span className="font-semibold text-black">{quantity}</span>
@@ -213,10 +447,24 @@ function SubscriptionContent() {
                   <hr />
                   <div className="flex items-center justify-between">
                     <span className="text-lg font-semibold text-gray-900">Total primer pago:</span>
-                    <span className="text-2xl font-bold" style={{color: '#481468'}}>
-                      ${(TOTAL_PER_PULSERA * quantity).toLocaleString('es-CL')} CLP
-                    </span>
+                    <div className="text-right">
+                      {totales.descuento > 0 && (
+                        <span className="text-sm text-gray-400 line-through block">
+                          ${(TOTAL_PER_PULSERA * quantity).toLocaleString('es-CL')} CLP
+                        </span>
+                      )}
+                      <span className="text-2xl font-bold" style={{color: '#481468'}}>
+                        ${totales.totalFinal.toLocaleString('es-CL')} CLP
+                      </span>
+                    </div>
                   </div>
+                  {totales.descuento > 0 && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                      <span className="text-green-700 font-medium">
+                        ¡Estás ahorrando ${totales.descuento.toLocaleString('es-CL')} CLP con tu cupón!
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Términos y Condiciones */}

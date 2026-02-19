@@ -300,7 +300,7 @@ function ProfileContent() {
                 className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-100"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span>Volver al Dashboard</span>
+                <span>Volver al inicio</span>
               </button>
 
               <div className="flex items-center gap-2">
@@ -778,17 +778,6 @@ function ProfileContent() {
                         />
                       </div>
 
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Referencia de ayuda
-                        </label>
-                        <textarea
-                          {...registerDireccion("referencia")}
-                          rows={2}
-                          placeholder="Ej: Casa color azul, cerca del supermercado"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
-                        />
-                      </div>
                     </div>
 
                     <p className="text-sm text-red-600">
