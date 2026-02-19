@@ -103,6 +103,15 @@ export const pulseraApi = {
   scanQr: (qrCode: string) =>
     api.get(API_ENDPOINTS.pulseras.scanQr(qrCode)),
 
+  // Registrar ubicación del escaneo (geolocalización)
+  registerScanLocation: (qrCode: string, locationData: {
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+    timestamp: string;
+  }) =>
+    api.post(`/pulseras/scan/${qrCode}/location`, locationData),
+
   assign: (id: string | number, assignData: {
     portadorEmail: string;
     portadorRut: string;
@@ -165,8 +174,25 @@ export const contratanteApi = {
     return api.post('/contratantes/protection-plan/process', payload);
   },
 
-  initiateProtectionPlan: (quantity: number) =>
-    api.post('/contratantes/protection-plan/initiate', { quantity }),
+  initiateProtectionPlan: (quantity: number, direccion?: {
+    region?: string;
+    calle?: string;
+    tipoVivienda?: string;
+    numero?: string;
+    numeroDepto?: string;
+    comuna?: string;
+    referencia?: string;
+    telefono?: string;
+  }, codigoCupon?: string) =>
+    api.post('/contratantes/protection-plan/initiate', {
+      quantity,
+      ...direccion,
+      codigoCupon: codigoCupon || undefined
+    }),
+
+  // Validar código de cupón de descuento
+  validateCupon: (codigo: string) =>
+    api.get(`/cupones/validar/${encodeURIComponent(codigo)}`),
 
   getPricing: () =>
     api.get('/contratantes/protection-plan/pricing'),
@@ -214,8 +240,15 @@ export const contratanteApi = {
     medicalInfo?: string;
     medicamentos?: string;
     enfermedadIds?: number[];
+    enfermedadesCustom?: string[];
     principiosActivos?: Array<{
       principioActivoId: number;
+      concentracion: string;
+      dosis: string;
+      observaciones?: string;
+    }>;
+    principiosActivosCustom?: Array<{
+      nombre: string;
       concentracion: string;
       dosis: string;
       observaciones?: string;
@@ -241,8 +274,15 @@ export const contratanteApi = {
     medicalInfo?: string;
     medicamentos?: string;
     enfermedadIds?: number[];
+    enfermedadesCustom?: string[];
     principiosActivos?: Array<{
       principioActivoId: number;
+      concentracion: string;
+      dosis: string;
+      observaciones?: string;
+    }>;
+    principiosActivosCustom?: Array<{
+      nombre: string;
       concentracion: string;
       dosis: string;
       observaciones?: string;
@@ -396,6 +436,34 @@ export const adminApi = {
 
   cambiarEstadoPedido: (pedidoId: number, nuevoEstado: string) =>
     api.put(`/admin/pedidos/${pedidoId}/status`, { nuevoEstado }),
+
+  // Gestión de cupones de descuento
+  getCupones: () =>
+    api.get('/admin/cupones'),
+
+  getCupon: (id: number) =>
+    api.get(`/admin/cupones/${id}`),
+
+  createCupon: (data: {
+    nombre: string;
+    porcentajeDescuento: number;
+    fechaInicio: string;
+    fechaFin: string;
+  }) =>
+    api.post('/admin/cupones', data),
+
+  updateCupon: (id: number, data: {
+    porcentajeDescuento: number;
+    fechaInicio: string;
+    fechaFin: string;
+  }) =>
+    api.put(`/admin/cupones/${id}`, data),
+
+  toggleCuponActivo: (id: number) =>
+    api.post(`/admin/cupones/${id}/toggle-activo`),
+
+  deleteCupones: (ids: number[]) =>
+    api.delete('/admin/cupones', { data: { ids } }),
 };
 
 export default api;
