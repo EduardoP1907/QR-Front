@@ -58,6 +58,7 @@ export default function LoginPage() {
       await authApi.loginRequestOtp(email);
       setOtpSent(true);
       setOtpEmail(email);
+      otpForm.setValue('email', email); // sincronizar con react-hook-form
       toast.success('Código de acceso enviado a tu email');
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Error al enviar código';
@@ -83,14 +84,14 @@ export default function LoginPage() {
   };
 
   // Manejar solicitud de OTP desde email del modo contraseña
-  const handleRequestOtpFromPassword = () => {
+  const handleRequestOtpFromPassword = async () => {
     const email = passwordForm.getValues('email');
     if (!email) {
       toast.error('Ingresa tu email primero');
       return;
     }
-    requestOtp(email);
     setLoginMode('otp');
+    await requestOtp(email);
   };
 
   return (
@@ -306,7 +307,7 @@ export default function LoginPage() {
                   </button>
                 </form>
               ) : (
-                <form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="space-y-6">
+                <form onSubmit={otpForm.handleSubmit((data) => onOtpSubmit({ email: otpEmail, otp: data.otp }))} className="space-y-6">
                   {/* Success message */}
                   <div className="p-4 bg-green-50 rounded-lg border border-green-200">
                     <div className="flex items-center gap-3">
@@ -321,13 +322,6 @@ export default function LoginPage() {
                       </div>
                     </div>
                   </div>
-
-                  {/* Hidden email field */}
-                  <input
-                    {...otpForm.register('email')}
-                    type="hidden"
-                    value={otpEmail}
-                  />
 
                   {/* OTP Input */}
                   <div>
