@@ -2541,134 +2541,141 @@ function DashboardContent() {
                             {patologiasDetalle.map((detalle, index) => (
                               <div key={index} className="p-3 bg-white flex gap-2 items-start">
                                 <div className="flex-1 min-w-0 relative">
-                                  <input
-                                    type="text"
-                                    value={
-                                      detalle.nombreCustom
-                                        ? detalle.nombreCustom
-                                        : detalle.enfermedadId
-                                        ? enfermedades.find(
-                                            (e) =>
-                                              e.id === detalle.enfermedadId,
-                                          )?.nombre ||
-                                          searchStatesPatologias[index] ||
-                                          ""
-                                        : searchStatesPatologias[index] ||
-                                          ""
-                                    }
-                                    onChange={(e) =>
-                                      updateSearchStatePatologia(
-                                        index,
-                                        e.target.value,
-                                      )
-                                    }
-                                    onFocus={() => {
-                                      setFocusStatePatologia(index, true);
-                                      if (detalle.nombreCustom) {
-                                        updateSearchStatePatologia(
-                                          index,
-                                          detalle.nombreCustom,
-                                        );
-                                        updatePatologia(
-                                          index,
-                                          "nombreCustom",
-                                          undefined,
-                                        );
-                                      } else if (detalle.enfermedadId) {
-                                        updatePatologia(
-                                          index,
-                                          "enfermedadId",
-                                          0,
-                                        );
-                                        updateSearchStatePatologia(
-                                          index,
-                                          "",
-                                        );
-                                      }
-                                    }}
-                                    onBlur={() => {
-                                      setTimeout(
-                                        () =>
-                                          setFocusStatePatologia(
-                                            index,
-                                            false,
-                                          ),
-                                        200,
-                                      );
-                                    }}
-                                    className="w-full px-2 py-1 text-sm text-black border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    placeholder="Haz clic para ver lista o escribe para buscar..."
-                                  />
-
-                                  {(focusStatesPatologias[index] ||
-                                    (searchStatesPatologias[index] &&
-                                      searchStatesPatologias[index].length >
-                                        0)) && (
-                                    <div className="absolute z-[9999] w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                                      {getFilteredPatologias(
-                                        searchStatesPatologias[index] || "",
-                                      ).length > 0 ? (
-                                        getFilteredPatologias(
-                                          searchStatesPatologias[index] ||
-                                            "",
-                                        )
-                                          .slice(0, 15)
-                                          .map((patologia) => (
-                                            <button
-                                              key={patologia.id}
-                                              type="button"
-                                              onClick={() => {
-                                                updatePatologia(
-                                                  index,
-                                                  "enfermedadId",
-                                                  patologia.id,
-                                                );
-                                                updateSearchStatePatologia(
-                                                  index,
-                                                  "",
-                                                );
-                                                setFocusStatePatologia(
-                                                  index,
-                                                  false,
-                                                );
-                                              }}
-                                              className="w-full text-left px-3 py-2 hover:bg-gray-100 focus:bg-gray-100 border-b border-gray-100 last:border-b-0"
-                                            >
-                                              <div className="text-sm font-medium text-gray-900">
-                                                {patologia.nombre}
-                                              </div>
-                                            </button>
-                                          ))
-                                      ) : searchStatesPatologias[index] ? (
-                                        <div className="px-3 py-4 text-sm text-gray-500 text-center">
-                                          <div>
-                                            No se encontraron patologías
-                                          </div>
-                                          <div className="text-xs mt-1">
-                                            que coincidan con "
-                                            {searchStatesPatologias[index]}"
-                                          </div>
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              updatePatologia(index, "nombreCustom", searchStatesPatologias[index]);
-                                              updatePatologia(index, "enfermedadId", 0);
-                                              updateSearchStatePatologia(index, "");
-                                              setFocusStatePatologia(index, false);
-                                            }}
-                                            className="mt-2 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
-                                          >
-                                            Agregar &quot;{searchStatesPatologias[index]}&quot; como personalizado
-                                          </button>
-                                        </div>
-                                      ) : (
-                                        enfermedades.length === 0 && (
-                                          <div className="px-3 py-4 text-sm text-gray-500 text-center">
-                                            Cargando patologías...
-                                          </div>
-                                        )
-                                      )}
+                                  {detalle.nombreCustom ? (
+                                    <div className="flex items-center gap-2 px-2 py-1.5 bg-orange-50 border border-orange-300 rounded text-sm">
+                                      <span className="flex-1 text-orange-800 font-medium">{detalle.nombreCustom}</span>
+                                      <span className="text-xs text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">personalizado</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          updatePatologia(index, "nombreCustom", undefined);
+                                          updatePatologia(index, "enfermedadId", 0);
+                                        }}
+                                        className="text-orange-400 hover:text-orange-600 flex-shrink-0"
+                                      >
+                                        <X className="w-3 h-3" />
+                                      </button>
                                     </div>
+                                  ) : (
+                                    <>
+                                      <input
+                                        type="text"
+                                        value={
+                                          detalle.enfermedadId
+                                            ? enfermedades.find(
+                                                (e) =>
+                                                  e.id === detalle.enfermedadId,
+                                              )?.nombre ||
+                                              searchStatesPatologias[index] ||
+                                              ""
+                                            : searchStatesPatologias[index] ||
+                                              ""
+                                        }
+                                        onChange={(e) =>
+                                          updateSearchStatePatologia(
+                                            index,
+                                            e.target.value,
+                                          )
+                                        }
+                                        onFocus={() => {
+                                          setFocusStatePatologia(index, true);
+                                          if (detalle.enfermedadId) {
+                                            updatePatologia(
+                                              index,
+                                              "enfermedadId",
+                                              0,
+                                            );
+                                            updateSearchStatePatologia(
+                                              index,
+                                              "",
+                                            );
+                                          }
+                                        }}
+                                        onBlur={() => {
+                                          setTimeout(
+                                            () =>
+                                              setFocusStatePatologia(
+                                                index,
+                                                false,
+                                              ),
+                                            200,
+                                          );
+                                        }}
+                                        className="w-full px-2 py-1 text-sm text-black border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        placeholder="Haz clic para ver lista o escribe para buscar..."
+                                      />
+
+                                      {(focusStatesPatologias[index] ||
+                                        (searchStatesPatologias[index] &&
+                                          searchStatesPatologias[index].length >
+                                            0)) && (
+                                        <div className="absolute z-[9999] w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                          {getFilteredPatologias(
+                                            searchStatesPatologias[index] || "",
+                                          ).length > 0 ? (
+                                            getFilteredPatologias(
+                                              searchStatesPatologias[index] ||
+                                                "",
+                                            )
+                                              .slice(0, 15)
+                                              .map((patologia) => (
+                                                <button
+                                                  key={patologia.id}
+                                                  type="button"
+                                                  onClick={() => {
+                                                    updatePatologia(
+                                                      index,
+                                                      "enfermedadId",
+                                                      patologia.id,
+                                                    );
+                                                    updateSearchStatePatologia(
+                                                      index,
+                                                      "",
+                                                    );
+                                                    setFocusStatePatologia(
+                                                      index,
+                                                      false,
+                                                    );
+                                                  }}
+                                                  className="w-full text-left px-3 py-2 hover:bg-gray-100 focus:bg-gray-100 border-b border-gray-100 last:border-b-0"
+                                                >
+                                                  <div className="text-sm font-medium text-gray-900">
+                                                    {patologia.nombre}
+                                                  </div>
+                                                </button>
+                                              ))
+                                          ) : searchStatesPatologias[index] ? (
+                                            <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                                              <div>
+                                                No se encontraron patologías
+                                              </div>
+                                              <div className="text-xs mt-1">
+                                                que coincidan con "
+                                                {searchStatesPatologias[index]}"
+                                              </div>
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  updatePatologia(index, "nombreCustom", searchStatesPatologias[index]);
+                                                  updatePatologia(index, "enfermedadId", 0);
+                                                  updateSearchStatePatologia(index, "");
+                                                  setFocusStatePatologia(index, false);
+                                                }}
+                                                className="mt-2 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                                              >
+                                                Agregar &quot;{searchStatesPatologias[index]}&quot; como personalizado
+                                              </button>
+                                            </div>
+                                          ) : (
+                                            enfermedades.length === 0 && (
+                                              <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                                                Cargando patologías...
+                                              </div>
+                                            )
+                                          )}
+                                        </div>
+                                      )}
+                                    </>
                                   )}
                                 </div>
                                 <button
@@ -2718,138 +2725,152 @@ function DashboardContent() {
                                 <div key={index} className="p-3 bg-white space-y-2">
                                   <div className="flex gap-2 items-start">
                                     <div className="flex-1 min-w-0 relative">
-                                      <input
-                                        type="text"
-                                        value={
-                                          detalle.nombreCustom
-                                            ? detalle.nombreCustom
-                                            : detalle.principioActivoId
-                                            ? principiosActivos.find(
-                                                (p) =>
-                                                  p.id ===
-                                                  detalle.principioActivoId,
-                                              )?.nombre ||
-                                              searchStates[index] ||
-                                              ""
-                                            : searchStates[index] || ""
-                                        }
-                                        onChange={(e) =>
-                                          updateSearchState(
-                                            index,
-                                            e.target.value,
-                                          )
-                                        }
-                                        onFocus={() => {
-                                          setFocusState(index, true);
-                                          if (detalle.nombreCustom) {
-                                            updateSearchState(index, detalle.nombreCustom);
-                                            updatePrincipioActivo(index, "nombreCustom", undefined);
-                                          } else if (detalle.principioActivoId) {
-                                            updatePrincipioActivo(
-                                              index,
-                                              "principioActivoId",
-                                              0,
-                                            );
-                                            updateSearchState(index, "");
-                                          }
-                                        }}
-                                        onBlur={() => {
-                                          setTimeout(
-                                            () => setFocusState(index, false),
-                                            200,
-                                          );
-                                        }}
-                                        className="w-full px-2 py-1 text-sm text-black border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                                        placeholder="Buscar principio activo..."
-                                      />
-
-                                      {(focusStates[index] ||
-                                        (searchStates[index] &&
-                                          searchStates[index].length >
-                                            0)) && (
-                                        <div className="absolute z-[9999] w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                                          {getFilteredPrincipiosActivos(
-                                            searchStates[index] || "",
-                                          ).length > 0 ? (
-                                            getFilteredPrincipiosActivos(
-                                              searchStates[index] || "",
-                                            )
-                                              .slice(0, 15)
-                                              .map((principio) => (
-                                                <button
-                                                  key={principio.id}
-                                                  type="button"
-                                                  onClick={() => {
-                                                    updatePrincipioActivo(
-                                                      index,
-                                                      "principioActivoId",
-                                                      principio.id,
-                                                    );
-                                                    updateSearchState(
-                                                      index,
-                                                      "",
-                                                    );
-                                                    setFocusState(
-                                                      index,
-                                                      false,
-                                                    );
-                                                  }}
-                                                  className="w-full text-left px-3 py-2 hover:bg-gray-100 focus:bg-gray-100 border-b border-gray-100 last:border-b-0"
-                                                >
-                                                  <div className="text-sm font-medium text-gray-900">
-                                                    {principio.nombre}
-                                                  </div>
-                                                  <div className="flex flex-col mt-1">
-                                                    {principio.nombreComercial && (
-                                                      <span className="text-xs text-blue-600">
-                                                        Comercial:{" "}
-                                                        {
-                                                          principio.nombreComercial
-                                                        }
-                                                      </span>
-                                                    )}
-                                                    {principio.descripcion && (
-                                                      <span className="text-xs text-gray-500 truncate">
-                                                        {
-                                                          principio.descripcion
-                                                        }
-                                                      </span>
-                                                    )}
-                                                  </div>
-                                                </button>
-                                              ))
-                                          ) : searchStates[index] ? (
-                                            <div className="px-3 py-4 text-sm text-gray-500 text-center">
-                                              <div>
-                                                No se encontraron principios
-                                                activos
-                                              </div>
-                                              <div className="text-xs mt-1">
-                                                que coincidan con "
-                                                {searchStates[index]}"
-                                              </div>
-                                              <button
-                                                type="button"
-                                                onClick={() => {
-                                                  updatePrincipioActivo(index, "nombreCustom", searchStates[index]);
-                                                  updatePrincipioActivo(index, "principioActivoId", 0);
-                                                  updateSearchState(index, "");
-                                                  setFocusState(index, false);
-                                                }}
-                                                className="mt-2 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
-                                              >
-                                                Agregar &quot;{searchStates[index]}&quot; como personalizado
-                                              </button>
-                                            </div>
-                                          ) : (
-                                            principiosActivos.length ===
-                                              0 && (
-                                              <div className="px-3 py-4 text-sm text-gray-500 text-center">
-                                                Cargando principios activos...
-                                              </div>
-                                            )
-                                          )}
+                                      {detalle.nombreCustom ? (
+                                        <div className="flex items-center gap-2 px-2 py-1.5 bg-orange-50 border border-orange-300 rounded text-sm">
+                                          <span className="flex-1 text-orange-800 font-medium">{detalle.nombreCustom}</span>
+                                          <span className="text-xs text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">personalizado</span>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              updatePrincipioActivo(index, "nombreCustom", undefined);
+                                              updatePrincipioActivo(index, "principioActivoId", 0);
+                                            }}
+                                            className="text-orange-400 hover:text-orange-600 flex-shrink-0"
+                                          >
+                                            <X className="w-3 h-3" />
+                                          </button>
                                         </div>
+                                      ) : (
+                                        <>
+                                          <input
+                                            type="text"
+                                            value={
+                                              detalle.principioActivoId
+                                                ? principiosActivos.find(
+                                                    (p) =>
+                                                      p.id ===
+                                                      detalle.principioActivoId,
+                                                  )?.nombre ||
+                                                  searchStates[index] ||
+                                                  ""
+                                                : searchStates[index] || ""
+                                            }
+                                            onChange={(e) =>
+                                              updateSearchState(
+                                                index,
+                                                e.target.value,
+                                              )
+                                            }
+                                            onFocus={() => {
+                                              setFocusState(index, true);
+                                              if (detalle.principioActivoId) {
+                                                updatePrincipioActivo(
+                                                  index,
+                                                  "principioActivoId",
+                                                  0,
+                                                );
+                                                updateSearchState(index, "");
+                                              }
+                                            }}
+                                            onBlur={() => {
+                                              setTimeout(
+                                                () => setFocusState(index, false),
+                                                200,
+                                              );
+                                            }}
+                                            className="w-full px-2 py-1 text-sm text-black border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                            placeholder="Buscar principio activo..."
+                                          />
+
+                                          {(focusStates[index] ||
+                                            (searchStates[index] &&
+                                              searchStates[index].length >
+                                                0)) && (
+                                            <div className="absolute z-[9999] w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                              {getFilteredPrincipiosActivos(
+                                                searchStates[index] || "",
+                                              ).length > 0 ? (
+                                                getFilteredPrincipiosActivos(
+                                                  searchStates[index] || "",
+                                                )
+                                                  .slice(0, 15)
+                                                  .map((principio) => (
+                                                    <button
+                                                      key={principio.id}
+                                                      type="button"
+                                                      onClick={() => {
+                                                        updatePrincipioActivo(
+                                                          index,
+                                                          "principioActivoId",
+                                                          principio.id,
+                                                        );
+                                                        updateSearchState(
+                                                          index,
+                                                          "",
+                                                        );
+                                                        setFocusState(
+                                                          index,
+                                                          false,
+                                                        );
+                                                      }}
+                                                      className="w-full text-left px-3 py-2 hover:bg-gray-100 focus:bg-gray-100 border-b border-gray-100 last:border-b-0"
+                                                    >
+                                                      <div className="text-sm font-medium text-gray-900">
+                                                        {principio.nombre}
+                                                      </div>
+                                                      <div className="flex flex-col mt-1">
+                                                        {principio.nombreComercial && (
+                                                          <span className="text-xs text-blue-600">
+                                                            Comercial:{" "}
+                                                            {
+                                                              principio.nombreComercial
+                                                            }
+                                                          </span>
+                                                        )}
+                                                        {principio.descripcion && (
+                                                          <span className="text-xs text-gray-500 truncate">
+                                                            {
+                                                              principio.descripcion
+                                                            }
+                                                          </span>
+                                                        )}
+                                                      </div>
+                                                    </button>
+                                                  ))
+                                              ) : searchStates[index] ? (
+                                                <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                                                  <div>
+                                                    No se encontraron principios
+                                                    activos
+                                                  </div>
+                                                  <div className="text-xs mt-1">
+                                                    que coincidan con "
+                                                    {searchStates[index]}"
+                                                  </div>
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                      updatePrincipioActivo(index, "nombreCustom", searchStates[index]);
+                                                      updatePrincipioActivo(index, "principioActivoId", 0);
+                                                      updateSearchState(index, "");
+                                                      setFocusState(index, false);
+                                                    }}
+                                                    className="mt-2 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                                                  >
+                                                    Agregar &quot;{searchStates[index]}&quot; como personalizado
+                                                  </button>
+                                                </div>
+                                              ) : (
+                                                principiosActivos.length ===
+                                                  0 && (
+                                                  <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                                                    Cargando principios activos...
+                                                  </div>
+                                                )
+                                              )}
+                                            </div>
+                                          )}
+                                        </>
                                       )}
                                     </div>
                                     <button
@@ -3304,145 +3325,116 @@ function DashboardContent() {
                                     <tr key={index}>
                                       <td className="px-3 py-2 relative">
                                         <div className="relative">
-                                          <input
-                                            type="text"
-                                            value={
-                                              detalle.nombreCustom
-                                                ? detalle.nombreCustom
-                                                : detalle.enfermedadId
-                                                ? enfermedades.find(
-                                                    (e) =>
-                                                      e.id ===
-                                                      detalle.enfermedadId,
-                                                  )?.nombre ||
-                                                  searchStatesPatologias[
-                                                    index
-                                                  ] ||
-                                                  ""
-                                                : searchStatesPatologias[
-                                                    index
-                                                  ] || ""
-                                            }
-                                            onChange={(e) =>
-                                              updateSearchStatePatologia(
-                                                index,
-                                                e.target.value,
-                                              )
-                                            }
-                                            onFocus={() => {
-                                              setFocusStatePatologia(
-                                                index,
-                                                true,
-                                              );
-                                              if (detalle.nombreCustom) {
-                                                updateSearchStatePatologia(index, detalle.nombreCustom);
-                                                updatePatologia(index, "nombreCustom", undefined);
-                                              } else if (detalle.enfermedadId) {
-                                                updatePatologia(
-                                                  index,
-                                                  "enfermedadId",
-                                                  0,
-                                                );
-                                                updateSearchStatePatologia(
-                                                  index,
-                                                  "",
-                                                );
-                                              }
-                                            }}
-                                            onBlur={() => {
-                                              // Delay hiding dropdown to allow selection
-                                              setTimeout(
-                                                () =>
-                                                  setFocusStatePatologia(
-                                                    index,
-                                                    false,
-                                                  ),
-                                                200,
-                                              );
-                                            }}
-                                            className="w-full px-2 py-1 text-sm text-black border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            placeholder="Haz clic para ver lista o escribe para buscar..."
-                                          />
-
-                                          {/* Dropdown de búsqueda */}
-                                          {(focusStatesPatologias[index] ||
-                                            (searchStatesPatologias[index] &&
-                                              searchStatesPatologias[index]
-                                                .length > 0)) && (
-                                            <div className="absolute z-[9999] w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                                              {getFilteredPatologias(
-                                                searchStatesPatologias[index] ||
-                                                  "",
-                                              ).length > 0 ? (
-                                                getFilteredPatologias(
-                                                  searchStatesPatologias[
-                                                    index
-                                                  ] || "",
-                                                )
-                                                  .slice(0, 15)
-                                                  .map((patologia) => (
-                                                    <button
-                                                      key={patologia.id}
-                                                      type="button"
-                                                      onClick={() => {
-                                                        updatePatologia(
-                                                          index,
-                                                          "enfermedadId",
-                                                          patologia.id,
-                                                        );
-                                                        updateSearchStatePatologia(
-                                                          index,
-                                                          "",
-                                                        );
-                                                        setFocusStatePatologia(
-                                                          index,
-                                                          false,
-                                                        );
-                                                      }}
-                                                      className="w-full text-left px-3 py-2 hover:bg-gray-100 focus:bg-gray-100 border-b border-gray-100 last:border-b-0"
-                                                    >
-                                                      <div className="text-sm font-medium text-gray-900">
-                                                        {patologia.nombre}
-                                                      </div>
-                                                    </button>
-                                                  ))
-                                              ) : searchStatesPatologias[
-                                                  index
-                                                ] ? (
-                                                <div className="px-3 py-4 text-sm text-gray-500 text-center">
-                                                  <div>
-                                                    No se encontraron patologías
-                                                  </div>
-                                                  <div className="text-xs mt-1">
-                                                    que coincidan con "
-                                                    {
-                                                      searchStatesPatologias[
-                                                        index
-                                                      ]
-                                                    }
-                                                    "
-                                                  </div>
-                                                  <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                      updatePatologia(index, "nombreCustom", searchStatesPatologias[index]);
-                                                      updatePatologia(index, "enfermedadId", 0);
-                                                      updateSearchStatePatologia(index, "");
-                                                      setFocusStatePatologia(index, false);
-                                                    }}
-                                                    className="mt-2 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
-                                                  >
-                                                    Agregar &quot;{searchStatesPatologias[index]}&quot; como personalizado
-                                                  </button>
-                                                </div>
-                                              ) : (
-                                                enfermedades.length === 0 && (
-                                                  <div className="px-3 py-4 text-sm text-gray-500 text-center">
-                                                    Cargando patologías...
-                                                  </div>
-                                                )
-                                              )}
+                                          {detalle.nombreCustom ? (
+                                            <div className="flex items-center gap-2 px-2 py-1.5 bg-orange-50 border border-orange-300 rounded text-sm">
+                                              <span className="flex-1 text-orange-800 font-medium">{detalle.nombreCustom}</span>
+                                              <span className="text-xs text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">personalizado</span>
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  updatePatologia(index, "nombreCustom", undefined);
+                                                  updatePatologia(index, "enfermedadId", 0);
+                                                }}
+                                                className="text-orange-400 hover:text-orange-600 flex-shrink-0"
+                                              >
+                                                <X className="w-3 h-3" />
+                                              </button>
                                             </div>
+                                          ) : (
+                                            <>
+                                              <input
+                                                type="text"
+                                                value={
+                                                  detalle.enfermedadId
+                                                    ? enfermedades.find(
+                                                        (e) =>
+                                                          e.id ===
+                                                          detalle.enfermedadId,
+                                                      )?.nombre ||
+                                                      searchStatesPatologias[index] ||
+                                                      ""
+                                                    : searchStatesPatologias[index] || ""
+                                                }
+                                                onChange={(e) =>
+                                                  updateSearchStatePatologia(
+                                                    index,
+                                                    e.target.value,
+                                                  )
+                                                }
+                                                onFocus={() => {
+                                                  setFocusStatePatologia(index, true);
+                                                  if (detalle.enfermedadId) {
+                                                    updatePatologia(index, "enfermedadId", 0);
+                                                    updateSearchStatePatologia(index, "");
+                                                  }
+                                                }}
+                                                onBlur={() => {
+                                                  setTimeout(
+                                                    () => setFocusStatePatologia(index, false),
+                                                    200,
+                                                  );
+                                                }}
+                                                className="w-full px-2 py-1 text-sm text-black border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                placeholder="Haz clic para ver lista o escribe para buscar..."
+                                              />
+
+                                              {/* Dropdown de búsqueda */}
+                                              {(focusStatesPatologias[index] ||
+                                                (searchStatesPatologias[index] &&
+                                                  searchStatesPatologias[index].length > 0)) && (
+                                                <div className="absolute z-[9999] w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                                  {getFilteredPatologias(
+                                                    searchStatesPatologias[index] || "",
+                                                  ).length > 0 ? (
+                                                    getFilteredPatologias(
+                                                      searchStatesPatologias[index] || "",
+                                                    )
+                                                      .slice(0, 15)
+                                                      .map((patologia) => (
+                                                        <button
+                                                          key={patologia.id}
+                                                          type="button"
+                                                          onClick={() => {
+                                                            updatePatologia(index, "enfermedadId", patologia.id);
+                                                            updateSearchStatePatologia(index, "");
+                                                            setFocusStatePatologia(index, false);
+                                                          }}
+                                                          className="w-full text-left px-3 py-2 hover:bg-gray-100 focus:bg-gray-100 border-b border-gray-100 last:border-b-0"
+                                                        >
+                                                          <div className="text-sm font-medium text-gray-900">
+                                                            {patologia.nombre}
+                                                          </div>
+                                                        </button>
+                                                      ))
+                                                  ) : searchStatesPatologias[index] ? (
+                                                    <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                                                      <div>No se encontraron patologías</div>
+                                                      <div className="text-xs mt-1">
+                                                        que coincidan con "{searchStatesPatologias[index]}"
+                                                      </div>
+                                                      <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                          updatePatologia(index, "nombreCustom", searchStatesPatologias[index]);
+                                                          updatePatologia(index, "enfermedadId", 0);
+                                                          updateSearchStatePatologia(index, "");
+                                                          setFocusStatePatologia(index, false);
+                                                        }}
+                                                        className="mt-2 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                                                      >
+                                                        Agregar &quot;{searchStatesPatologias[index]}&quot; como personalizado
+                                                      </button>
+                                                    </div>
+                                                  ) : (
+                                                    enfermedades.length === 0 && (
+                                                      <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                                                        Cargando patologías...
+                                                      </div>
+                                                    )
+                                                  )}
+                                                </div>
+                                              )}
+                                            </>
                                           )}
                                         </div>
                                       </td>
@@ -3514,142 +3506,121 @@ function DashboardContent() {
                                       <tr key={index}>
                                         <td className="px-3 py-2 relative">
                                           <div className="relative">
-                                            <input
-                                              type="text"
-                                              value={
-                                                detalle.nombreCustom
-                                                  ? detalle.nombreCustom
-                                                  : detalle.principioActivoId
-                                                  ? principiosActivos.find(
-                                                      (p) =>
-                                                        p.id ===
-                                                        detalle.principioActivoId,
-                                                    )?.nombre ||
-                                                    searchStates[index] ||
-                                                    ""
-                                                  : searchStates[index] || ""
-                                              }
-                                              onChange={(e) =>
-                                                updateSearchState(
-                                                  index,
-                                                  e.target.value,
-                                                )
-                                              }
-                                              onFocus={() => {
-                                                setFocusState(index, true);
-                                                if (detalle.nombreCustom) {
-                                                  updateSearchState(index, detalle.nombreCustom);
-                                                  updatePrincipioActivo(index, "nombreCustom", undefined);
-                                                } else if (detalle.principioActivoId) {
-                                                  updatePrincipioActivo(
-                                                    index,
-                                                    "principioActivoId",
-                                                    0,
-                                                  );
-                                                  updateSearchState(index, "");
-                                                }
-                                              }}
-                                              onBlur={() => {
-                                                // Delay hiding dropdown to allow selection
-                                                setTimeout(
-                                                  () =>
-                                                    setFocusState(index, false),
-                                                  200,
-                                                );
-                                              }}
-                                              className="w-full px-2 py-1 text-sm text-black border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                                              placeholder="Haz clic para ver lista o escribe para buscar..."
-                                            />
-
-                                            {/* Dropdown de búsqueda */}
-                                            {(focusStates[index] ||
-                                              (searchStates[index] &&
-                                                searchStates[index].length >
-                                                  0)) && (
-                                              <div className="absolute z-[9999] w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                                                {getFilteredPrincipiosActivos(
-                                                  searchStates[index] || "",
-                                                ).length > 0 ? (
-                                                  getFilteredPrincipiosActivos(
-                                                    searchStates[index] || "",
-                                                  )
-                                                    .slice(0, 15)
-                                                    .map((principio) => (
-                                                      <button
-                                                        key={principio.id}
-                                                        type="button"
-                                                        onClick={() => {
-                                                          updatePrincipioActivo(
-                                                            index,
-                                                            "principioActivoId",
-                                                            principio.id,
-                                                          );
-                                                          updateSearchState(
-                                                            index,
-                                                            "",
-                                                          );
-                                                          setFocusState(
-                                                            index,
-                                                            false,
-                                                          );
-                                                        }}
-                                                        className="w-full text-left px-3 py-2 hover:bg-gray-100 focus:bg-gray-100 border-b border-gray-100 last:border-b-0"
-                                                      >
-                                                        <div className="text-sm font-medium text-gray-900">
-                                                          {principio.nombre}
-                                                        </div>
-                                                        <div className="flex flex-col mt-1">
-                                                          {principio.nombreComercial && (
-                                                            <span className="text-xs text-blue-600">
-                                                              Comercial:{" "}
-                                                              {
-                                                                principio.nombreComercial
-                                                              }
-                                                            </span>
-                                                          )}
-                                                          {principio.descripcion && (
-                                                            <span className="text-xs text-gray-500 truncate">
-                                                              {
-                                                                principio.descripcion
-                                                              }
-                                                            </span>
-                                                          )}
-                                                        </div>
-                                                      </button>
-                                                    ))
-                                                ) : searchStates[index] ? (
-                                                  <div className="px-3 py-4 text-sm text-gray-500 text-center">
-                                                    <div>
-                                                      No se encontraron
-                                                      principios activos
-                                                    </div>
-                                                    <div className="text-xs mt-1">
-                                                      que coincidan con "
-                                                      {searchStates[index]}"
-                                                    </div>
-                                                    <button
-                                                      type="button"
-                                                      onClick={() => {
-                                                        updatePrincipioActivo(index, "nombreCustom", searchStates[index]);
-                                                        updatePrincipioActivo(index, "principioActivoId", 0);
-                                                        updateSearchState(index, "");
-                                                        setFocusState(index, false);
-                                                      }}
-                                                      className="mt-2 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
-                                                    >
-                                                      Agregar &quot;{searchStates[index]}&quot; como personalizado
-                                                    </button>
-                                                  </div>
-                                                ) : (
-                                                  principiosActivos.length ===
-                                                    0 && (
-                                                    <div className="px-3 py-4 text-sm text-gray-500 text-center">
-                                                      Cargando principios
-                                                      activos...
-                                                    </div>
-                                                  )
-                                                )}
+                                            {detalle.nombreCustom ? (
+                                              <div className="flex items-center gap-2 px-2 py-1.5 bg-orange-50 border border-orange-300 rounded text-sm">
+                                                <span className="flex-1 text-orange-800 font-medium">{detalle.nombreCustom}</span>
+                                                <span className="text-xs text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">personalizado</span>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => {
+                                                    updatePrincipioActivo(index, "nombreCustom", undefined);
+                                                    updatePrincipioActivo(index, "principioActivoId", 0);
+                                                  }}
+                                                  className="text-orange-400 hover:text-orange-600 flex-shrink-0"
+                                                >
+                                                  <X className="w-3 h-3" />
+                                                </button>
                                               </div>
+                                            ) : (
+                                              <>
+                                                <input
+                                                  type="text"
+                                                  value={
+                                                    detalle.principioActivoId
+                                                      ? principiosActivos.find(
+                                                          (p) =>
+                                                            p.id ===
+                                                            detalle.principioActivoId,
+                                                        )?.nombre ||
+                                                        searchStates[index] ||
+                                                        ""
+                                                      : searchStates[index] || ""
+                                                  }
+                                                  onChange={(e) =>
+                                                    updateSearchState(index, e.target.value)
+                                                  }
+                                                  onFocus={() => {
+                                                    setFocusState(index, true);
+                                                    if (detalle.principioActivoId) {
+                                                      updatePrincipioActivo(index, "principioActivoId", 0);
+                                                      updateSearchState(index, "");
+                                                    }
+                                                  }}
+                                                  onBlur={() => {
+                                                    setTimeout(() => setFocusState(index, false), 200);
+                                                  }}
+                                                  className="w-full px-2 py-1 text-sm text-black border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                                  placeholder="Haz clic para ver lista o escribe para buscar..."
+                                                />
+
+                                                {/* Dropdown de búsqueda */}
+                                                {(focusStates[index] ||
+                                                  (searchStates[index] && searchStates[index].length > 0)) && (
+                                                  <div className="absolute z-[9999] w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                                    {getFilteredPrincipiosActivos(
+                                                      searchStates[index] || "",
+                                                    ).length > 0 ? (
+                                                      getFilteredPrincipiosActivos(
+                                                        searchStates[index] || "",
+                                                      )
+                                                        .slice(0, 15)
+                                                        .map((principio) => (
+                                                          <button
+                                                            key={principio.id}
+                                                            type="button"
+                                                            onClick={() => {
+                                                              updatePrincipioActivo(index, "principioActivoId", principio.id);
+                                                              updateSearchState(index, "");
+                                                              setFocusState(index, false);
+                                                            }}
+                                                            className="w-full text-left px-3 py-2 hover:bg-gray-100 focus:bg-gray-100 border-b border-gray-100 last:border-b-0"
+                                                          >
+                                                            <div className="text-sm font-medium text-gray-900">
+                                                              {principio.nombre}
+                                                            </div>
+                                                            <div className="flex flex-col mt-1">
+                                                              {principio.nombreComercial && (
+                                                                <span className="text-xs text-blue-600">
+                                                                  Comercial: {principio.nombreComercial}
+                                                                </span>
+                                                              )}
+                                                              {principio.descripcion && (
+                                                                <span className="text-xs text-gray-500 truncate">
+                                                                  {principio.descripcion}
+                                                                </span>
+                                                              )}
+                                                            </div>
+                                                          </button>
+                                                        ))
+                                                    ) : searchStates[index] ? (
+                                                      <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                                                        <div>No se encontraron principios activos</div>
+                                                        <div className="text-xs mt-1">
+                                                          que coincidan con "{searchStates[index]}"
+                                                        </div>
+                                                        <button
+                                                          type="button"
+                                                          onClick={() => {
+                                                            updatePrincipioActivo(index, "nombreCustom", searchStates[index]);
+                                                            updatePrincipioActivo(index, "principioActivoId", 0);
+                                                            updateSearchState(index, "");
+                                                            setFocusState(index, false);
+                                                          }}
+                                                          className="mt-2 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                                                        >
+                                                          Agregar &quot;{searchStates[index]}&quot; como personalizado
+                                                        </button>
+                                                      </div>
+                                                    ) : (
+                                                      principiosActivos.length === 0 && (
+                                                        <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                                                          Cargando principios activos...
+                                                        </div>
+                                                      )
+                                                    )}
+                                                  </div>
+                                                )}
+                                              </>
                                             )}
                                           </div>
                                         </td>
