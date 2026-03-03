@@ -399,22 +399,6 @@ export default function LoginPage() {
               </Link>
             </p>
           </div>
-
-            {/* Demo Note */}
-            <div className="mt-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
-              <div className="flex items-start gap-3">
-                <Shield className="w-5 h-5 text-[#481468] mt-0.5 flex-shrink-0" />
-                <div>
-                  <h4 className="text-sm font-medium text-purple-900 mb-1">
-                    Demo de la aplicación
-                  </h4>
-                  <p className="text-xs text-purple-700">
-                    Esta es una demostración del sistema Bluko Life.
-                    En producción se conectaría a un backend real.
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
