@@ -1667,49 +1667,49 @@ function DashboardContent() {
 
         {/* Status Cards */}
         <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-          {/* Total Pulseras */}
-          <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 animate-scaleIn">
+          {/* Bluko Life Asignados */}
+          <div className="bg-blue-50 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 animate-scaleIn">
             <div className="flex items-start justify-between mb-2">
-              <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
-                <QrCode className="w-4 h-4" />
+              <div className="bg-blue-100 p-2 rounded-lg">
+                <QrCode className="w-4 h-4 text-blue-600" />
               </div>
-              <span className="bg-white/30 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+              <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
                 Total
               </span>
             </div>
-            <h3 className="text-2xl font-bold mb-0.5">{pulseras.length}</h3>
-            <p className="text-white/90 text-xs font-medium">
-              {pulseras.length === 1
-                ? "Bluko Life Registrado"
-                : "Bluko Life Registrados"}
+            <h3 className="text-2xl font-bold mb-0.5 text-gray-900">{pulseras.filter((p) => p.portador !== null && p.portador !== undefined).length}</h3>
+            <p className="text-blue-700 text-xs font-medium">
+              {pulseras.filter((p) => p.portador !== null && p.portador !== undefined).length === 1
+                ? "Bluko Life Asignado"
+                : "Bluko Life Asignados"}
             </p>
-            <p className="text-white/70 text-[10px] mt-1">
-              En tu sistema Bluko Life
+            <p className="text-blue-400 text-[10px] mt-1">
+              Usuarios con QR asignado
             </p>
           </div>
 
-          {/* Active Subscriptions */}
+          {/* Suscripciones Activas */}
           <div
-            className="bg-gradient-to-br from-green-600 to-green-800 rounded-xl p-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 animate-scaleIn"
+            className="bg-green-50 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 animate-scaleIn"
             style={{ animationDelay: "0.1s" }}
           >
             <div className="flex items-start justify-between mb-2">
-              <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
-                <Activity className="w-4 h-4" />
+              <div className="bg-green-100 p-2 rounded-lg">
+                <Activity className="w-4 h-4 text-green-600" />
               </div>
-              <span className="bg-white/30 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+              <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                 <TrendingUp className="w-2.5 h-2.5" />
                 Estado
               </span>
             </div>
-            <h3 className="text-2xl font-bold mb-0.5">
-              {pulseras.filter((p) => p.subscriptionActive).length}
+            <h3 className="text-2xl font-bold mb-0.5 text-gray-900">
+              {pulseras.length}
             </h3>
-            <p className="text-white/90 text-xs font-medium">
+            <p className="text-green-700 text-xs font-medium">
               Suscripciones Activas
             </p>
-            <p className="text-white/70 text-[10px] mt-1">
-              De {pulseras.length} Bluko Life totales
+            <p className="text-green-400 text-[10px] mt-1">
+              Dispositivos adquiridos
             </p>
           </div>
         </div>
