@@ -25,8 +25,7 @@ import {
   CheckCircle,
   XCircle,
   ChevronDown,
-  ChevronUp,
-  MapPin
+  ChevronUp
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { contratanteApi } from '../../services/api';
@@ -56,9 +55,6 @@ function SubscriptionContent() {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
-  // Estado para error de dirección faltante
-  const [showAddressError, setShowAddressError] = useState(false);
-
   // Estados para cupón de descuento
   const [showCuponField, setShowCuponField] = useState(false);
   const [cuponCode, setCuponCode] = useState('');
@@ -78,10 +74,9 @@ function SubscriptionContent() {
 
   const handleQuantityChange = (increment: boolean) => {
     if (increment) {
-      setQuantity(quantity + 1);
+      setQuantity(Math.min(quantity + 1, 10)); // Máximo 10 dispositivos
     } else {
-      const newQuantity = Math.max(quantity - 1, 1); // Mínimo 1 dispositivo
-      setQuantity(newQuantity);
+      setQuantity(Math.max(quantity - 1, 1)); // Mínimo 1 dispositivo
     }
   };
 
@@ -146,41 +141,33 @@ function SubscriptionContent() {
     setProcessing(true);
 
     try {
-      const cuponAplicado = cuponValidation?.valido ? cuponCode.trim().toUpperCase() : undefined;
-      console.log('Initiating protection plan payment:', { quantity, cupon: cuponAplicado });
+      const descuento = cuponValidation?.valido ? cuponValidation.porcentajeDescuento : null;
+      console.log('Buscando plan de pago:', { quantity, descuento });
 
-      // Iniciar pago - obtener URL del checkout de VirtualPos
-      const response = await contratanteApi.initiateProtectionPlan(quantity, undefined, cuponAplicado);
+      // Obtener la URL del plan pre-configurado en VirtualPos
+      const response = await contratanteApi.buscarPlanPago(quantity, descuento);
+      const planUrl: string = response.data.urlPago;
 
-      if (response.data.checkoutUrl) {
-        // Guardar información del pedido en localStorage para verificación posterior
-        localStorage.setItem('pendingPurchase', JSON.stringify({
-          quantity,
-          timestamp: Date.now()
-        }));
-
-        toast.success('Redirigiendo al pago seguro...');
-        // Redirigir al usuario al checkout de VirtualPos
-        window.location.href = response.data.checkoutUrl;
-      } else {
-        throw new Error('No se recibió URL de checkout');
+      if (!planUrl) {
+        throw new Error('No se encontró un plan disponible para la selección');
       }
+
+      // Guardar información del pedido en localStorage para verificación posterior
+      localStorage.setItem('pendingPurchase', JSON.stringify({
+        quantity,
+        timestamp: Date.now()
+      }));
+
+      toast.success('Redirigiendo al pago seguro...');
+      window.location.href = planUrl;
+
     } catch (err: any) {
-      console.error('Error initiating protection plan:', err);
-      console.error('Error response:', err.response?.data);
+      console.error('Error obteniendo plan de pago:', err);
 
       const errorMessage = err.response?.data?.error ||
                           err.response?.data?.message ||
                           err.message ||
                           'Error al iniciar el pago. Inténtalo de nuevo.';
-
-      // Detectar si el error es por dirección faltante
-      const isAddressError = errorMessage.toLowerCase().includes('dirección') ||
-                             errorMessage.toLowerCase().includes('direccion');
-
-      if (isAddressError) {
-        setShowAddressError(true);
-      }
 
       toast.error(errorMessage);
       setProcessing(false);
@@ -235,7 +222,8 @@ function SubscriptionContent() {
                 <button
                   type="button"
                   onClick={() => handleQuantityChange(true)}
-                  className="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-400 hover:text-gray-800"
+                  disabled={quantity >= 10}
+                  className="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-400 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -293,30 +281,6 @@ function SubscriptionContent() {
                   </div>
                 </div>
               </div>
-
-              {/* Alerta de dirección faltante */}
-              {showAddressError && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <MapPin className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-red-900 mb-1">Dirección de envío requerida</h4>
-                      <p className="text-sm text-red-700 mb-3">
-                        Debes configurar tu dirección de envío antes de realizar la compra.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => router.push('/profile?section=direccion&from=subscription')}
-                        className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg text-sm hover:opacity-90 transition-colors"
-                        style={{ backgroundColor: '#481468' }}
-                      >
-                        <MapPin className="w-4 h-4" />
-                        <span>Ingresar dirección de envío</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Cupón de descuento */}
               <div className="border rounded-lg overflow-hidden">
@@ -408,52 +372,52 @@ function SubscriptionContent() {
               {/* Submit */}
               <div className="pt-2">
                 <div className="space-y-3 mb-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Pago único al momento de contratación:</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm text-gray-600 min-w-0">Pago único al momento de contratación:</span>
                     {totales.descuento > 0 ? (
-                      <div className="text-right">
-                        <span className="text-sm text-gray-400 line-through mr-2">
+                      <div className="text-right flex-shrink-0">
+                        <span className="text-sm text-gray-400 line-through mr-2 whitespace-nowrap">
                           ${totales.totalPulserasSinDescuento.toLocaleString('es-CL')}
                         </span>
-                        <span className="font-semibold text-black">
+                        <span className="font-semibold text-black whitespace-nowrap">
                           ${totales.totalPulserasConDescuento.toLocaleString('es-CL')} CLP
                         </span>
                       </div>
                     ) : (
-                      <span className="font-semibold text-black">
+                      <span className="font-semibold text-black whitespace-nowrap flex-shrink-0">
                         ${totales.totalPulserasSinDescuento.toLocaleString('es-CL')} CLP
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Plan de protección Mensual:</span>
-                    <span className="font-semibold text-black">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm text-gray-600 min-w-0">Plan de protección Mensual:</span>
+                    <span className="font-semibold text-black whitespace-nowrap flex-shrink-0">
                       ${totales.totalHabilitacion.toLocaleString('es-CL')} CLP
                     </span>
                   </div>
                   {totales.descuento > 0 && (
-                    <div className="flex items-center justify-between text-green-600">
-                      <span className="text-sm flex items-center gap-1">
-                        <Tag className="w-4 h-4" />
+                    <div className="flex items-center justify-between gap-2 text-green-600">
+                      <span className="text-sm flex items-center gap-1 min-w-0">
+                        <Tag className="w-4 h-4 flex-shrink-0" />
                         Descuento cupón ({cuponValidation?.porcentajeDescuento}%):
                       </span>
-                      <span className="font-semibold">-${totales.descuento.toLocaleString('es-CL')} CLP</span>
+                      <span className="font-semibold whitespace-nowrap flex-shrink-0">-${totales.descuento.toLocaleString('es-CL')} CLP</span>
                     </div>
                   )}
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Cantidad de Bluko Life:</span>
-                    <span className="font-semibold text-black">{quantity}</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm text-gray-600 min-w-0">Cantidad de Bluko Life:</span>
+                    <span className="font-semibold text-black flex-shrink-0">{quantity}</span>
                   </div>
                   <hr />
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <span className="text-lg font-semibold text-gray-900">Total primer pago:</span>
-                    <div className="text-right">
+                    <div className="text-right flex-shrink-0">
                       {totales.descuento > 0 && (
-                        <span className="text-sm text-gray-400 line-through block">
+                        <span className="text-sm text-gray-400 line-through block whitespace-nowrap">
                           ${(TOTAL_PER_PULSERA * quantity).toLocaleString('es-CL')} CLP
                         </span>
                       )}
-                      <span className="text-2xl font-bold" style={{color: '#481468'}}>
+                      <span className="text-2xl font-bold whitespace-nowrap" style={{color: '#481468'}}>
                         ${totales.totalFinal.toLocaleString('es-CL')} CLP
                       </span>
                     </div>

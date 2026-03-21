@@ -190,6 +190,13 @@ export const contratanteApi = {
       codigoCupon: codigoCupon || undefined
     }),
 
+  // Obtener la URL de pago para una cantidad + descuento específicos
+  buscarPlanPago: (cantidad: number, descuento?: number | null) => {
+    const params = new URLSearchParams({ cantidad: String(cantidad) });
+    if (descuento) params.append('descuento', String(descuento));
+    return api.get(`/planes/buscar?${params.toString()}`);
+  },
+
   // Validar código de cupón de descuento
   validateCupon: (codigo: string) =>
     api.get(`/cupones/validar/${encodeURIComponent(codigo)}`),
@@ -464,6 +471,22 @@ export const adminApi = {
 
   deleteCupones: (ids: number[]) =>
     api.delete('/admin/cupones', { data: { ids } }),
+
+  // Gestión de cupones-plan (nombre editable, sin fechas)
+  getCuponesPlanes: () =>
+    api.get('/admin/cupones-plan'),
+
+  createCuponPlan: (data: { nombre: string; porcentajeDescuento: number }) =>
+    api.post('/admin/cupones-plan', data),
+
+  updateCuponPlan: (id: number, data: { nombre?: string; activo?: boolean }) =>
+    api.put(`/admin/cupones-plan/${id}`, data),
+
+  toggleCuponPlanActivo: (id: number) =>
+    api.post(`/admin/cupones-plan/${id}/toggle-activo`),
+
+  deleteCuponesPlanes: (ids: number[]) =>
+    api.delete('/admin/cupones-plan', { data: { ids } }),
 };
 
 export default api;

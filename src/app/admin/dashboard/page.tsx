@@ -80,7 +80,7 @@ export default function AdminDashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'generar' | 'fabricar' | 'enFabricacion' | 'fabricados' | 'enStock' | 'asignados' | 'suscritos' | 'porDespachar' | 'despachados' | 'administrar' | 'cupones'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'generar' | 'fabricar' | 'enFabricacion' | 'fabricados' | 'enStock' | 'asignados' | 'suscritos' | 'porDespachar' | 'despachados' | 'administrar' | 'cupones' | 'cuponesPlanes'>('dashboard');
 
   const [generateQuantity, setGenerateQuantity] = useState<number>(1);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -125,6 +125,15 @@ export default function AdminDashboardPage() {
     fechaInicio: new Date().toISOString().split('T')[0],
     fechaFin: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   });
+
+  // Estados para cupones-plan
+  const [cuponesPlanes, setCuponesPlanes] = useState<any[]>([]);
+  const [loadingCuponesPlanes, setLoadingCuponesPlanes] = useState(false);
+  const [showCuponPlanModal, setShowCuponPlanModal] = useState(false);
+  const [editingCuponPlan, setEditingCuponPlan] = useState<any | null>(null);
+  const [selectedCuponesPlanes, setSelectedCuponesPlanes] = useState<number[]>([]);
+  const [deletingCuponesPlanes, setDeletingCuponesPlanes] = useState(false);
+  const [cuponPlanForm, setCuponPlanForm] = useState({ nombre: '', porcentajeDescuento: 15 });
 
   // Función para formatear fecha
   const formatDate = (dateString: string | undefined) => {
@@ -201,6 +210,8 @@ export default function AdminDashboardPage() {
         await loadAllContratantes();
       } else if (activeTab === 'cupones') {
         await loadCupones();
+      } else if (activeTab === 'cuponesPlanes') {
+        await loadCuponesPlanes();
       }
     };
 
@@ -524,6 +535,97 @@ export default function AdminDashboardPage() {
       fechaFin: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     });
   };
+
+  // ── Funciones cupones-plan ──────────────────────────────────────
+  const loadCuponesPlanes = async () => {
+    setLoadingCuponesPlanes(true);
+    try {
+      const response = await adminApi.getCuponesPlanes();
+      setCuponesPlanes(response.data || []);
+    } catch (error: any) {
+      toast.error('Error al cargar cupones-plan');
+    } finally {
+      setLoadingCuponesPlanes(false);
+    }
+  };
+
+  const handleCreateCuponPlan = async () => {
+    if (!cuponPlanForm.nombre.trim()) {
+      toast.error('El nombre del cupón es requerido');
+      return;
+    }
+    try {
+      await adminApi.createCuponPlan({
+        nombre: cuponPlanForm.nombre.trim(),
+        porcentajeDescuento: cuponPlanForm.porcentajeDescuento
+      });
+      toast.success('Cupón-Plan creado exitosamente');
+      setShowCuponPlanModal(false);
+      setCuponPlanForm({ nombre: '', porcentajeDescuento: 15 });
+      await loadCuponesPlanes();
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Error al crear el cupón-plan');
+    }
+  };
+
+  const handleUpdateCuponPlan = async () => {
+    if (!editingCuponPlan) return;
+    if (!cuponPlanForm.nombre.trim()) {
+      toast.error('El nombre no puede estar vacío');
+      return;
+    }
+    try {
+      await adminApi.updateCuponPlan(editingCuponPlan.id, { nombre: cuponPlanForm.nombre.trim() });
+      toast.success('Nombre actualizado exitosamente');
+      setShowCuponPlanModal(false);
+      setEditingCuponPlan(null);
+      setCuponPlanForm({ nombre: '', porcentajeDescuento: 15 });
+      await loadCuponesPlanes();
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Error al actualizar el cupón-plan');
+    }
+  };
+
+  const handleToggleCuponPlanActivo = async (id: number) => {
+    try {
+      await adminApi.toggleCuponPlanActivo(id);
+      toast.success('Estado actualizado');
+      await loadCuponesPlanes();
+    } catch {
+      toast.error('Error al cambiar estado');
+    }
+  };
+
+  const handleDeleteCuponesPlanes = async () => {
+    if (selectedCuponesPlanes.length === 0) return;
+    if (!window.confirm(`¿Eliminar ${selectedCuponesPlanes.length} cupón(es)-plan?`)) return;
+    setDeletingCuponesPlanes(true);
+    try {
+      await adminApi.deleteCuponesPlanes(selectedCuponesPlanes);
+      toast.success('Eliminados exitosamente');
+      setSelectedCuponesPlanes([]);
+      await loadCuponesPlanes();
+    } catch {
+      toast.error('Error al eliminar');
+    } finally {
+      setDeletingCuponesPlanes(false);
+    }
+  };
+
+  const toggleCuponPlanSelection = (id: number) => {
+    setSelectedCuponesPlanes(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const toggleAllCuponesPlanes = () => {
+    setSelectedCuponesPlanes(
+      selectedCuponesPlanes.length === cuponesPlanes.length
+        ? []
+        : cuponesPlanes.map(c => c.id)
+    );
+  };
+  // ────────────────────────────────────────────────────────────────
 
   const getEstadoBadge = (estado: string) => {
     switch (estado) {
@@ -1190,6 +1292,22 @@ export default function AdminDashboardPage() {
                   <div className="text-left">
                     <p className="font-bold text-gray-900 text-lg">Cupones de Descuento</p>
                     <p className="text-sm text-gray-500">Gestionar códigos promocionales</p>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleTabChange('cuponesPlanes')}
+                className="group relative overflow-hidden bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-transparent hover:border-[#82c341]"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-[#82c341]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="relative flex items-center gap-4">
+                  <div className="p-3 bg-[#82c341]/10 rounded-xl group-hover:bg-[#82c341]/20 transition-colors">
+                    <CreditCard className="w-6 h-6 text-[#82c341]" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-gray-900 text-lg">Cupones-Plan</p>
+                    <p className="text-sm text-gray-500">Códigos con nombre editable → planes PAT</p>
                   </div>
                 </div>
               </button>
@@ -1995,7 +2113,6 @@ export default function AdminDashboardPage() {
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Dirección de Envío</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Pedido</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Cantidad</th>
-                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Pago</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
                       </tr>
                     </thead>
@@ -2039,17 +2156,6 @@ export default function AdminDashboardPage() {
                             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
                               {pedido.cantidadPulseras} {pedido.cantidadPulseras === 1 ? 'dispositivo' : 'dispositivos'}
                             </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            {pedido.pagado ? (
-                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
-                                Pagado
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
-                                No pagado
-                              </span>
-                            )}
                           </td>
                           <td className="px-6 py-4">
                             {getStatusBadge(pedido.status)}
@@ -2113,7 +2219,6 @@ export default function AdminDashboardPage() {
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Cliente</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Dirección de Envío</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Cantidad</th>
-                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Pago</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Despacho</th>
                       </tr>
@@ -2147,17 +2252,6 @@ export default function AdminDashboardPage() {
                             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
                               {pedido.cantidadPulseras} {pedido.cantidadPulseras === 1 ? 'dispositivo' : 'dispositivos'}
                             </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            {pedido.pagado ? (
-                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
-                                Pagado
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
-                                No pagado
-                              </span>
-                            )}
                           </td>
                           <td className="px-6 py-4">
                             {getStatusBadge(pedido.status)}
@@ -2701,6 +2795,238 @@ export default function AdminDashboardPage() {
                 className="flex-1 px-6 py-3 bg-[#82c341] text-white rounded-xl hover:bg-[#6fa832] font-semibold transition-colors"
               >
                 {editingCupon ? 'Guardar Cambios' : 'Crear Cupón'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cupones-Plan Tab */}
+      {activeTab === 'cuponesPlanes' && (
+        <div className="space-y-6 animate-fadeIn">
+          <button
+            onClick={() => handleTabChange('dashboard')}
+            className="inline-flex items-center gap-2 text-[#481468] hover:text-[#3d1158] font-semibold group transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+            Volver al Dashboard
+          </button>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Cupones-Plan</h2>
+              <p className="text-gray-600">Códigos con nombre libre que apuntan a planes PAT pre-configurados</p>
+            </div>
+            <div className="flex items-center gap-3">
+              {selectedCuponesPlanes.length > 0 && (
+                <button
+                  onClick={handleDeleteCuponesPlanes}
+                  disabled={deletingCuponesPlanes}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 font-semibold transition-colors shadow-lg disabled:opacity-50"
+                >
+                  {deletingCuponesPlanes ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />}
+                  Eliminar ({selectedCuponesPlanes.length})
+                </button>
+              )}
+              <button
+                onClick={() => { setEditingCuponPlan(null); setCuponPlanForm({ nombre: '', porcentajeDescuento: 15 }); setShowCuponPlanModal(true); }}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#82c341] text-white rounded-xl hover:bg-[#6fa832] font-semibold transition-colors shadow-lg"
+              >
+                <Plus className="w-5 h-5" />
+                Nuevo Cupón-Plan
+              </button>
+            </div>
+          </div>
+
+          {/* Tabla */}
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+            {loadingCuponesPlanes ? (
+              <div className="p-12 text-center">
+                <RefreshCw className="w-8 h-8 animate-spin text-[#481468] mx-auto mb-4" />
+                <p className="text-gray-500 font-medium">Cargando...</p>
+              </div>
+            ) : cuponesPlanes.length === 0 ? (
+              <div className="p-12 text-center">
+                <CreditCard className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 font-medium text-lg">No hay cupones-plan creados</p>
+                <p className="text-gray-400 mt-1">Crea el primero con el botón de arriba</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-4 text-center">
+                        <input type="checkbox"
+                          checked={selectedCuponesPlanes.length === cuponesPlanes.length && cuponesPlanes.length > 0}
+                          onChange={toggleAllCuponesPlanes}
+                          className="w-4 h-4 text-[#481468] border-gray-300 rounded cursor-pointer"
+                        />
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Código (nombre)</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Descuento</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Plan destino</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Estado</th>
+                      <th className="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {cuponesPlanes.map((cp: any) => (
+                      <tr key={cp.id} className={`hover:bg-gray-50 transition-colors ${selectedCuponesPlanes.includes(cp.id) ? 'bg-purple-50' : ''}`}>
+                        <td className="px-4 py-4 text-center">
+                          <input type="checkbox"
+                            checked={selectedCuponesPlanes.includes(cp.id)}
+                            onChange={() => toggleCuponPlanSelection(cp.id)}
+                            className="w-4 h-4 text-[#481468] border-gray-300 rounded cursor-pointer"
+                          />
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-[#82c341]/10 rounded-lg">
+                              <Tag className="w-5 h-5 text-[#82c341]" />
+                            </div>
+                            <div>
+                              <span className="font-bold text-gray-900 text-lg">{cp.nombre}</span>
+                              <p className="text-xs text-gray-400">ID: {cp.id}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <Percent className="w-4 h-4 text-gray-400" />
+                            <span className="font-bold text-[#481468] text-xl">{cp.porcentajeDescuento}%</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full font-medium">
+                            Cualquier cantidad · {cp.porcentajeDescuento}% dto.
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${cp.activo ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
+                            {cp.activo ? 'ACTIVO' : 'INACTIVO'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => { setEditingCuponPlan(cp); setCuponPlanForm({ nombre: cp.nombre, porcentajeDescuento: cp.porcentajeDescuento }); setShowCuponPlanModal(true); }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-semibold transition-colors"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                              Renombrar
+                            </button>
+                            <button
+                              onClick={() => handleToggleCuponPlanActivo(cp.id)}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg font-semibold transition-colors ${cp.activo ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
+                            >
+                              {cp.activo ? <><Pause className="w-3.5 h-3.5" />Desactivar</> : <><Play className="w-3.5 h-3.5" />Activar</>}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Info */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+            <h3 className="font-bold text-blue-900 mb-2">¿Cómo funcionan los Cupones-Plan?</h3>
+            <ul className="text-sm text-blue-700 space-y-1">
+              <li>• El <strong>nombre</strong> es lo que el usuario escribe en el checkout (ej: <code>mamá15</code>, <code>semana15</code>)</li>
+              <li>• Puedes <strong>renombrarlo en cualquier momento</strong> sin cambiar el descuento ni la URL destino</li>
+              <li>• El <strong>descuento</strong> (15/25/35/50%) determina qué URL de VirtualPos se usa, junto con la cantidad de pulseras seleccionada</li>
+              <li>• Sin fechas de vencimiento — actívalo o desactívalo manualmente</li>
+              <li>• Tienen prioridad sobre los cupones tradicionales con fechas</li>
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Crear/Renombrar Cupón-Plan */}
+      {showCuponPlanModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl">
+            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">
+                  {editingCuponPlan ? 'Renombrar Cupón-Plan' : 'Nuevo Cupón-Plan'}
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  {editingCuponPlan
+                    ? `Cambia el nombre visible. El descuento (${editingCuponPlan.porcentajeDescuento}%) no cambia.`
+                    : 'El nombre es editable en cualquier momento'}
+                </p>
+              </div>
+              <button onClick={() => { setShowCuponPlanModal(false); setEditingCuponPlan(null); }} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              {/* Nombre */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Nombre / Código del cupón
+                </label>
+                <input
+                  type="text"
+                  value={cuponPlanForm.nombre}
+                  onChange={(e) => setCuponPlanForm({ ...cuponPlanForm, nombre: e.target.value })}
+                  placeholder="Ej: mamá15, semana25, promo50"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#481468] focus:border-transparent text-black font-medium"
+                  maxLength={100}
+                />
+                <p className="mt-1 text-xs text-gray-400">Puedes usar letras, números, acentos y espacios. Distingue mayúsculas/minúsculas en visualización pero no en validación.</p>
+              </div>
+
+              {/* Descuento (solo en creación) */}
+              {!editingCuponPlan && (
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Porcentaje de descuento
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[15, 25, 35, 50].map(pct => (
+                      <button
+                        key={pct}
+                        type="button"
+                        onClick={() => setCuponPlanForm({ ...cuponPlanForm, porcentajeDescuento: pct })}
+                        className={`py-3 rounded-xl font-bold text-sm border-2 transition-all ${cuponPlanForm.porcentajeDescuento === pct ? 'border-[#481468] bg-[#481468] text-white' : 'border-gray-200 text-gray-700 hover:border-[#481468]'}`}
+                      >
+                        {pct}%
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-1 text-xs text-gray-400">Solo se permiten estos valores porque son los planes existentes en VirtualPos.</p>
+                </div>
+              )}
+
+              {/* Preview */}
+              <div className="bg-gray-50 rounded-xl p-4">
+                <p className="text-sm text-gray-600">
+                  Cuando un usuario ingrese <strong>&ldquo;{cuponPlanForm.nombre || '...'}&rdquo;</strong>, se aplicará un{' '}
+                  <strong>{editingCuponPlan ? editingCuponPlan.porcentajeDescuento : cuponPlanForm.porcentajeDescuento}% de descuento</strong>{' '}
+                  y se usará la URL del plan correspondiente según la cantidad de pulseras elegida.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-gray-200 flex gap-3">
+              <button
+                onClick={() => { setShowCuponPlanModal(false); setEditingCuponPlan(null); }}
+                className="flex-1 px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={editingCuponPlan ? handleUpdateCuponPlan : handleCreateCuponPlan}
+                className="flex-1 px-6 py-3 bg-[#82c341] text-white rounded-xl hover:bg-[#6fa832] font-semibold transition-colors"
+              >
+                {editingCuponPlan ? 'Guardar Nombre' : 'Crear Cupón-Plan'}
               </button>
             </div>
           </div>
