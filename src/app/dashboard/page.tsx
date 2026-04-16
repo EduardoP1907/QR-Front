@@ -1666,7 +1666,7 @@ function DashboardContent() {
         </div>
 
         {/* Status Cards */}
-        <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* Bluko Life Asignados */}
           <div className="bg-blue-50 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 animate-scaleIn">
             <div className="flex items-start justify-between mb-2">
@@ -1688,10 +1688,38 @@ function DashboardContent() {
             </p>
           </div>
 
+          {/* Bluko Life Disponibles */}
+          <div
+            className="bg-amber-50 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 animate-scaleIn"
+            style={{ animationDelay: "0.1s" }}
+          >
+            <div className="flex items-start justify-between mb-2">
+              <div className="bg-amber-100 p-2 rounded-lg">
+                <ShoppingCart className="w-4 h-4 text-amber-600" />
+              </div>
+              <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                Comprados
+              </span>
+            </div>
+            <h3 className="text-2xl font-bold mb-0.5 text-gray-900">
+              {availablePulseras}
+            </h3>
+            <p className="text-amber-700 text-xs font-medium">
+              {availablePulseras === 1
+                ? "Bluko Life Disponible"
+                : "Bluko Life Disponibles"}
+            </p>
+            <p className="text-amber-400 text-[10px] mt-1">
+              {availablePulseras > 0
+                ? "Listos para asignar a un portador"
+                : "Sin dispositivos pendientes de asignar"}
+            </p>
+          </div>
+
           {/* Suscripciones Activas */}
           <div
             className="bg-green-50 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 animate-scaleIn"
-            style={{ animationDelay: "0.1s" }}
+            style={{ animationDelay: "0.2s" }}
           >
             <div className="flex items-start justify-between mb-2">
               <div className="bg-green-100 p-2 rounded-lg">
