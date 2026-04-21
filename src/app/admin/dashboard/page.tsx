@@ -2989,8 +2989,8 @@ export default function AdminDashboardPage() {
                   <label className="block text-sm font-bold text-gray-700 mb-2">
                     Porcentaje de descuento
                   </label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {[15, 25, 35, 50].map(pct => (
+                  <div className="grid grid-cols-5 gap-2">
+                    {[15, 25, 35, 50, 90].map(pct => (
                       <button
                         key={pct}
                         type="button"
