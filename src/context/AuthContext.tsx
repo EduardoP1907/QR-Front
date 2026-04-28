@@ -31,13 +31,26 @@ export const useAuth = () => {
   return context;
 };
 
+const DEV_BYPASS = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true';
+const DEV_ROLE = (process.env.NEXT_PUBLIC_DEV_ROLE || 'contratante') as User['role'];
+
+const DEV_USER: User = {
+  email: 'dev@bluko.local',
+  firstName: 'Dev',
+  paternalSurname: 'User',
+  maternalSurname: '',
+  userId: '1',
+  role: DEV_ROLE,
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(DEV_BYPASS ? DEV_USER : null);
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [initialized, setInitialized] = useState(false);
+  const [loading, setLoading] = useState(!DEV_BYPASS);
+  const [initialized, setInitialized] = useState(DEV_BYPASS);
 
   useEffect(() => {
+    if (DEV_BYPASS) return;
     // Solo acceder a localStorage en el cliente
     if (typeof window !== 'undefined') {
       const storedToken = localStorage.getItem('token');
@@ -47,6 +60,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   useEffect(() => {
+    if (DEV_BYPASS) return;
     if (!initialized) return;
 
     if (token) {
@@ -173,6 +187,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = () => {
+    if (DEV_BYPASS) return;
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
     }

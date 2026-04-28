@@ -9,7 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@tailwindcss/oxide-darwin-arm64": "^4.1.12",
     "axios": "^1.11.0",
+    "lightningcss": "^1.32.0",
     "lucide-react": "^0.540.0",
     "next": "^15.5.0",
     "qrcode": "^1.5.4",

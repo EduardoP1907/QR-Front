@@ -987,270 +987,319 @@ function DashboardContent() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{backgroundColor: '#F5F3FF'}}>
       {/* Top Bar */}
-      <header className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Shield className="w-7 h-7" style={{color: '#551A8B'}} />
-            <h1 className="text-xl font-semibold text-gray-900">Mi Panel</h1>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-2 text-gray-600">
-              <User className="w-5 h-5" />
-              <span>{user?.email ?? 'Usuario'}</span>
+      <header className="bg-white border-b border-purple-100 shadow-sm sticky top-0 z-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl" style={{background: 'linear-gradient(135deg, #3C0B5A, #551A8B)'}}>
+                <Shield className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <span className="text-lg font-bold text-gray-900">Bluko Life</span>
+                <span className="hidden md:inline ml-2 text-xs text-gray-400 font-medium">Panel de Control</span>
+              </div>
             </div>
 
-            <button
-              onClick={() => router.push('/profile')}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-100"
-            >
-              <User className="w-4 h-4" />
-              <span>Mi Perfil</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-50 border border-purple-100">
+                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{background: 'linear-gradient(135deg, #3C0B5A, #551A8B)'}}>
+                  <User className="w-3 h-3 text-white" />
+                </div>
+                <span className="text-xs font-medium text-gray-700">{user?.email ?? 'Usuario'}</span>
+              </div>
 
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-100"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Cerrar sesión</span>
-            </button>
+              <button
+                onClick={() => router.push('/profile')}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-purple-50 hover:text-purple-700 transition-colors"
+              >
+                <User className="w-4 h-4" />
+                <span className="hidden sm:inline">Mi Perfil</span>
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Salir</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Hero */}
-        <div className="mb-6 rounded-2xl p-6 text-white flex items-center justify-between" style={{background: 'linear-gradient(to right, #3C0B5A, #551A8B)'}}>
-          <div>
-            <h2 className="text-2xl font-bold mb-1">Bluko Life</h2>
-            <p className="text-white opacity-90">
-              Gestiona la información médica y contactos de emergencia.
-            </p>
-          </div>
-          <div className="hidden md:flex items-center gap-4 opacity-90">
-            <Heart className="w-6 h-6" />
-            <Phone className="w-6 h-6" />
-            <AlertTriangle className="w-6 h-6" />
-          </div>
-        </div>
+        {/* Hero Banner */}
+        <div className="mb-8 rounded-2xl overflow-hidden relative" style={{background: 'linear-gradient(135deg, #3C0B5A 0%, #551A8B 60%, #7B2FBE 100%)'}}>
+          <div className="absolute top-0 right-0 w-72 h-72 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
+          <div className="absolute bottom-0 left-1/3 w-40 h-40 bg-white/5 rounded-full translate-y-1/2 pointer-events-none"></div>
+          <div className="absolute top-1/2 right-1/4 w-20 h-20 rounded-full -translate-y-1/2 pointer-events-none" style={{backgroundColor: 'rgba(131,195,65,0.15)'}}></div>
 
-        {/* Status Cards */}
-        <div className="mb-6 grid grid-cols-1 md:grid-cols-1 gap-4">
-          {/* Available Bracelets */}
-          <div className="bg-white border rounded-2xl p-4">
-            <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full ${availablePulseras > 0 ? 'bg-blue-500' : 'bg-gray-400'}`}></div>
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-900">Créditos para Reclamar QRs</h4>
-                <p className="text-sm text-gray-600">
-                  {availablePulseras} {availablePulseras === 1 ? 'crédito disponible' : 'créditos disponibles'} para reclamar pulseras físicas
-                </p>
-                {claimingQr && (
-                  <p className="text-sm text-blue-600 mt-1">
-                    Procesando reclamo de QR...
-                  </p>
-                )}
+          <div className="relative p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div>
+              <p className="text-purple-300 text-sm font-medium mb-1 tracking-wide uppercase">Bienvenido de vuelta</p>
+              <h2 className="text-3xl font-bold text-white mb-2">Mi Panel Bluko</h2>
+              <p className="text-purple-200 max-w-md text-sm leading-relaxed">
+                Gestiona las pulseras inteligentes y la información médica de tus seres queridos.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl px-5 py-4 border border-white/10">
+                <p className="text-3xl font-bold text-white">{pulseras.length}</p>
+                <p className="text-purple-300 text-xs mt-1 font-medium">Pulseras</p>
+              </div>
+              <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl px-5 py-4 border border-white/10">
+                <p className="text-3xl font-bold" style={{color: '#83C341'}}>{pulseras.filter(p => p.subscriptionActive).length}</p>
+                <p className="text-purple-300 text-xs mt-1 font-medium">Activas</p>
+              </div>
+              <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl px-5 py-4 border border-white/10">
+                <p className="text-3xl font-bold text-yellow-300">{availablePulseras}</p>
+                <p className="text-purple-300 text-xs mt-1 font-medium">Créditos</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Mis Bluko Life</h3>
-            <p className="text-sm text-gray-600">
-              Administra tu sistema Bluko Life
+            <h3 className="text-xl font-bold text-gray-900">Mis Bluko Life</h3>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {pulseras.length === 0
+                ? 'No tienes pulseras aún'
+                : `${pulseras.length} pulsera${pulseras.length !== 1 ? 's' : ''} registrada${pulseras.length !== 1 ? 's' : ''}`}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => router.push('/subscription')}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl transition-colors text-white hover:opacity-90"
-              style={{backgroundColor: '#551A8B'}}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+              style={{background: 'linear-gradient(135deg, #3C0B5A, #551A8B)'}}
             >
               <ShoppingCart className="w-4 h-4" />
-              <span>{'Contratar Plan'}</span>
+              Contratar Plan
             </button>
             <button
               onClick={handleCreateUser}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl transition-colors text-white hover:opacity-90"
-              style={{backgroundColor: '#2563EB'}}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-colors"
               title="Crear usuario sin asignar pulsera"
             >
               <User className="w-4 h-4" />
-              <span>Crear Usuario</span>
+              Crear Usuario
             </button>
             <button
               onClick={handleCreate}
               disabled={availablePulseras <= 0}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
                 availablePulseras > 0
-                  ? 'text-white hover:opacity-90'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  ? 'text-white shadow-sm hover:shadow-md hover:-translate-y-0.5'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
               }`}
               style={availablePulseras > 0 ? {backgroundColor: '#83C341'} : {}}
               title={availablePulseras <= 0 ? 'Necesitas créditos. Escanea un QR o compra más pulseras' : 'Asignar pulsera reclamada a un usuario'}
             >
               <UserPlus className="w-4 h-4" />
-              <span>Asignar a Usuario</span>
+              Asignar a Usuario
             </button>
           </div>
         </div>
 
+        {claimingQr && (
+          <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-center gap-3">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse flex-shrink-0"></div>
+            <p className="text-sm text-blue-700 font-medium">Procesando reclamo de QR...</p>
+          </div>
+        )}
+
         {/* List */}
-        <div className="bg-white border rounded-2xl overflow-hidden">
-          {loading ? (
-            <div className="p-10 text-center text-gray-500">Cargando…</div>
-          ) : pulseras.length === 0 ? (
-            <div className="p-10 text-center text-gray-500">
-              Aún no tienes pulseras registradas.
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100 animate-pulse">
+                <div className="flex gap-4">
+                  <div className="w-16 h-16 bg-gray-200 rounded-xl flex-shrink-0"></div>
+                  <div className="flex-1 space-y-2 py-1">
+                    <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                    <div className="h-3 bg-gray-100 rounded w-1/4"></div>
+                    <div className="h-3 bg-gray-100 rounded w-1/2"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : pulseras.length === 0 ? (
+          <div className="bg-white rounded-2xl border-2 border-dashed border-purple-200 p-16 text-center">
+            <div className="w-20 h-20 mx-auto mb-6 bg-purple-50 rounded-full flex items-center justify-center">
+              <QrCode className="w-10 h-10 text-purple-300" />
             </div>
-          ) : (
-            <ul role="list" className="divide-y divide-gray-100">
-              {pulseras.map((p) => (
-                <li key={p.id} className="p-4 sm:p-5 flex items-start justify-between gap-4">
-                  <div className="flex gap-4 min-w-0 flex-1">
-                    <div className="flex-shrink-0">
-                      {qrCodes[p.id] ? (
-                        <img 
-                          src={qrCodes[p.id]} 
+            <h4 className="text-lg font-bold text-gray-700 mb-2">Sin pulseras registradas</h4>
+            <p className="text-gray-500 text-sm max-w-sm mx-auto leading-relaxed">
+              Contrata un plan para obtener créditos y comenzar a asignar pulseras Bluko Life.
+            </p>
+            <button
+              onClick={() => router.push('/subscription')}
+              className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white text-sm font-semibold shadow-sm hover:-translate-y-0.5 transition-all duration-200"
+              style={{background: 'linear-gradient(135deg, #3C0B5A, #551A8B)'}}
+            >
+              <ShoppingCart className="w-4 h-4" />
+              Ver planes disponibles
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {pulseras.map((p) => (
+              <div key={p.id} className="bg-white rounded-2xl border border-gray-100 hover:border-purple-200 hover:shadow-md transition-all duration-200 overflow-hidden">
+                <div className="p-5 flex items-start gap-5">
+                  {/* QR Thumbnail */}
+                  <div className="flex-shrink-0">
+                    {qrCodes[p.id] ? (
+                      <div className="relative group cursor-pointer" onClick={() => handleShowQr(p)}>
+                        <img
+                          src={qrCodes[p.id]}
                           alt={`QR Code para ${p.name}`}
-                          className="w-16 h-16 border rounded-lg"
+                          className="w-16 h-16 rounded-xl border border-gray-100 group-hover:opacity-75 transition-opacity"
                         />
-                      ) : (
-                        <div className="w-16 h-16 border rounded-lg bg-gray-100 flex items-center justify-center">
-                          <QrCode className="w-6 h-6 text-gray-400" />
+                        <div className="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <QrCode className="w-5 h-5 text-white" />
                         </div>
-                      )}
-                    </div>
-                    
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="text-sm font-medium text-gray-900 truncate">{p.name ?? `Pulsera #${p.id}`}</p>
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                          p.subscriptionActive
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${
-                            p.subscriptionActive ? 'bg-green-500' : 'bg-red-500'
-                          }`}></span>
-                          {p.subscriptionActive
-                            ? `Activa (${p.daysRemaining || 0}d)`
-                            : 'Inactiva'
-                          }
-                        </span>
                       </div>
-                      <p className="text-sm text-gray-500 truncate">
-                        Código: {p.qrCode ?? p.id}
-                      </p>
-                      {p.portador && (
-                        <p className="text-sm text-blue-600 truncate">
-                          Asignada a: {p.portador.firstName} {p.portador.paternalSurname}
-                        </p>
-                      )}
-                    </div>
+                    ) : (
+                      <div className="w-16 h-16 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center">
+                        <QrCode className="w-7 h-7 text-purple-300" />
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    {/* Botón de Suscripción */}
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                      <h4 className="font-semibold text-gray-900 truncate">{p.name ?? `Pulsera #${p.id}`}</h4>
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                        p.subscriptionActive
+                          ? 'bg-green-50 text-green-700 border-green-200'
+                          : 'bg-red-50 text-red-700 border-red-200'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${p.subscriptionActive ? 'bg-green-500' : 'bg-red-400'}`}></span>
+                        {p.subscriptionActive ? `Activa · ${p.daysRemaining || 0}d` : 'Inactiva'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-400 mb-1 font-mono">ID: {p.qrCode ?? p.id}</p>
+                    {p.portador ? (
+                      <div className="flex items-center gap-1.5 text-xs text-purple-600">
+                        <User className="w-3 h-3" />
+                        <span className="font-medium">{p.portador.firstName} {p.portador.paternalSurname}</span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-amber-600 font-medium">Sin usuario asignado</span>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-1.5 flex-wrap justify-end">
                     <button
                       onClick={() => p.subscriptionActive ? handleRenewSubscription(p.id) : handleActivateSubscription(p.id)}
-                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                         p.subscriptionActive
-                          ? 'border-green-200 text-green-600 hover:bg-green-50'
-                          : 'border-purple-200 text-purple-600 hover:bg-purple-50'
+                          ? 'border-green-200 text-green-700 bg-green-50 hover:bg-green-100'
+                          : 'border-purple-200 text-purple-700 bg-purple-50 hover:bg-purple-100'
                       }`}
                       title={p.subscriptionActive ? 'Renovar suscripción' : 'Activar suscripción'}
                     >
-                      <Shield className="w-4 h-4" />
+                      <Shield className="w-3.5 h-3.5" />
                       <span className="hidden sm:inline">{p.subscriptionActive ? 'Renovar' : 'Activar'}</span>
                     </button>
 
                     <button
                       onClick={() => handleShowQr(p)}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border hover:bg-gray-50"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
                       title="Ver QR Grande"
                     >
-                      <QrCode className="w-4 h-4" />
+                      <QrCode className="w-3.5 h-3.5" />
                       <span className="hidden sm:inline">Ver QR</span>
                     </button>
 
                     <button
                       onClick={() => handleEdit(p)}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border hover:bg-gray-50"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
                       title="Editar Pulsera"
                     >
-                      <Edit className="w-4 h-4" />
+                      <Edit className="w-3.5 h-3.5" />
                       <span className="hidden sm:inline">Editar</span>
                     </button>
 
                     {p.portador ? (
                       <button
                         onClick={() => handleEditAssignment(p)}
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
                         title="Editar Asignación"
                       >
-                        <UserPlus className="w-4 h-4" />
+                        <UserPlus className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">Editar Asignación</span>
                       </button>
                     ) : (
                       <button
                         onClick={() => handleAssign(p)}
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-green-200 text-green-600 hover:bg-green-50"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-green-200 text-green-700 bg-green-50 hover:bg-green-100 transition-colors"
                         title="Asignar a Usuario"
                       >
-                        <UserPlus className="w-4 h-4" />
+                        <UserPlus className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">Asignar</span>
                       </button>
                     )}
 
                     <button
                       onClick={() => handleDelete(p.id)}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
                       title="Eliminar"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
                       <span className="hidden sm:inline">Eliminar</span>
                     </button>
                   </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </main>
 
       {/* Modal QR */}
       {showQrModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-            <h4 className="text-lg font-semibold mb-4">Código QR</h4>
-            {qrImage ? (
-              <img
-                src={qrImage}
-                alt="QR Pulsera"
-                className="mx-auto w-64 h-64 object-contain border rounded-xl"
-              />
-            ) : (
-              <div className="text-center text-gray-500 py-10">Cargando QR…</div>
-            )}
-
-            <div className="mt-6 flex items-center justify-end gap-2">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div className="p-6 border-b border-gray-100 text-center">
+              <h4 className="text-lg font-bold text-gray-900">Código QR</h4>
+              <p className="text-sm text-gray-500 mt-1">Escanea con cualquier dispositivo</p>
+            </div>
+            <div className="p-6">
+              {qrImage ? (
+                <div className="bg-gray-50 rounded-2xl p-4">
+                  <img
+                    src={qrImage}
+                    alt="QR Pulsera"
+                    className="mx-auto w-56 h-56 object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <QrCode className="w-12 h-12 mx-auto mb-3 text-gray-200" />
+                  <p className="text-sm text-gray-400">Cargando QR…</p>
+                </div>
+              )}
+            </div>
+            <div className="p-4 border-t border-gray-100 flex items-center justify-end gap-2">
               <button
                 onClick={() => setShowQrModal(false)}
-                className="px-4 py-2 rounded-lg border hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50"
               >
                 Cerrar
               </button>
               <button
                 onClick={handleDownloadQr}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white hover:opacity-90 transition-all"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-xl hover:opacity-90 transition-all"
                 style={{backgroundColor: '#83C341'}}
               >
                 <Download className="w-4 h-4" />
@@ -1263,258 +1312,259 @@ function DashboardContent() {
 
       {/* Modal Crear */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h4 className="text-xl font-semibold text-gray-900">Asignar Pulsera Inteligente</h4>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <div>
+                <h4 className="text-xl font-bold text-gray-900">Asignar Pulsera</h4>
+                <p className="text-sm text-gray-500 mt-0.5">Completa los datos del portador</p>
+              </div>
+              <button onClick={() => setShowCreateModal(false)} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={createForm.handleSubmit(handleCreateSubmit)} className="space-y-6">
-              <FormFields form={createForm} />
+            <div className="p-6">
+              <form onSubmit={createForm.handleSubmit(handleCreateSubmit)} className="space-y-6">
+                <FormFields form={createForm} />
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-gray-500"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={createForm.formState.isSubmitting}
-                  className="px-6 py-2 text-white rounded-lg hover:opacity-90 transition-all disabled:opacity-50"
-                  style={{backgroundColor: '#83C341'}}
-                >
-                  {createForm.formState.isSubmitting ? 'Asignando...' : 'Asignar Pulsera'}
-                </button>
-              </div>
-            </form>
+                <div className="flex items-center justify-end gap-3 pt-4 border-t">
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateModal(false)}
+                    className="px-4 py-2 text-sm text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={createForm.formState.isSubmitting}
+                    className="px-6 py-2 text-sm font-semibold text-white rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
+                    style={{backgroundColor: '#83C341'}}
+                  >
+                    {createForm.formState.isSubmitting ? 'Asignando...' : 'Asignar Pulsera'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
 
       {/* Modal Editar */}
       {showEditModal && editingPulsera && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h4 className="text-xl font-semibold text-gray-900">
-                Editar: {editingPulsera.name || `Pulsera #${editingPulsera.id}`}
-              </h4>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <div>
+                <h4 className="text-xl font-bold text-gray-900">Editar Pulsera</h4>
+                <p className="text-sm text-gray-500 mt-0.5">{editingPulsera.name || `Pulsera #${editingPulsera.id}`}</p>
+              </div>
               <button
-                onClick={() => {
-                  setShowEditModal(false);
-                  setEditingPulsera(null);
-                }}
-                className="text-gray-400 hover:text-gray-600"
+                onClick={() => { setShowEditModal(false); setEditingPulsera(null); }}
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-6">
-              <FormFields form={editForm} />
+            <div className="p-6">
+              <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-6">
+                <FormFields form={editForm} />
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowEditModal(false);
-                    setEditingPulsera(null);
-                  }}
-                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-gray-500"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={editForm.formState.isSubmitting}
-                  className="px-6 py-2 text-white rounded-lg hover:opacity-90 transition-all disabled:opacity-50"
-                  style={{backgroundColor: '#83C341'}}
-                >
-                  {editForm.formState.isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
-                </button>
-              </div>
-            </form>
+                <div className="flex items-center justify-end gap-3 pt-4 border-t">
+                  <button
+                    type="button"
+                    onClick={() => { setShowEditModal(false); setEditingPulsera(null); }}
+                    className="px-4 py-2 text-sm text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={editForm.formState.isSubmitting}
+                    className="px-6 py-2 text-sm font-semibold text-white rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
+                    style={{backgroundColor: '#83C341'}}
+                  >
+                    {editForm.formState.isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
 
       {/* Modal Crear Usuario */}
       {showCreateUserModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h4 className="text-xl font-semibold text-gray-900">Crear Nuevo Usuario</h4>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <div>
+                <h4 className="text-xl font-bold text-gray-900">Crear Nuevo Usuario</h4>
+                <p className="text-sm text-gray-500 mt-0.5">Registra un nuevo portador de pulsera</p>
+              </div>
               <button
-                onClick={() => {
-                  setShowCreateUserModal(false);
-                  assignForm.reset();
-                }}
-                className="text-gray-400 hover:text-gray-600"
+                onClick={() => { setShowCreateUserModal(false); assignForm.reset(); }}
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={assignForm.handleSubmit(handleAssignSubmit)} className="space-y-6">
-              {/* Datos del Usuario */}
-              <div>
-                <h5 className="text-sm font-medium text-gray-900 mb-3">Datos del Usuario</h5>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email del Usuario *
-                    </label>
-                    <input
-                      {...assignForm.register('portadorEmail', {
-                        required: 'El email es requerido',
-                        pattern: {
-                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                          message: 'Email inválido'
-                        }
-                      })}
-                      type="email"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
-                      placeholder="usuario@email.com"
-                    />
-                    {assignForm.formState.errors.portadorEmail && (
-                      <p className="text-red-500 text-xs mt-1">{assignForm.formState.errors.portadorEmail.message}</p>
-                    )}
-                  </div>
+            <div className="p-6">
+              <form onSubmit={assignForm.handleSubmit(handleAssignSubmit)} className="space-y-6">
+                {/* Datos del Usuario */}
+                <div>
+                  <h5 className="text-sm font-medium text-gray-900 mb-3">Datos del Usuario</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Email del Usuario *
+                      </label>
+                      <input
+                        {...assignForm.register('portadorEmail', {
+                          required: 'El email es requerido',
+                          pattern: {
+                            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                            message: 'Email inválido'
+                          }
+                        })}
+                        type="email"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
+                        placeholder="usuario@email.com"
+                      />
+                      {assignForm.formState.errors.portadorEmail && (
+                        <p className="text-red-500 text-xs mt-1">{assignForm.formState.errors.portadorEmail.message}</p>
+                      )}
+                    </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      RUT del Usuario *
-                    </label>
-                    <input
-                      {...assignForm.register('portadorRut', {
-                        required: 'El RUT es requerido',
-                        validate: (value) => {
-                          const validation = validateRutWithMessage(value);
-                          return validation.isValid || validation.message;
-                        }
-                      })}
-                      type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
-                      placeholder="20.283.752-3"
-                      maxLength={12}
-                      onChange={(e) => {
-                        const formatted = formatRutSimple(e.target.value);
-                        e.target.value = formatted;
-                        assignForm.setValue('portadorRut', formatted);
-                        assignForm.trigger('portadorRut');
-                      }}
-                    />
-                    {assignForm.formState.errors.portadorRut && (
-                      <p className="text-red-500 text-xs mt-1">{assignForm.formState.errors.portadorRut.message}</p>
-                    )}
-                    <p className="text-xs text-gray-500 mt-1">
-                      💡 Ingresa números y dígito verificador (ej: 202837523). Se formateará automáticamente.
-                    </p>
-                  </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        RUT del Usuario *
+                      </label>
+                      <input
+                        {...assignForm.register('portadorRut', {
+                          required: 'El RUT es requerido',
+                          validate: (value) => {
+                            const validation = validateRutWithMessage(value);
+                            return validation.isValid || validation.message;
+                          }
+                        })}
+                        type="text"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
+                        placeholder="20.283.752-3"
+                        maxLength={12}
+                        onChange={(e) => {
+                          const formatted = formatRutSimple(e.target.value);
+                          e.target.value = formatted;
+                          assignForm.setValue('portadorRut', formatted);
+                          assignForm.trigger('portadorRut');
+                        }}
+                      />
+                      {assignForm.formState.errors.portadorRut && (
+                        <p className="text-red-500 text-xs mt-1">{assignForm.formState.errors.portadorRut.message}</p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        💡 Ingresa números y dígito verificador (ej: 202837523). Se formateará automáticamente.
+                      </p>
+                    </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Nombre *
-                    </label>
-                    <input
-                      {...assignForm.register('firstName', {
-                        required: 'El nombre es requerido'
-                      })}
-                      type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
-                      placeholder="Nombre"
-                    />
-                    {assignForm.formState.errors.firstName && (
-                      <p className="text-red-500 text-xs mt-1">{assignForm.formState.errors.firstName.message}</p>
-                    )}
-                  </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nombre *
+                      </label>
+                      <input
+                        {...assignForm.register('firstName', {
+                          required: 'El nombre es requerido'
+                        })}
+                        type="text"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
+                        placeholder="Nombre"
+                      />
+                      {assignForm.formState.errors.firstName && (
+                        <p className="text-red-500 text-xs mt-1">{assignForm.formState.errors.firstName.message}</p>
+                      )}
+                    </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Apellido Paterno *
-                    </label>
-                    <input
-                      {...assignForm.register('paternalSurname', {
-                        required: 'El apellido paterno es requerido'
-                      })}
-                      type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
-                      placeholder="Apellido Paterno"
-                    />
-                    {assignForm.formState.errors.paternalSurname && (
-                      <p className="text-red-500 text-xs mt-1">{assignForm.formState.errors.paternalSurname.message}</p>
-                    )}
-                  </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Apellido Paterno *
+                      </label>
+                      <input
+                        {...assignForm.register('paternalSurname', {
+                          required: 'El apellido paterno es requerido'
+                        })}
+                        type="text"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
+                        placeholder="Apellido Paterno"
+                      />
+                      {assignForm.formState.errors.paternalSurname && (
+                        <p className="text-red-500 text-xs mt-1">{assignForm.formState.errors.paternalSurname.message}</p>
+                      )}
+                    </div>
 
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Apellido Materno
-                    </label>
-                    <input
-                      {...assignForm.register('maternalSurname')}
-                      type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
-                      placeholder="Apellido Materno (opcional)"
-                    />
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Apellido Materno
+                      </label>
+                      <input
+                        {...assignForm.register('maternalSurname')}
+                        type="text"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
+                        placeholder="Apellido Materno (opcional)"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowCreateUserModal(false);
-                    assignForm.reset();
-                  }}
-                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-gray-500"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={assignForm.formState.isSubmitting}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-                >
-                  {assignForm.formState.isSubmitting ? 'Creando...' : 'Crear Usuario'}
-                </button>
-              </div>
-            </form>
+                <div className="flex items-center justify-end gap-3 pt-4 border-t">
+                  <button
+                    type="button"
+                    onClick={() => { setShowCreateUserModal(false); assignForm.reset(); }}
+                    className="px-4 py-2 text-sm text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={assignForm.formState.isSubmitting}
+                    className="px-6 py-2 text-sm font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {assignForm.formState.isSubmitting ? 'Creando...' : 'Crear Usuario'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
 
       {/* Modal Asignar Pulsera */}
       {showAssignModal && assigningPulsera && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="overflow-visible">
-            <div className="flex items-center justify-between mb-6">
-              <h4 className="text-xl font-semibold text-gray-900">
-                {assigningPulsera.portador ? 'Editar Asignación de Usuario' : 'Asignar Pulsera a Usuario'}: {assigningPulsera.name || `Pulsera #${assigningPulsera.id}`}
-              </h4>
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <div>
+                <h4 className="text-xl font-bold text-gray-900">
+                  {assigningPulsera.portador ? 'Editar Asignación' : 'Asignar Pulsera a Usuario'}
+                </h4>
+                <p className="text-sm text-gray-500 mt-0.5">{assigningPulsera.name || `Pulsera #${assigningPulsera.id}`}</p>
+              </div>
               <button
                 onClick={() => {
                   setShowAssignModal(false);
                   setAssigningPulsera(null);
                   setSelectedPortadorId('');
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={assignForm.handleSubmit(handleAssignSubmit)} className="space-y-6">
+            <form onSubmit={assignForm.handleSubmit(handleAssignSubmit)} className="space-y-6 p-6">
               {/* Selección de Usuario Existente o Nuevo */}
               {portadores.length > 0 && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -2053,17 +2103,18 @@ function DashboardContent() {
                     setShowAssignModal(false);
                     setAssigningPulsera(null);
                   }}
-                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-gray-500"
+                  className="px-4 py-2 text-sm text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={assignForm.formState.isSubmitting}
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+                  className="px-6 py-2 text-sm font-semibold text-white rounded-xl hover:opacity-90 disabled:opacity-50"
+                  style={{backgroundColor: '#83C341'}}
                 >
-                  {assignForm.formState.isSubmitting ? 
-                    (assigningPulsera?.portador ? 'Actualizando...' : 'Asignando...') : 
+                  {assignForm.formState.isSubmitting ?
+                    (assigningPulsera?.portador ? 'Actualizando...' : 'Asignando...') :
                     (assigningPulsera?.portador ? 'Actualizar Asignación' : 'Asignar a Usuario')
                   }
                 </button>
