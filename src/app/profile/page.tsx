@@ -688,18 +688,6 @@ function ProfileContent() {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Adicional dirección
-                        </label>
-                        <input
-                          {...registerDireccion("tipoVivienda")}
-                          type="text"
-                          placeholder="Sector Las Animas, Edificio Colon"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
                           Número *
                         </label>
                         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -739,6 +727,18 @@ function ProfileContent() {
                         <input
                           {...registerDireccion("numeroDepto")}
                           type="text"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Adicional dirección
+                        </label>
+                        <input
+                          {...registerDireccion("tipoVivienda")}
+                          type="text"
+                          placeholder="Sector Las Animas, Edificio Colon"
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
                         />
                       </div>
@@ -859,60 +859,6 @@ function ProfileContent() {
               </div>
             </div>
 
-            {/* Subscription Status */}
-            <div className="bg-white rounded-2xl shadow-sm border p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Estado de Suscripción
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div
-                  className={`p-4 rounded-lg border-2 ${
-                    profile.subscriptionActive
-                      ? "border-green-200 bg-green-50"
-                      : "border-red-200 bg-red-50"
-                  }`}
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    <div
-                      className={`w-3 h-3 rounded-full ${
-                        profile.subscriptionActive
-                          ? "bg-green-500"
-                          : "bg-red-500"
-                      }`}
-                    ></div>
-                    <p className="font-medium text-gray-900">
-                      {profile.subscriptionActive
-                        ? "Suscripción Activa"
-                        : "Sin Suscripción"}
-                    </p>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    Plan: {profile.subscriptionPlanType || "Ninguno"}
-                  </p>
-                  {profile.subscriptionActive &&
-                    summary.tiempoSuscripcion > 0 && (
-                      <p className="text-sm text-gray-600">
-                        {summary.tiempoSuscripcion} días restantes
-                      </p>
-                    )}
-                </div>
-
-                <div className="p-4 rounded-lg bg-blue-50 border-2 border-blue-200">
-                  <div className="flex items-center gap-3 mb-2">
-                    <QrCode className="w-5 h-5 text-blue-500" />
-                    <p className="font-medium text-gray-900">
-                      Total dispositivos
-                    </p>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    Comprados: {profile.totalPurchasedPulseras}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Sin asignar: {summary.pulserasDisponibles}
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </main>

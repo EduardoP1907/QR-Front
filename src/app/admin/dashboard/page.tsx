@@ -1249,22 +1249,6 @@ export default function AdminDashboardPage() {
               </button>
 
               <button
-                onClick={() => handleTabChange('enFabricacion')}
-                className="group relative overflow-hidden bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-transparent hover:border-[#481468]"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-[#481468]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative flex items-center gap-4">
-                  <div className="p-3 bg-[#481468]/10 rounded-xl group-hover:bg-[#481468]/20 transition-colors">
-                    <TrendingUp className="w-6 h-6 text-[#481468]" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-bold text-gray-900 text-lg">En Fabricación</p>
-                    <p className="text-sm text-gray-500">Marcar como fabricados</p>
-                  </div>
-                </div>
-              </button>
-
-              <button
                 onClick={() => handleTabChange('administrar')}
                 className="group relative overflow-hidden bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-transparent hover:border-[#481468]"
               >

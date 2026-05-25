@@ -2570,16 +2570,15 @@ function DashboardContent() {
                               <div key={index} className="p-3 bg-white flex gap-2 items-start">
                                 <div className="flex-1 min-w-0 relative">
                                   {detalle.nombreCustom ? (
-                                    <div className="flex items-center gap-2 px-2 py-1.5 bg-orange-50 border border-orange-300 rounded text-sm">
-                                      <span className="flex-1 text-orange-800 font-medium">{detalle.nombreCustom}</span>
-                                      <span className="text-xs text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">personalizado</span>
+                                    <div className="flex items-center gap-2 px-2 py-1.5 bg-gray-50 border border-gray-300 rounded text-sm">
+                                      <span className="flex-1 text-gray-800 font-medium">{detalle.nombreCustom}</span>
                                       <button
                                         type="button"
                                         onClick={() => {
                                           updatePatologia(index, "nombreCustom", undefined);
                                           updatePatologia(index, "enfermedadId", 0);
                                         }}
-                                        className="text-orange-400 hover:text-orange-600 flex-shrink-0"
+                                        className="text-gray-400 hover:text-gray-600 flex-shrink-0"
                                       >
                                         <X className="w-3 h-3" />
                                       </button>
@@ -2754,16 +2753,15 @@ function DashboardContent() {
                                   <div className="flex gap-2 items-start">
                                     <div className="flex-1 min-w-0 relative">
                                       {detalle.nombreCustom ? (
-                                        <div className="flex items-center gap-2 px-2 py-1.5 bg-orange-50 border border-orange-300 rounded text-sm">
-                                          <span className="flex-1 text-orange-800 font-medium">{detalle.nombreCustom}</span>
-                                          <span className="text-xs text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">personalizado</span>
+                                        <div className="flex items-center gap-2 px-2 py-1.5 bg-gray-50 border border-gray-300 rounded text-sm">
+                                          <span className="flex-1 text-gray-800 font-medium">{detalle.nombreCustom}</span>
                                           <button
                                             type="button"
                                             onClick={() => {
                                               updatePrincipioActivo(index, "nombreCustom", undefined);
                                               updatePrincipioActivo(index, "principioActivoId", 0);
                                             }}
-                                            className="text-orange-400 hover:text-orange-600 flex-shrink-0"
+                                            className="text-gray-400 hover:text-gray-600 flex-shrink-0"
                                           >
                                             <X className="w-3 h-3" />
                                           </button>
@@ -2845,23 +2843,6 @@ function DashboardContent() {
                                                     >
                                                       <div className="text-sm font-medium text-gray-900">
                                                         {principio.nombre}
-                                                      </div>
-                                                      <div className="flex flex-col mt-1">
-                                                        {principio.nombreComercial && (
-                                                          <span className="text-xs text-blue-600">
-                                                            Comercial:{" "}
-                                                            {
-                                                              principio.nombreComercial
-                                                            }
-                                                          </span>
-                                                        )}
-                                                        {principio.descripcion && (
-                                                          <span className="text-xs text-gray-500 truncate">
-                                                            {
-                                                              principio.descripcion
-                                                            }
-                                                          </span>
-                                                        )}
                                                       </div>
                                                     </button>
                                                   ))
@@ -3354,16 +3335,15 @@ function DashboardContent() {
                                       <td className="px-3 py-2 relative">
                                         <div className="relative">
                                           {detalle.nombreCustom ? (
-                                            <div className="flex items-center gap-2 px-2 py-1.5 bg-orange-50 border border-orange-300 rounded text-sm">
-                                              <span className="flex-1 text-orange-800 font-medium">{detalle.nombreCustom}</span>
-                                              <span className="text-xs text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">personalizado</span>
+                                            <div className="flex items-center gap-2 px-2 py-1.5 bg-gray-50 border border-gray-300 rounded text-sm">
+                                              <span className="flex-1 text-gray-800 font-medium">{detalle.nombreCustom}</span>
                                               <button
                                                 type="button"
                                                 onClick={() => {
                                                   updatePatologia(index, "nombreCustom", undefined);
                                                   updatePatologia(index, "enfermedadId", 0);
                                                 }}
-                                                className="text-orange-400 hover:text-orange-600 flex-shrink-0"
+                                                className="text-gray-400 hover:text-gray-600 flex-shrink-0"
                                               >
                                                 <X className="w-3 h-3" />
                                               </button>
@@ -3535,16 +3515,15 @@ function DashboardContent() {
                                         <td className="px-3 py-2 relative">
                                           <div className="relative">
                                             {detalle.nombreCustom ? (
-                                              <div className="flex items-center gap-2 px-2 py-1.5 bg-orange-50 border border-orange-300 rounded text-sm">
-                                                <span className="flex-1 text-orange-800 font-medium">{detalle.nombreCustom}</span>
-                                                <span className="text-xs text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">personalizado</span>
+                                              <div className="flex items-center gap-2 px-2 py-1.5 bg-gray-50 border border-gray-300 rounded text-sm">
+                                                <span className="flex-1 text-gray-800 font-medium">{detalle.nombreCustom}</span>
                                                 <button
                                                   type="button"
                                                   onClick={() => {
                                                     updatePrincipioActivo(index, "nombreCustom", undefined);
                                                     updatePrincipioActivo(index, "principioActivoId", 0);
                                                   }}
-                                                  className="text-orange-400 hover:text-orange-600 flex-shrink-0"
+                                                  className="text-gray-400 hover:text-gray-600 flex-shrink-0"
                                                 >
                                                   <X className="w-3 h-3" />
                                                 </button>
@@ -3605,18 +3584,6 @@ function DashboardContent() {
                                                           >
                                                             <div className="text-sm font-medium text-gray-900">
                                                               {principio.nombre}
-                                                            </div>
-                                                            <div className="flex flex-col mt-1">
-                                                              {principio.nombreComercial && (
-                                                                <span className="text-xs text-blue-600">
-                                                                  Comercial: {principio.nombreComercial}
-                                                                </span>
-                                                              )}
-                                                              {principio.descripcion && (
-                                                                <span className="text-xs text-gray-500 truncate">
-                                                                  {principio.descripcion}
-                                                                </span>
-                                                              )}
                                                             </div>
                                                           </button>
                                                         ))
