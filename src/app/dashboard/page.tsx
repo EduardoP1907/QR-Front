@@ -2690,7 +2690,7 @@ function DashboardContent() {
                                                 }}
                                                 className="mt-2 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
                                               >
-                                                Agregar &quot;{searchStatesPatologias[index]}&quot; como personalizado
+                                                Agregar
                                               </button>
                                             </div>
                                           ) : (
@@ -2866,7 +2866,7 @@ function DashboardContent() {
                                                     }}
                                                     className="mt-2 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
                                                   >
-                                                    Agregar &quot;{searchStates[index]}&quot; como personalizado
+                                                    Agregar
                                                   </button>
                                                 </div>
                                               ) : (
@@ -3430,7 +3430,7 @@ function DashboardContent() {
                                                         }}
                                                         className="mt-2 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
                                                       >
-                                                        Agregar &quot;{searchStatesPatologias[index]}&quot; como personalizado
+                                                        Agregar
                                                       </button>
                                                     </div>
                                                   ) : (
@@ -3603,7 +3603,7 @@ function DashboardContent() {
                                                           }}
                                                           className="mt-2 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
                                                         >
-                                                          Agregar &quot;{searchStates[index]}&quot; como personalizado
+                                                          Agregar
                                                         </button>
                                                       </div>
                                                     ) : (
