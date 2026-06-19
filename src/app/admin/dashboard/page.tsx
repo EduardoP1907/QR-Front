@@ -757,6 +757,30 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleBlockPortadorFromAdmin = async (portadorId: number, nombre: string, contratanteId: number) => {
+    if (!confirm(`¿Bloquear a ${nombre}? Se pausarán todas sus pulseras activas.`)) return;
+    try {
+      const details = contratanteDetails.get(contratanteId);
+      const portadorPulseras = (details?.pulseras || []).filter((p: any) => p.portador?.id === portadorId && p.active);
+      if (portadorPulseras.length === 0) {
+        toast.error('Este portador no tiene pulseras activas para bloquear');
+        return;
+      }
+      for (const pulsera of portadorPulseras) {
+        await adminApi.pausePulsera(pulsera.id);
+      }
+      toast.success(`Portador ${nombre} bloqueado exitosamente`);
+      const newDetails = new Map(contratanteDetails);
+      newDetails.delete(contratanteId);
+      setContratanteDetails(newDetails);
+      await loadContratanteDetail(contratanteId);
+      loadData();
+    } catch (error: any) {
+      console.error('Error bloqueando portador:', error);
+      toast.error('Error al bloquear el portador');
+    }
+  };
+
   const handleGenerateQrs = async () => {
     if (generateQuantity < 1 || generateQuantity > 1000) {
       toast.error('La cantidad debe estar entre 1 y 1000');
@@ -2348,7 +2372,7 @@ export default function AdminDashboardPage() {
                         <th className="px-6 py-4 text-left font-bold text-gray-900">Email</th>
                         <th className="px-6 py-4 text-left font-bold text-gray-900">RUT</th>
                         <th className="px-6 py-4 text-left font-bold text-gray-900">Fecha Registro</th>
-                        <th className="px-6 py-4 text-left font-bold text-gray-900">Dispositivos</th>
+                        <th className="px-6 py-4 text-left font-bold text-gray-900">Portadores</th>
                         <th className="px-6 py-4 text-left font-bold text-gray-900">Acciones</th>
                       </tr>
                     </thead>
@@ -2387,9 +2411,9 @@ export default function AdminDashboardPage() {
                               <span className="text-gray-600 text-sm">{formatDate(contratante.createdAt)}</span>
                             </td>
                             <td className="px-6 py-4">
-                              <div className="text-sm">
-                                <p className="text-gray-900 font-semibold">{contratante.totalPurchasedPulseras} total</p>
-                                <p className="text-gray-500">{contratante.availablePulseras} disponibles</p>
+                              <div className="flex items-center gap-2">
+                                <Users className="w-4 h-4 text-[#481468]" />
+                                <span className="font-semibold text-gray-900">{contratante.portadoresCount ?? 0}</span>
                               </div>
                             </td>
                             <td className="px-6 py-4">
@@ -2470,12 +2494,20 @@ export default function AdminDashboardPage() {
                                             </div>
                                             <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
                                               <button
+                                                onClick={() => handleBlockPortadorFromAdmin(portador.id, `${portador.firstName} ${portador.paternalSurname}`, contratante.id)}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 font-semibold transition-colors"
+                                                title="Bloquear portador (pausa sus pulseras activas)"
+                                              >
+                                                <Pause className="w-3.5 h-3.5" />
+                                                Bloquear
+                                              </button>
+                                              <button
                                                 onClick={() => handleDeletePortadorFromAdmin(portador.id, `${portador.firstName} ${portador.paternalSurname}`, contratante.id)}
                                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-semibold transition-colors"
                                                 title="Eliminar portador"
                                               >
                                                 <Trash2 className="w-3.5 h-3.5" />
-                                                Eliminar portador
+                                                Eliminar
                                               </button>
                                             </div>
                                           </div>
@@ -2489,106 +2521,6 @@ export default function AdminDashboardPage() {
                                     )}
                                   </div>
 
-                                  {/* Sección de Pulseras */}
-                                  <div>
-                                    <h4 className="font-bold text-gray-900 flex items-center gap-2 mb-4">
-                                      <QrCode className="w-5 h-5" />
-                                      Pulseras / QR ({contratanteDetails.get(contratante.id).pulseras?.length || 0})
-                                    </h4>
-
-                                    {contratanteDetails.get(contratante.id).pulseras?.length > 0 ? (
-                                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                        {contratanteDetails.get(contratante.id).pulseras.map((pulsera: any) => (
-                                          <div key={pulsera.id} className={`bg-white rounded-xl p-4 shadow border-2 ${pulsera.active && pulsera.subscriptionActive ? 'border-green-200' : 'border-red-200'}`}>
-                                            <div className="flex items-start justify-between">
-                                              <div className="flex items-start gap-3">
-                                                <div className={`p-2 rounded-lg ${pulsera.active && pulsera.subscriptionActive ? 'bg-green-100' : 'bg-red-100'}`}>
-                                                  <QrCode className={`w-5 h-5 ${pulsera.active && pulsera.subscriptionActive ? 'text-green-600' : 'text-red-600'}`} />
-                                                </div>
-                                                <div>
-                                                  <p className="font-bold text-gray-900">{pulsera.customId || pulsera.name}</p>
-                                                  <div className="flex items-center gap-2 mt-1">
-                                                    {pulsera.subscriptionActive ? (
-                                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                                                        <CheckCircle className="w-3 h-3" />
-                                                        Suscripción Activa
-                                                      </span>
-                                                    ) : (
-                                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">
-                                                        <X className="w-3 h-3" />
-                                                        Suscripción Inactiva
-                                                      </span>
-                                                    )}
-                                                    {pulsera.active ? (
-                                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                                                        Activa
-                                                      </span>
-                                                    ) : (
-                                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">
-                                                        Pausada
-                                                      </span>
-                                                    )}
-                                                  </div>
-                                                  {pulsera.portador && (
-                                                    <p className="text-sm text-gray-500 mt-1">
-                                                      Portador: {pulsera.portador.firstName} {pulsera.portador.paternalSurname}
-                                                    </p>
-                                                  )}
-                                                  <p className="text-xs text-gray-400 mt-1">Creado: {formatDate(pulsera.createdAt)}</p>
-                                                </div>
-                                              </div>
-                                            </div>
-
-                                            {/* Botones de acción */}
-                                            <div className="flex items-center gap-2 mt-4 pt-3 border-t border-gray-100">
-                                              <button
-                                                onClick={() => handleViewQrImage(pulsera.customId || pulsera.qrCode)}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-semibold transition-colors"
-                                                title="Ver QR"
-                                              >
-                                                <Eye className="w-3.5 h-3.5" />
-                                                Ver QR
-                                              </button>
-
-                                              {pulsera.active ? (
-                                                <button
-                                                  onClick={() => handlePausePulsera(pulsera.id, pulsera.customId || pulsera.name)}
-                                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 font-semibold transition-colors"
-                                                  title="Pausar pulsera"
-                                                >
-                                                  <Pause className="w-3.5 h-3.5" />
-                                                  Pausar
-                                                </button>
-                                              ) : (
-                                                <button
-                                                  onClick={() => handleActivatePulsera(pulsera.id, pulsera.customId || pulsera.name)}
-                                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-green-100 text-green-700 rounded-lg hover:bg-green-200 font-semibold transition-colors"
-                                                  title="Activar pulsera"
-                                                >
-                                                  <Play className="w-3.5 h-3.5" />
-                                                  Activar
-                                                </button>
-                                              )}
-
-                                              <button
-                                                onClick={() => handleDeletePulsera(pulsera.id, pulsera.customId || pulsera.name)}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-semibold transition-colors"
-                                                title="Eliminar pulsera"
-                                              >
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                                Eliminar
-                                              </button>
-                                            </div>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    ) : (
-                                      <div className="text-center py-6 text-gray-500 bg-white rounded-xl border border-gray-200">
-                                        <QrCode className="w-10 h-10 mx-auto mb-2 text-gray-300" />
-                                        <p>No hay pulseras asignadas</p>
-                                      </div>
-                                    )}
-                                  </div>
                                 </div>
                               </td>
                             </tr>
