@@ -243,14 +243,15 @@ function SubscriptionContent() {
                   <span className="text-white opacity-80">/CLP</span>
                 </div>
                 <div className="text-sm text-white opacity-90 mt-1">Plan de protección Mensual</div>
+                <div className="text-xs text-white opacity-75 mt-0.5">primer cargo en 30 días</div>
               </div>
 
               <div className="mb-6 p-4 bg-white/10 rounded-lg">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">+ ${PULSERA_PRICE.toLocaleString('es-CL')} Bluko Life física</span>
+                  <span className="text-sm">+ ${PULSERA_PRICE.toLocaleString('es-CL')} cargo por habilitación</span>
                 </div>
                 <div className="text-xs text-white opacity-80 mt-1">
-                  (pago unico al momento de contratación)
+                  (pago único al momento de contratación)
                 </div>
               </div>
 
@@ -373,7 +374,7 @@ function SubscriptionContent() {
               <div className="pt-2">
                 <div className="space-y-3 mb-4">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm text-gray-600 min-w-0">Pago único al momento de contratación:</span>
+                    <span className="text-sm text-gray-600 min-w-0">Cargo por habilitación (pago único):</span>
                     {totales.descuento > 0 ? (
                       <div className="text-right flex-shrink-0">
                         <span className="text-sm text-gray-400 line-through mr-2 whitespace-nowrap">
@@ -390,7 +391,7 @@ function SubscriptionContent() {
                     )}
                   </div>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm text-gray-600 min-w-0">Plan de protección Mensual:</span>
+                    <span className="text-sm text-gray-600 min-w-0">Plan de protección Mensual <span className="text-xs text-gray-400">(primer cargo en 30 días)</span>:</span>
                     <span className="font-semibold text-black whitespace-nowrap flex-shrink-0">
                       ${totales.totalHabilitacion.toLocaleString('es-CL')} CLP
                     </span>

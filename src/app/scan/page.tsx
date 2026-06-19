@@ -39,34 +39,51 @@ interface PulseraData {
   };
 }
 
+// Función para parsear texto en lista de items (por salto de línea o coma)
+function parseListItems(text: string): string[] {
+  if (!text) return [];
+
+  // Primero intentamos dividir por saltos de línea
+  let items = text.split('\n').map(item => item.trim()).filter(item => item.length > 0);
+
+  // Si solo hay un item y contiene comas, dividimos por comas
+  if (items.length === 1 && items[0].includes(',')) {
+    items = items[0].split(',').map(item => item.trim()).filter(item => item.length > 0);
+  }
+
+  return items;
+}
+
 // Función para extraer números de teléfono del texto y hacerlos clickeables
 function makePhoneNumbersClickable(text: string): React.ReactNode[] {
   if (!text) return [];
 
   // Regex para detectar números de teléfono chilenos y genéricos
   const phoneRegex = /(\+?56\s?)?(\d{1,2}\s?)?\d{4}[\s-]?\d{4}|\d{9,}/g;
-  const parts: React.ReactNode[] = [];
-  let lastIndex = 0;
-  let match;
   let key = 0;
 
-  const lines = text.split('\n');
+  // Usar parseListItems para obtener los elementos
+  const items = parseListItems(text);
 
-  return lines.map((line, lineIndex) => {
+  return items.map((item, itemIndex) => {
     const lineParts: React.ReactNode[] = [];
-    lastIndex = 0;
+    let lastIndex = 0;
+    let match;
 
-    while ((match = phoneRegex.exec(line)) !== null) {
+    // Resetear el regex para cada línea
+    phoneRegex.lastIndex = 0;
+
+    while ((match = phoneRegex.exec(item)) !== null) {
       // Agregar texto antes del número
       if (match.index > lastIndex) {
-        lineParts.push(<span key={`text-${lineIndex}-${key++}`}>{line.slice(lastIndex, match.index)}</span>);
+        lineParts.push(<span key={`text-${itemIndex}-${key++}`}>{item.slice(lastIndex, match.index)}</span>);
       }
 
       // Agregar el número como link clickeable
       const phoneNumber = match[0].replace(/\s/g, '');
       lineParts.push(
         <a
-          key={`phone-${lineIndex}-${key++}`}
+          key={`phone-${itemIndex}-${key++}`}
           href={`tel:${phoneNumber}`}
           className="text-blue-600 font-bold underline hover:text-blue-800 inline-flex items-center gap-1"
         >
@@ -79,13 +96,14 @@ function makePhoneNumbersClickable(text: string): React.ReactNode[] {
     }
 
     // Agregar el resto del texto
-    if (lastIndex < line.length) {
-      lineParts.push(<span key={`text-${lineIndex}-${key++}`}>{line.slice(lastIndex)}</span>);
+    if (lastIndex < item.length) {
+      lineParts.push(<span key={`text-${itemIndex}-${key++}`}>{item.slice(lastIndex)}</span>);
     }
 
     return (
-      <div key={`line-${lineIndex}`} className={lineIndex < lines.length - 1 ? 'mb-1' : ''}>
-        {lineParts.length > 0 ? lineParts : line}
+      <div key={`item-${itemIndex}`} className="mb-1 flex items-start gap-2">
+        <span className="text-gray-400">•</span>
+        <span>{lineParts.length > 0 ? lineParts : item}</span>
       </div>
     );
   });
@@ -313,16 +331,16 @@ function ScanPageContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando información...</p>
-
-          {/* Debug info */}
-          <div className="mt-8 bg-gray-900 text-green-400 p-4 rounded-lg text-left text-xs font-mono max-w-md mx-auto">
-            <p className="font-bold mb-2">🔍 DEBUG INFO:</p>
-            <p>URL: {typeof window !== 'undefined' ? window.location.href : 'N/A'}</p>
-            <p>QR Code: {qrCode || 'empty'}</p>
+      <div className="min-h-screen bg-gradient-to-br from-[#f8f4ff] to-[#ede8f5]">
+        <div className="w-full py-3 px-4" style={{background: 'linear-gradient(to right, #3d1158, #481468)'}}>
+          <div className="max-w-md mx-auto flex items-center justify-center">
+            <Image src="/logo-bluko-horizontal.jpg" alt="Bluko Life" width={160} height={40} className="h-8 w-auto" />
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-16">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#481468]/20 border-t-[#481468] mx-auto mb-4"></div>
+            <p className="text-gray-600">Cargando información...</p>
           </div>
         </div>
       </div>
@@ -332,20 +350,15 @@ function ScanPageContent() {
   // ⏸️ Pulsera SUSPENDIDA/PAUSADA
   if (isSuspended) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 py-12 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-[#f8f4ff] to-[#ede8f5]">
+        <div className="w-full py-3 px-4" style={{background: 'linear-gradient(to right, #3d1158, #481468)'}}>
+          <div className="max-w-md mx-auto flex items-center justify-center">
+            <Image src="/logo-bluko-horizontal.jpg" alt="Bluko Life" width={160} height={40} className="h-8 w-auto" />
+          </div>
+        </div>
+        <div className="py-12 px-4">
         <div className="max-w-2xl mx-auto">
           <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
-            {/* Logo Bluko */}
-            <div className="flex justify-center mb-6">
-              <Image
-                src="/logo-bluko-icon.png"
-                alt="Bluko Life"
-                width={80}
-                height={80}
-                className="object-contain"
-              />
-            </div>
-
             <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <AlertTriangle className="w-10 h-10 text-orange-600" />
             </div>
@@ -391,6 +404,7 @@ function ScanPageContent() {
             </div>
           </div>
         </div>
+        </div>
       </div>
     );
   }
@@ -398,61 +412,59 @@ function ScanPageContent() {
   // ⏳ Pulsera NO está lista para ser reclamada (GENERATED, IN_FABRICATION, FABRICATED)
   if (isNotReady) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
-            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <AlertTriangle className="w-12 h-12 text-gray-600" />
-            </div>
-
-            <div className="text-6xl mb-4">⏳</div>
-
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              Bluko Life No Disponible
-            </h1>
-
-            <p className="text-lg text-gray-600 mb-8">
-              Este Bluko Life aún no está listo para ser reclamado
-            </p>
-
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
-              <p className="text-yellow-700 mb-4">
-                Tu Bluko Life está siendo procesado. Recibirás una notificación cuando esté listo para ser reclamado y asignado.
-              </p>
-              <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
-                <span className="font-semibold">Estado actual: {pulsera?.status}</span>
+      <div className="min-h-screen bg-gradient-to-br from-[#f8f4ff] to-[#ede8f5]">
+        <div className="w-full py-3 px-4" style={{background: 'linear-gradient(to right, #3d1158, #481468)'}}>
+          <div className="max-w-md mx-auto flex items-center justify-center">
+            <Image src="/logo-bluko-horizontal.jpg" alt="Bluko Life" width={160} height={40} className="h-8 w-auto" />
+          </div>
+        </div>
+        <div className="py-12 px-4">
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+              <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4" style={{backgroundColor: '#f8f4ff'}}>
+                <QrCode className="w-10 h-10" style={{color: '#481468'}} />
               </div>
+
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                Bluko Life® en Proceso
+              </h1>
+
+              <p className="text-lg text-gray-600 mb-8">
+                Este dispositivo se encuentra en proceso de fabricación/stock. Aún no ha sido asignado a un portador.
+              </p>
+
+              <div className="rounded-xl p-6 mb-6 text-left" style={{backgroundColor: '#f8f4ff', border: '1px solid #d4c5f9'}}>
+                <h2 className="font-bold mb-3 text-lg" style={{color: '#481468'}}>
+                  ¿Eres el dueño de este Bluko Life®?
+                </h2>
+                <p className="text-gray-700 mb-5">
+                  Si compraste este Bluko Life®, debes activarlo desde tu cuenta de contratante y asignarlo al portador.
+                </p>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm font-bold" style={{backgroundColor: '#481468'}}>1</div>
+                    <p className="text-gray-700 text-sm pt-1">Ingresar a tu cuenta de contratante desde tu celular</p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm font-bold" style={{backgroundColor: '#481468'}}>2</div>
+                    <p className="text-gray-700 text-sm pt-1">Escanear el QR del dispositivo</p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm font-bold" style={{backgroundColor: '#481468'}}>3</div>
+                    <p className="text-gray-700 text-sm pt-1">Asignar al portador</p>
+                  </div>
+                </div>
+              </div>
+
+              <Link
+                href="/"
+                className="inline-flex items-center gap-2 text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-colors"
+                style={{backgroundColor: '#481468'}}
+              >
+                <Home className="w-5 h-5" />
+                Volver al Inicio
+              </Link>
             </div>
-
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
-              <h3 className="font-semibold text-blue-900 mb-2">¿Qué puedes hacer mientras tanto?</h3>
-              <ul className="text-left text-blue-700 space-y-2">
-                <li className="flex items-start gap-2">
-                  <span>✓</span>
-                  <span>Espera a que tu Bluko Life esté en stock (IN_STOCK)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span>✓</span>
-                  <span>Recibirás una notificación cuando esté listo</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span>✓</span>
-                  <span>Una vez listo, podrás reclamarlo desde tu dashboard</span>
-                </li>
-              </ul>
-            </div>
-
-            <p className="text-sm text-gray-500 mb-6">
-              Código QR: <span className="font-mono font-semibold">{qrCode}</span>
-            </p>
-
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-            >
-              <Home className="w-5 h-5" />
-              Volver al Inicio
-            </Link>
           </div>
         </div>
       </div>
@@ -461,16 +473,14 @@ function ScanPageContent() {
 
   if (isReadyToClaim) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 py-12 px-4">
-        <div className="max-w-2xl mx-auto">
-          {/* Debug banner - ALWAYS VISIBLE */}
-          <div className="mb-4 bg-gray-900 text-green-400 p-4 rounded-lg text-left text-xs font-mono">
-            <p className="font-bold mb-2">🔍 DEBUG INFO (GENERATED):</p>
-            <p className="break-all">URL: {typeof window !== 'undefined' ? window.location.href : 'N/A'}</p>
-            <p>QR Code: {qrCode || 'empty'}</p>
-            <p>Status: GENERATED (claim page)</p>
+      <div className="min-h-screen bg-gradient-to-br from-[#f8f4ff] to-[#ede8f5]">
+        <div className="w-full py-3 px-4" style={{background: 'linear-gradient(to right, #3d1158, #481468)'}}>
+          <div className="max-w-md mx-auto flex items-center justify-center">
+            <Image src="/logo-bluko-horizontal.jpg" alt="Bluko Life" width={160} height={40} className="h-8 w-auto" />
           </div>
-
+        </div>
+        <div className="py-12 px-4">
+        <div className="max-w-2xl mx-auto">
           <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
             <div className="w-24 h-24 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <QrCode className="w-12 h-12 text-amber-600" />
@@ -535,96 +545,66 @@ function ScanPageContent() {
             </p>
           </div>
         </div>
+        </div>
       </div>
     );
   }
 
   if (error || !pulsera) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 py-12 px-4">
-        <div className="max-w-2xl mx-auto">
-          {/* Debug banner - ALWAYS VISIBLE */}
-          <div className="mb-4 bg-gray-900 text-red-400 p-4 rounded-lg text-left text-xs font-mono">
-            <p className="font-bold mb-2">🔍 DEBUG INFO (ERROR):</p>
-            <p className="break-all">URL: {typeof window !== 'undefined' ? window.location.href : 'N/A'}</p>
-            <p>QR Code: {qrCode || 'empty'}</p>
-            <p>Error: {error || 'No pulsera data'}</p>
+      <div className="min-h-screen bg-gradient-to-br from-[#f8f4ff] to-[#ede8f5]">
+        <div className="w-full py-3 px-4" style={{background: 'linear-gradient(to right, #3d1158, #481468)'}}>
+          <div className="max-w-md mx-auto flex items-center justify-center">
+            <Image src="/logo-bluko-horizontal.jpg" alt="Bluko Life" width={160} height={40} className="h-8 w-auto" />
           </div>
+        </div>
+        <div className="py-12 px-4">
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+              <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <AlertTriangle className="w-12 h-12 text-red-600" />
+              </div>
 
-          <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
-            <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <AlertTriangle className="w-12 h-12 text-red-600" />
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                Bluko Life No Encontrado
+              </h1>
+
+              <p className="text-lg text-gray-600 mb-8">
+                {error || 'No se encontró información para este código QR.'}
+              </p>
+
+              <Link
+                href="/"
+                className="inline-flex items-center gap-2 text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-colors"
+                style={{backgroundColor: '#481468'}}
+              >
+                <Home className="w-5 h-5" />
+                Volver al Inicio
+              </Link>
             </div>
-
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              Bluko Life No Encontrado
-            </h1>
-
-            <p className="text-lg text-gray-600 mb-8">
-              {error || 'No se encontró información para este código QR.'}
-            </p>
-
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-            >
-              <Home className="w-5 h-5" />
-              Volver al Inicio
-            </Link>
           </div>
         </div>
       </div>
     );
   }
 
-  // Detectar si hay alertas críticas (alergias o condiciones importantes)
-  const hasAlerts = pulsera.alergias || pulsera.enfermedadesResumen || pulsera.condicionesMedicas;
+  // Detectar si hay alertas críticas (alergias o info médica adicional)
+  const hasAlerts = pulsera.alergias || pulsera.medicalInfo;
 
   return (
     <div className="min-h-screen bg-gray-100 py-4 px-2 sm:px-4">
       <div className="max-w-md mx-auto">
-        {/* Botón de Emergencias 133 - Siempre visible arriba */}
-        <a
-          href="tel:133"
-          className="flex items-center justify-center gap-3 w-full bg-red-600 hover:bg-red-700 text-white py-4 px-6 rounded-xl mb-4 shadow-lg transition-all active:scale-95"
-        >
-          <PhoneCall className="w-8 h-8" />
-          <div className="text-left">
-            <p className="text-xl font-bold">LLAMAR A EMERGENCIAS</p>
-            <p className="text-red-200 text-sm">Ambulancia / Bomberos / Carabineros</p>
-          </div>
-          <span className="text-3xl font-bold ml-auto">133</span>
-        </a>
-
         <div className="bg-white rounded-xl shadow-xl overflow-hidden">
-          {/* Header Púrpura con Logo */}
-          <div className="bg-gradient-to-r from-purple-900 to-purple-800 text-white p-4 text-center">
-            {/* Logo Bluko */}
-            <div className="flex justify-center mb-2">
-              <Image
-                src="/logo-bluko-icon.png"
-                alt="Bluko Life"
-                width={80}
-                height={80}
-                className="rounded-lg"
-              />
-            </div>
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <span className="text-2xl font-black tracking-tight">BLUKO</span>
-              <span className="text-2xl font-light">LIFE</span>
-              <span className="text-xs">®</span>
-            </div>
-            <p className="text-purple-200 text-sm font-semibold tracking-wide">FICHA DE EMERGENCIA MÉDICA</p>
-            {/* Símbolo de emergencia médica (Estrella de la Vida) */}
-            <div className="mt-3 flex justify-center">
-              <div className="bg-orange-500 p-2 rounded-full">
-                <svg className="w-8 h-8 text-white" viewBox="0 0 100 100" fill="currentColor">
-                  <polygon points="50,5 61,35 95,35 68,55 79,90 50,70 21,90 32,55 5,35 39,35"/>
-                  <rect x="45" y="30" width="10" height="40" fill="white"/>
-                  <rect x="30" y="45" width="40" height="10" fill="white"/>
-                </svg>
-              </div>
-            </div>
+          {/* Header con imagen completa */}
+          <div className="w-full">
+            <Image
+              src="/header-ficha-medica.jpg"
+              alt="Bluko Life - Ficha de Emergencia Médica"
+              width={500}
+              height={250}
+              className="w-full h-auto"
+              priority
+            />
           </div>
 
           {/* Sección 1: Datos Personales */}
@@ -650,14 +630,20 @@ function ScanPageContent() {
                   </p>
                 )}
               </div>
-              {/* Badge Grupo Sanguíneo */}
+              {/* Badge Grupo Sanguíneo con imagen */}
               {pulsera.portador?.grupoSanguineo && (
                 <div className="flex-shrink-0 ml-4">
-                  <div className="bg-gray-100 border-2 border-gray-300 rounded-lg p-2 text-center min-w-[70px]">
-                    <p className="text-[10px] text-gray-500 font-semibold leading-tight">GRUPO</p>
-                    <p className="text-[10px] text-gray-500 font-semibold leading-tight">SANGUÍNEO</p>
-                    <p className="text-2xl font-black text-red-600 mt-1">{pulsera.portador.grupoSanguineo}</p>
-                  </div>
+                  <Image
+                    src={`/${pulsera.portador.grupoSanguineo.toLowerCase().replace('+', '%2B')}.png`}
+                    alt={`Tipo de sangre ${pulsera.portador.grupoSanguineo}`}
+                    width={80}
+                    height={80}
+                    className="rounded-lg"
+                    onError={(e) => {
+                      // Fallback si no existe la imagen
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
                 </div>
               )}
             </div>
@@ -666,10 +652,10 @@ function ScanPageContent() {
           {/* Sección 2: Alertas Médicas (fondo rojo) */}
           {hasAlerts && (
             <div className="border-b-4 border-gray-200">
-              <div className="bg-red-600 text-white px-4 py-2">
+              <div className="bg-[#d80000] text-white px-4 py-2">
                 <h2 className="font-bold text-sm">2. ALERTAS MÉDICAS</h2>
               </div>
-              <div className="bg-red-500 p-4 flex items-start gap-3">
+              <div className="bg-[#d80000] p-4 flex items-start gap-3">
                 <div className="flex-grow text-white">
                   {pulsera.alergias && (
                     <p className="mb-1">
@@ -677,19 +663,21 @@ function ScanPageContent() {
                       <span className="font-bold">{pulsera.alergias.toUpperCase()}</span>
                     </p>
                   )}
-                  {(pulsera.enfermedadesResumen || pulsera.condicionesMedicas) && (
+                  {pulsera.medicalInfo && (
                     <div className="text-sm">
-                      {(pulsera.enfermedadesResumen || pulsera.condicionesMedicas)?.split('\n').slice(0, 3).map((line, idx) => (
-                        <p key={idx} className="mb-0.5">• {line}</p>
-                      ))}
+                      <p className="mb-0.5">• {pulsera.medicalInfo}</p>
                     </div>
                   )}
                 </div>
-                {/* Icono de alerta */}
+                {/* Logo de precaución */}
                 <div className="flex-shrink-0">
-                  <div className="bg-yellow-400 p-2 rounded">
-                    <AlertTriangle className="w-8 h-8 text-yellow-900" />
-                  </div>
+                  <Image
+                    src="/logo-precaucion.png"
+                    alt="Precaución"
+                    width={60}
+                    height={60}
+                    className="object-contain"
+                  />
                 </div>
               </div>
             </div>
@@ -704,10 +692,10 @@ function ScanPageContent() {
               </div>
               <div className="p-4 bg-gray-50">
                 <div className="text-gray-800 text-sm">
-                  {(pulsera.enfermedadesResumen || pulsera.condicionesMedicas)?.split('\n').map((line, idx) => (
+                  {parseListItems(pulsera.enfermedadesResumen || pulsera.condicionesMedicas || '').map((item, idx) => (
                     <p key={idx} className="mb-1 flex items-start gap-2">
                       <span className="text-gray-400">•</span>
-                      <span>{line}</span>
+                      <span>{item}</span>
                     </p>
                   ))}
                 </div>
@@ -724,16 +712,16 @@ function ScanPageContent() {
               </div>
               <div className="p-4 bg-gray-50">
                 <div className="text-gray-800 text-sm">
-                  {pulsera.principiosActivosResumen && pulsera.principiosActivosResumen.split('\n').map((line, idx) => (
+                  {pulsera.principiosActivosResumen && parseListItems(pulsera.principiosActivosResumen).map((item, idx) => (
                     <p key={`pa-${idx}`} className="mb-1 flex items-start gap-2">
                       <span className="text-gray-400">•</span>
-                      <span>{line}</span>
+                      <span>{item}</span>
                     </p>
                   ))}
-                  {pulsera.medicamentos && pulsera.medicamentos.split('\n').map((line, idx) => (
+                  {pulsera.medicamentos && parseListItems(pulsera.medicamentos).map((item, idx) => (
                     <p key={`med-${idx}`} className="mb-1 flex items-start gap-2">
                       <span className="text-gray-400">•</span>
-                      <span>{line}</span>
+                      <span>{item}</span>
                     </p>
                   ))}
                 </div>
@@ -769,18 +757,6 @@ function ScanPageContent() {
                     </>
                   )}
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* Información Adicional */}
-          {pulsera.medicalInfo && (
-            <div className="border-b-4 border-gray-200">
-              <div className="bg-gray-600 text-white px-4 py-2">
-                <h2 className="font-bold text-sm">INFORMACIÓN ADICIONAL</h2>
-              </div>
-              <div className="p-4 bg-gray-50">
-                <p className="text-gray-700 text-sm whitespace-pre-line">{pulsera.medicalInfo}</p>
               </div>
             </div>
           )}
@@ -848,18 +824,19 @@ function ScanPageContent() {
               Esta información es confidencial y solo debe ser usada en emergencias médicas
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              Bluko Life® - Protegiendo vidas
+              Bluko Life®
             </p>
           </div>
         </div>
 
-        {/* Botón secundario de emergencias abajo */}
+        {/* Botón de emergencias - Ambulancias 131 */}
         <a
-          href="tel:133"
-          className="flex items-center justify-center gap-2 w-full bg-red-600 hover:bg-red-700 text-white py-3 px-6 rounded-xl mt-4 shadow-lg transition-all active:scale-95"
+          href="tel:131"
+          className="flex items-center justify-center gap-3 w-full bg-[#d80000] hover:bg-red-800 text-white py-4 px-6 rounded-xl mt-4 shadow-lg transition-all active:scale-95"
         >
-          <Phone className="w-5 h-5" />
-          <span className="font-bold">Llamar al 133</span>
+          <Phone className="w-6 h-6" />
+          <span className="font-bold text-lg">LLAMAR AMBULANCIA</span>
+          <span className="text-2xl font-bold ml-auto">131</span>
         </a>
 
         {/* QR Code Info */}

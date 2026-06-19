@@ -713,6 +713,50 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleDeactivateContratanteSubscription = async (id: number, nombre: string) => {
+    if (!confirm(`¿Desactivar suscripción de ${nombre}? Esto bloqueará el acceso del contratante.`)) return;
+    try {
+      await adminApi.deactivateContratanteSubscription(id);
+      toast.success(`Suscripción de ${nombre} desactivada`);
+      await loadAllContratantes();
+      loadData();
+    } catch (error: any) {
+      console.error('Error desactivando suscripción:', error);
+      toast.error('Error al desactivar suscripción');
+    }
+  };
+
+  const handleDeleteContratante = async (id: number, nombre: string) => {
+    if (!confirm(`¿ELIMINAR al contratante ${nombre}? Se eliminarán también sus pulseras y portadores.`)) return;
+    if (!confirm(`CONFIRMACIÓN FINAL: ¿Eliminar ${nombre} permanentemente? Esta acción no se puede deshacer.`)) return;
+    try {
+      await adminApi.deleteContratante(id);
+      toast.success(`Contratante ${nombre} eliminado exitosamente`);
+      if (expandedContratante === id) setExpandedContratante(null);
+      await loadAllContratantes();
+      loadData();
+    } catch (error: any) {
+      console.error('Error eliminando contratante:', error);
+      toast.error('Error al eliminar el contratante');
+    }
+  };
+
+  const handleDeletePortadorFromAdmin = async (portadorId: number, nombre: string, contratanteId: number) => {
+    if (!confirm(`¿Eliminar portador ${nombre}? Sus pulseras quedarán sin portador asignado.`)) return;
+    try {
+      await adminApi.deletePortador(portadorId);
+      toast.success(`Portador ${nombre} eliminado exitosamente`);
+      const newDetails = new Map(contratanteDetails);
+      newDetails.delete(contratanteId);
+      setContratanteDetails(newDetails);
+      await loadContratanteDetail(contratanteId);
+      loadData();
+    } catch (error: any) {
+      console.error('Error eliminando portador:', error);
+      toast.error('Error al eliminar el portador');
+    }
+  };
+
   const handleGenerateQrs = async () => {
     if (generateQuantity < 1 || generateQuantity > 1000) {
       toast.error('La cantidad debe estar entre 1 y 1000');
@@ -2349,13 +2393,35 @@ export default function AdminDashboardPage() {
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              <button
-                                onClick={() => handleToggleExpand(contratante.id)}
-                                className="inline-flex items-center gap-2 px-3 py-1.5 text-xs bg-[#481468] text-white rounded-lg hover:bg-[#3d1158] font-semibold transition-colors"
-                              >
-                                <Users className="w-4 h-4" />
-                                Ver Portadores
-                              </button>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <button
+                                  onClick={() => handleToggleExpand(contratante.id)}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[#481468] text-white rounded-lg hover:bg-[#3d1158] font-semibold transition-colors"
+                                >
+                                  {expandedContratante === contratante.id ? (
+                                    <ChevronDown className="w-3.5 h-3.5" />
+                                  ) : (
+                                    <ChevronRight className="w-3.5 h-3.5" />
+                                  )}
+                                  {expandedContratante === contratante.id ? 'Ocultar' : 'Ver Portadores'}
+                                </button>
+                                <button
+                                  onClick={() => handleDeactivateContratanteSubscription(contratante.id, `${contratante.firstName} ${contratante.paternalSurname}`)}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 font-semibold transition-colors"
+                                  title="Desactivar suscripción del contratante"
+                                >
+                                  <Pause className="w-3.5 h-3.5" />
+                                  Bloquear
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteContratante(contratante.id, `${contratante.firstName} ${contratante.paternalSurname}`)}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-semibold transition-colors"
+                                  title="Eliminar contratante permanentemente"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  Eliminar
+                                </button>
+                              </div>
                             </td>
                           </tr>
 
@@ -2363,6 +2429,66 @@ export default function AdminDashboardPage() {
                             <tr>
                               <td colSpan={6} className="px-6 py-4 bg-gray-50">
                                 <div className="space-y-6">
+
+                                  {/* Sección de Portadores */}
+                                  <div>
+                                    <h4 className="font-bold text-gray-900 flex items-center gap-2 mb-4">
+                                      <Users className="w-5 h-5 text-[#481468]" />
+                                      Portadores ({contratanteDetails.get(contratante.id).portadores?.length || 0})
+                                    </h4>
+
+                                    {contratanteDetails.get(contratante.id).portadores?.length > 0 ? (
+                                      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                                        {contratanteDetails.get(contratante.id).portadores.map((portador: any) => (
+                                          <div key={portador.id} className="bg-white rounded-xl p-4 shadow border-2 border-[#481468]/20">
+                                            <div className="flex items-start gap-3">
+                                              <div className="p-2 rounded-lg bg-[#481468]/10">
+                                                <User className="w-5 h-5 text-[#481468]" />
+                                              </div>
+                                              <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-gray-900 truncate">
+                                                  {portador.firstName} {portador.paternalSurname}
+                                                  {portador.maternalSurname ? ` ${portador.maternalSurname}` : ''}
+                                                </p>
+                                                <p className="text-sm text-gray-500 truncate">{portador.email}</p>
+                                                <p className="text-xs text-gray-400">RUT: {portador.rut}</p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                  {portador.verified ? (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                                      <CheckCircle className="w-3 h-3" />
+                                                      Verificado
+                                                    </span>
+                                                  ) : (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+                                                      <AlertCircle className="w-3 h-3" />
+                                                      Sin verificar
+                                                    </span>
+                                                  )}
+                                                </div>
+                                                <p className="text-xs text-gray-400 mt-1">Creado: {formatDate(portador.createdAt)}</p>
+                                              </div>
+                                            </div>
+                                            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                                              <button
+                                                onClick={() => handleDeletePortadorFromAdmin(portador.id, `${portador.firstName} ${portador.paternalSurname}`, contratante.id)}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-semibold transition-colors"
+                                                title="Eliminar portador"
+                                              >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                                Eliminar portador
+                                              </button>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <div className="text-center py-4 text-gray-500 bg-white rounded-xl border border-gray-200">
+                                        <User className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                                        <p className="text-sm">No hay portadores registrados</p>
+                                      </div>
+                                    )}
+                                  </div>
+
                                   {/* Sección de Pulseras */}
                                   <div>
                                     <h4 className="font-bold text-gray-900 flex items-center gap-2 mb-4">
@@ -2648,10 +2774,10 @@ export default function AdminDashboardPage() {
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
               <h3 className="font-bold text-blue-900 mb-2">Información sobre cupones</h3>
               <ul className="text-sm text-blue-700 space-y-1">
-                <li>• El descuento se aplica <strong>sobre el precio de la pulsera</strong> ($9.900 CLP), no sobre la habilitación ($3.450 CLP)</li>
-                <li>• El código del cupón no se puede cambiar después de creado</li>
-                <li>• Los cupones vencidos o inactivos no podrán ser usados en el checkout</li>
-                <li>• Los usuarios pueden ingresar el código en la página de suscripción</li>
+                <li>• El descuento aplica únicamente al costo de activación, excluyendo el valor de la suscripción.</li>
+                <li>• Los códigos no permiten modificaciones tras su creación.</li>
+                <li>• No se admitirán cupones vencidos o inactivos durante el checkout.</li>
+                <li>• Los usuarios pueden ingresar el código directamente en la página de compra.</li>
               </ul>
             </div>
           </div>
