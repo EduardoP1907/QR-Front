@@ -370,6 +370,17 @@ function SubscriptionContent() {
                 )}
               </div>
 
+              {/* Info cupones */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="text-sm font-semibold text-blue-900 mb-2">Información sobre cupones</h4>
+                <ul className="text-xs text-blue-700 space-y-1">
+                  <li>• El descuento se aplica sobre el precio de la pulsera ($9.900 CLP), no sobre la habilitación ($3.450 CLP)</li>
+                  <li>• El código del cupón no se puede cambiar después de creado</li>
+                  <li>• Los cupones vencidos o inactivos no podrán ser usados en el checkout</li>
+                  <li>• Los usuarios pueden ingresar el código en la página de suscripción</li>
+                </ul>
+              </div>
+
               {/* Submit */}
               <div className="pt-2">
                 <div className="space-y-3 mb-4">
