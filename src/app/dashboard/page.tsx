@@ -72,6 +72,7 @@ interface Pulsera {
   qrCode?: string;
   medicalInfo?: string;
   active?: boolean;
+  status?: string;
   owner?: any;
   portador?: any;
 }
@@ -220,17 +221,30 @@ function DashboardContent() {
             contratanteApi.getPortadores(),
           ]);
 
-        setPulseras(
-          Array.isArray(pulserasResponse.data)
-            ? pulserasResponse.data
-            : (pulserasResponse.data?.items ?? []),
-        );
+        const pulserasList = Array.isArray(pulserasResponse.data)
+          ? pulserasResponse.data
+          : (pulserasResponse.data?.items ?? []);
+
+        setPulseras(pulserasList);
         setAvailablePulseras(availableResponse.data.availablePulseras || 0);
         setPortadores(
           Array.isArray(portadoresResponse.data)
             ? portadoresResponse.data
             : (portadoresResponse.data?.items ?? []),
         );
+
+        // Recuperar automáticamente pulseras CLAIMED sin portador asignado
+        // (caso: usuario reclamó el QR pero no completó la asignación)
+        const pulseraClaimedPendiente = pulserasList.find(
+          (p: any) => p.status === 'CLAIMED' && !p.portador && !p.assigned
+        );
+        if (pulseraClaimedPendiente) {
+          setClaimedPulseraForAssignment(pulseraClaimedPendiente);
+          toast('Tienes un Bluko Life reclamado pendiente de asignar a un portador.', {
+            icon: '🔗',
+            duration: 5000,
+          });
+        }
       } catch (err) {
         console.error(err);
         toast.error("No se pudieron cargar los datos.");
@@ -338,24 +352,22 @@ function DashboardContent() {
               contratanteApi.getAvailablePulseras(),
             ]);
 
-            setPulseras(
-              Array.isArray(pulserasResponse.data)
-                ? pulserasResponse.data
-                : (pulserasResponse.data?.items ?? []),
-            );
+            const updatedPulserasList = Array.isArray(pulserasResponse.data)
+              ? pulserasResponse.data
+              : (pulserasResponse.data?.items ?? []);
+
+            setPulseras(updatedPulserasList);
             setAvailablePulseras(availableResponse.data.availablePulseras || 0);
 
-            // Save the claimed pulsera for assignment
+            // Buscar la pulsera recién reclamada para mostrar botón de asignación
             const pulseraId =
               response.data.pulseraId || response.data.pulsera?.id;
-            if (pulseraId) {
-              // Find the claimed pulsera in the updated list
-              const claimedPulsera = pulserasResponse.data.find(
-                (p: any) => p.id === pulseraId,
-              );
-              if (claimedPulsera) {
-                setClaimedPulseraForAssignment(claimedPulsera);
-              }
+            const claimedPulsera = pulseraId
+              ? updatedPulserasList.find((p: any) => p.id === pulseraId || String(p.id) === String(pulseraId))
+              : updatedPulserasList.find((p: any) => p.status === 'CLAIMED' && !p.portador && !p.assigned);
+
+            if (claimedPulsera) {
+              setClaimedPulseraForAssignment(claimedPulsera);
             }
 
             // Remove claimQr from URL

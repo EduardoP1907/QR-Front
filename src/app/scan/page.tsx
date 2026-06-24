@@ -283,7 +283,7 @@ function ScanPageContent() {
           console.log('⏳ DEBUG - Status is ' + status + ', NOT ready to claim yet');
           setIsNotReady(true);
         }
-        // 🏥 Estados que muestran información médica
+        // 🏥 Estados que muestran información médica (o pendiente de configurar)
         else if (status === 'ACTIVE' || status === 'ASSIGNED' || status === 'CLAIMED') {
           console.log('🏥 DEBUG - Status is ' + status + ', showing emergency medical info');
           setIsReadyToClaim(false);
@@ -293,6 +293,10 @@ function ScanPageContent() {
           if (location && !locationSent) {
             sendLocationToBackend(qrCode, location);
           }
+        }
+        // 🔒 Pulsera bloqueada/inactiva
+        else if (status === 'INACTIVE') {
+          setIsSuspended(true);
         }
         // Cualquier otro estado
         else {
@@ -580,6 +584,41 @@ function ScanPageContent() {
               >
                 <Home className="w-5 h-5" />
                 Volver al Inicio
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Pulsera CLAIMED sin portador configurado → guiar al usuario al dashboard
+  if (pulsera.status === 'CLAIMED' && !pulsera.portador) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#f8f4ff] to-[#ede8f5]">
+        <div className="w-full py-3 px-4" style={{background: 'linear-gradient(to right, #3d1158, #481468)'}}>
+          <div className="max-w-md mx-auto flex items-center justify-center">
+            <Image src="/logo-bluko-horizontal.jpg" alt="Bluko Life" width={160} height={40} className="h-8 w-auto" />
+          </div>
+        </div>
+        <div className="py-12 px-4">
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+              <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <User className="w-10 h-10 text-amber-600" />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-3">Bluko Life pendiente de configurar</h1>
+              <p className="text-gray-600 mb-6">
+                Este Bluko Life ya fue reclamado pero aún no tiene un portador asignado.<br/>
+                Ingresa a tu cuenta para completar la configuración.
+              </p>
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center gap-2 text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-colors"
+                style={{backgroundColor: '#481468'}}
+              >
+                <User className="w-5 h-5" />
+                Ir al Dashboard para asignar portador
               </Link>
             </div>
           </div>
