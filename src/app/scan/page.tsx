@@ -517,11 +517,12 @@ function ScanPageContent() {
                   <>
                     <button
                       onClick={() => {
-                        // Store QR code in localStorage before redirecting to login
                         if (typeof window !== 'undefined') {
                           localStorage.setItem('pendingClaimQr', qrCode);
                         }
-                        router.push('/login');
+                        // Pasar el QR en el returnUrl para que el dashboard lo reciba directamente
+                        const returnUrl = encodeURIComponent(`/dashboard?claimQr=${qrCode}`);
+                        router.push(`/login?returnUrl=${returnUrl}`);
                       }}
                       className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                     >
@@ -529,11 +530,11 @@ function ScanPageContent() {
                     </button>
                     <button
                       onClick={() => {
-                        // Store QR code in localStorage before redirecting to register
                         if (typeof window !== 'undefined') {
                           localStorage.setItem('pendingClaimQr', qrCode);
                         }
-                        router.push('/register');
+                        const returnUrl = encodeURIComponent(`/dashboard?claimQr=${qrCode}`);
+                        router.push(`/register?returnUrl=${returnUrl}`);
                       }}
                       className="inline-flex items-center gap-2 bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-colors"
                     >
