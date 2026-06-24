@@ -1850,18 +1850,6 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* Pulsera efectiva para asignar: estado explícito o primera sin portador del listado */}
-        {(() => {
-          const pendienteDeEstado = claimedPulseraForAssignment;
-          const pendienteDeLista = pulseras.find((p: any) => !p.portador && !p.assigned);
-          const efectiva = pendienteDeEstado || pendienteDeLista || null;
-          if (efectiva && efectiva !== claimedPulseraForAssignment) {
-            // Sincronizar el estado si el listado tiene una pulsera pendiente y el estado no
-            setTimeout(() => setClaimedPulseraForAssignment(efectiva), 0);
-          }
-          return null;
-        })()}
-
         {/* Banner: Pulseras reclamadas sin portador */}
         {pulseras.filter(p => !p.portador && !p.assigned).length > 0 && (
           <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-4 mb-4 shadow-md">
