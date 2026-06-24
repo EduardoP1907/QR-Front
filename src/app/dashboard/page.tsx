@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -131,7 +131,10 @@ function DashboardContent() {
   const [loading, setLoading] = useState(true);
   const [availablePulseras, setAvailablePulseras] = useState(0);
   const [claimingQr, setClaimingQr] = useState(false);
-  const claimedQrsRef = useRef<Set<string>>(new Set());
+  // sessionStorage persiste entre remounts de Suspense (a diferencia de useRef)
+  const isQrClaimed = (qr: string) => typeof window !== 'undefined' && sessionStorage.getItem(`clm_${qr}`) === '1';
+  const markQrClaimed = (qr: string) => typeof window !== 'undefined' && sessionStorage.setItem(`clm_${qr}`, '1');
+  const unmarkQrClaimed = (qr: string) => typeof window !== 'undefined' && sessionStorage.removeItem(`clm_${qr}`);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingPulsera, setEditingPulsera] = useState<Pulsera | null>(null);
@@ -336,10 +339,9 @@ function DashboardContent() {
     const handleClaimInit = async () => {
       const claimQr = await initializeQrClaim();
 
-      // Prevent claiming the same QR multiple times
-      if (claimQr && !claimingQr && !claimedQrsRef.current.has(claimQr)) {
-        // Mark this QR as being claimed
-        claimedQrsRef.current.add(claimQr);
+      // sessionStorage previene re-claims incluso si el componente se remonta (Suspense)
+      if (claimQr && !claimingQr && !isQrClaimed(claimQr)) {
+        markQrClaimed(claimQr);
 
         const handleClaimQr = async () => {
           setClaimingQr(true);
@@ -435,11 +437,13 @@ function DashboardContent() {
               toast.error(errorMsg);
             }
 
-            // Remove from ref on error so it can be retried if needed
-            claimedQrsRef.current.delete(claimQr);
-
-            // ALWAYS remove claimQr from URL to prevent infinite loop
-            router.replace("/dashboard");
+            // Solo desmarcar si fue un error real (no "ya reclamada") para permitir retry
+            if (!errorMsg.toLowerCase().includes("ya ha sido reclamada") &&
+                !errorMsg.toLowerCase().includes("already claimed") &&
+                error.response?.status !== 400) {
+              unmarkQrClaimed(claimQr);
+            }
+            // NO llamar router.replace — causa remount de Suspense que resetea el estado
           } finally {
             setClaimingQr(false);
           }
