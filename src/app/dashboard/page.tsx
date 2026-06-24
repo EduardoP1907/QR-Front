@@ -404,15 +404,28 @@ function DashboardContent() {
               error.response?.data?.message ||
               "Error al reclamar el QR";
 
-            // Check if it's an "already claimed" error
+            // Si ya fue reclamada, buscar la pulsera en la lista y mostrar opción de asignar
             if (
               errorMsg.toLowerCase().includes("ya ha sido reclamada") ||
               errorMsg.toLowerCase().includes("already claimed") ||
               error.response?.status === 400
             ) {
-              toast.error(
-                "Este Bluko Life ya fue reclamado. Por favor escanea un QR nuevo.",
-              );
+              try {
+                const pulserasResponse = await pulseraApi.getAll();
+                const lista = Array.isArray(pulserasResponse.data)
+                  ? pulserasResponse.data
+                  : (pulserasResponse.data?.items ?? []);
+                setPulseras(lista);
+                const pendiente = lista.find((p: any) => !p.portador && !p.assigned);
+                if (pendiente) {
+                  setClaimedPulseraForAssignment(pendiente);
+                  toast('Bluko Life reclamado — selecciona un portador para asignarlo.', { icon: '🔗', duration: 6000 });
+                } else {
+                  toast.error("Este Bluko Life ya fue reclamado y asignado.");
+                }
+              } catch {
+                toast.error("Este Bluko Life ya fue reclamado. Recarga la página.");
+              }
             } else {
               toast.error(errorMsg);
             }
