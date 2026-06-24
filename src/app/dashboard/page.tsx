@@ -295,34 +295,28 @@ function DashboardContent() {
     }
 
     const initializeQrClaim = async () => {
+      // Fuente 1: URL param (viene del returnUrl al hacer login desde la página de scan)
       let claimQr = searchParams.get("claimQr");
       console.log("🔍 [claim] URL claimQr param:", claimQr);
 
-      // Check localStorage for pending QR claim after login
+      // Fuente 2: localStorage (guardado por la página de scan antes de redirigir a login)
       if (!claimQr && typeof window !== "undefined") {
         const pendingQr = localStorage.getItem("pendingClaimQr");
         console.log("🔍 [claim] localStorage pendingClaimQr:", pendingQr);
         if (pendingQr) {
           claimQr = pendingQr;
           localStorage.removeItem("pendingClaimQr");
-
-          try {
-            await contratanteApi.saveScannedQr(pendingQr);
-          } catch (error) {
-            console.error("Error saving QR to backend:", error);
-          }
-
-          router.replace(`/dashboard?claimQr=${pendingQr}`);
+          // NO llamar router.replace — causa re-render completo de la página (Next.js + useSearchParams sin Suspense)
         }
       }
 
-      // Si no hay QR en URL ni en localStorage, intentar obtener del backend
+      // Fuente 3: backend cache (saveScannedQr fue llamado desde la página de scan cuando el usuario ya estaba logueado)
       if (!claimQr) {
         try {
           const response = await contratanteApi.getScannedQr();
           if (response.data?.qrCode) {
             claimQr = response.data.qrCode;
-            router.replace(`/dashboard?claimQr=${claimQr}`);
+            // NO llamar router.replace — misma razón
           }
         } catch (error: any) {
           if (error.response?.status !== 404) {
