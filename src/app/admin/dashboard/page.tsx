@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
-import {Shield,LogOut,QrCode,Download,X,Check,TrendingUp,Package,Truck,CheckCircle,AlertCircle,ArrowLeft,ChevronDown,ChevronRight,User,Users,Mail,CreditCard,Search,RefreshCw,Pause,Play,Trash2,Eye,Tag,Plus,Edit,Calendar,Percent} from 'lucide-react';
+import {Shield,LogOut,QrCode,Download,X,Check,TrendingUp,Package,Truck,CheckCircle,AlertCircle,ArrowLeft,ChevronDown,ChevronRight,User,Users,Mail,CreditCard,Search,RefreshCw,Pause,Play,Trash2,Eye,Tag,Plus,Edit,Calendar,Percent,Lock,Gift} from 'lucide-react';
 import { adminApi } from '@/services/api';
 
 interface Stats {
@@ -39,6 +39,8 @@ interface Pulsera {
   fabricatedAt?: string;
   inStockAt?: string;
   subscribedAt?: string;
+  cortesia?: boolean;
+  cortesiaDias?: number | null;
   portador?: {
     id: number;
     firstName: string;
@@ -778,6 +780,60 @@ export default function AdminDashboardPage() {
     } catch (error: any) {
       console.error('Error bloqueando portador:', error);
       toast.error('Error al bloquear el portador');
+    }
+  };
+
+  const handleBlockPulsera = async (pulseraId: number, customId: string) => {
+    if (!confirm(`¿Bloquear la pulsera ${customId}?\n\nEsto la desactiva inmediatamente (ej: robo o extravío). Se puede desbloquear después.`)) {
+      return;
+    }
+    try {
+      await adminApi.pausePulsera(pulseraId);
+      toast.success(`Pulsera ${customId} bloqueada`);
+      if (expandedContratante) {
+        const newDetails = new Map(contratanteDetails);
+        newDetails.delete(expandedContratante);
+        setContratanteDetails(newDetails);
+        await loadContratanteDetail(expandedContratante);
+      }
+      loadData();
+    } catch (error: any) {
+      console.error('Error bloqueando pulsera:', error);
+      toast.error('Error al bloquear la pulsera');
+    }
+  };
+
+  const handleToggleCortesia = async (pulseraId: number, customId: string, esCortesia: boolean | undefined) => {
+    if (esCortesia) {
+      if (!confirm(`¿Quitar la cortesía de la pulsera ${customId}?`)) return;
+      try {
+        await adminApi.toggleCortesiaPulsera(pulseraId, null);
+        toast.success(`Cortesía removida de ${customId}`);
+        await loadInStockPulseras();
+      } catch (error: any) {
+        toast.error('Error al actualizar cortesía');
+      }
+      return;
+    }
+
+    const diasInput = window.prompt(
+      `¿Cuántos días de suscripción gratuita para ${customId}?\n\n` +
+      'Ejemplos: 30, 60, 90, 180, 365\n' +
+      'Dejar vacío para indefinida (sin expiración).'
+    );
+    if (diasInput === null) return; // canceló
+    const dias = diasInput.trim() === '' ? null : parseInt(diasInput.trim(), 10);
+    if (dias !== null && (isNaN(dias) || dias <= 0)) {
+      toast.error('Ingresa un número de días válido o deja vacío para indefinida');
+      return;
+    }
+    try {
+      await adminApi.toggleCortesiaPulsera(pulseraId, dias);
+      const msg = dias ? `${dias} días gratis` : 'suscripción indefinida';
+      toast.success(`Pulsera ${customId} marcada como cortesía (${msg})`);
+      await loadInStockPulseras();
+    } catch (error: any) {
+      toast.error('Error al marcar como cortesía');
     }
   };
 
@@ -1827,6 +1883,7 @@ export default function AdminDashboardPage() {
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Código QR (UUID)</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Fecha Ingreso Stock</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Estado</th>
+                        <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Cortesía</th>
                         <th className="px-6 py-5 text-left text-base font-bold text-gray-900">Imagen QR</th>
                       </tr>
                     </thead>
@@ -1851,6 +1908,24 @@ export default function AdminDashboardPage() {
                           </td>
                           <td className="px-6 py-4">
                             {getStatusBadge(pulsera.status)}
+                          </td>
+                          <td className="px-6 py-4">
+                            <button
+                              onClick={() => handleToggleCortesia(pulsera.id, pulsera.customId, pulsera.cortesia)}
+                              className={`inline-flex items-center gap-2 px-3 py-2 text-sm rounded-lg font-semibold transition-colors ${
+                                pulsera.cortesia
+                                  ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              }`}
+                              title={pulsera.cortesia
+                                ? `Cortesía activa${pulsera.cortesiaDias ? ` (${pulsera.cortesiaDias} días)` : ' (indefinida)'} — clic para quitar`
+                                : 'Marcar como cortesía (sin pago al reclamar)'}
+                            >
+                              <Gift className="w-4 h-4" />
+                              {pulsera.cortesia
+                                ? `Cortesía${pulsera.cortesiaDias ? ` ${pulsera.cortesiaDias}d` : ' ∞'}`
+                                : 'Dar Cortesía'}
+                            </button>
                           </td>
                           <td className="px-6 py-4">
                             <button
@@ -2496,10 +2571,10 @@ export default function AdminDashboardPage() {
                                               <button
                                                 onClick={() => handleBlockPortadorFromAdmin(portador.id, `${portador.firstName} ${portador.paternalSurname}`, contratante.id)}
                                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 font-semibold transition-colors"
-                                                title="Bloquear portador (pausa sus pulseras activas)"
+                                                title="Bloquear portador (pausa todas sus pulseras activas)"
                                               >
                                                 <Pause className="w-3.5 h-3.5" />
-                                                Bloquear
+                                                Bloquear todo
                                               </button>
                                               <button
                                                 onClick={() => handleDeletePortadorFromAdmin(portador.id, `${portador.firstName} ${portador.paternalSurname}`, contratante.id)}
@@ -2510,6 +2585,40 @@ export default function AdminDashboardPage() {
                                                 Eliminar
                                               </button>
                                             </div>
+                                            {/* Pulseras del portador */}
+                                            {(() => {
+                                              const portadorPulseras = (contratanteDetails.get(contratante.id)?.pulseras || []).filter((p: any) => p.portador?.id === portador.id);
+                                              if (portadorPulseras.length === 0) return null;
+                                              return (
+                                                <div className="mt-3 pt-3 border-t border-gray-100">
+                                                  <p className="text-xs font-bold text-gray-600 mb-2 flex items-center gap-1">
+                                                    <QrCode className="w-3.5 h-3.5 text-[#481468]" />
+                                                    Pulsera(s) ({portadorPulseras.length})
+                                                  </p>
+                                                  <div className="space-y-1.5">
+                                                    {portadorPulseras.map((pulsera: any) => (
+                                                      <div key={pulsera.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 gap-2">
+                                                        <div className="flex items-center gap-2 min-w-0">
+                                                          <span className="text-xs font-bold text-gray-900 truncate">{pulsera.customId}</span>
+                                                          <span className={`shrink-0 text-xs px-1.5 py-0.5 rounded-full font-semibold ${pulsera.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                            {pulsera.active ? 'Activa' : 'Bloqueada'}
+                                                          </span>
+                                                        </div>
+                                                        <button
+                                                          onClick={() => handleBlockPulsera(pulsera.id, pulsera.customId)}
+                                                          disabled={!pulsera.active}
+                                                          className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                                          title={pulsera.active ? 'Bloquear QR (robo / extravío)' : 'Ya bloqueada'}
+                                                        >
+                                                          <Lock className="w-3 h-3" />
+                                                          Bloquear QR
+                                                        </button>
+                                                      </div>
+                                                    ))}
+                                                  </div>
+                                                </div>
+                                              );
+                                            })()}
                                           </div>
                                         ))}
                                       </div>

@@ -435,6 +435,11 @@ export const adminApi = {
   deletePulsera: (id: number) =>
     api.delete(`/admin/pulseras/${id}`),
 
+  // Cortesía: marca una pulsera en stock como gratuita
+  // dias: número de días de suscripción gratuita (undefined/null = indefinida)
+  toggleCortesiaPulsera: (id: number, dias?: number | null) =>
+    api.post(`/admin/pulseras/${id}/cortesia`, { dias: dias ?? null }),
+
   getPedidosPorDespachar: () =>
     api.get('/admin/pedidos/por-despachar'),
 
