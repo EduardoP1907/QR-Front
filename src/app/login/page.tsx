@@ -59,7 +59,9 @@ export default function LoginPage() {
       await login(data.email, data.password);
       await claimPendingQr();
       toast.success('¡Bienvenido de vuelta!');
-      router.push(returnUrl);
+      // window.location.href fuerza full page load (no client-side navigation)
+      // Esto bypasea el memory cache del browser y carga el chunk nuevo del dashboard
+      window.location.href = returnUrl;
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Error al iniciar sesión';
       toast.error(errorMessage);
@@ -92,7 +94,7 @@ export default function LoginPage() {
       await loginWithOtp(data.email, data.otp);
       await claimPendingQr();
       toast.success('¡Acceso autorizado!');
-      router.push(returnUrl);
+      window.location.href = returnUrl;
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Código inválido';
       toast.error(errorMessage);
