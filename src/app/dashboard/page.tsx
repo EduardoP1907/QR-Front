@@ -346,25 +346,42 @@ function DashboardContent() {
               "¡QR reclamado exitosamente! Ahora puedes asignar el Bluko Life a un portador.",
             );
 
-            // Reload pulseras and available count
-            const [pulserasResponse, availableResponse] = await Promise.all([
-              pulseraApi.getAll(),
-              contratanteApi.getAvailablePulseras(),
-            ]);
+            // Recargar pulseras (crítico para mostrar botón de asignación)
+            let updatedPulserasList: any[] = [];
+            try {
+              const pulserasResponse = await pulseraApi.getAll();
+              updatedPulserasList = Array.isArray(pulserasResponse.data)
+                ? pulserasResponse.data
+                : (pulserasResponse.data?.items ?? []);
+              setPulseras(updatedPulserasList);
+            } catch (err) {
+              console.error("Error recargando pulseras post-claim:", err);
+            }
 
-            const updatedPulserasList = Array.isArray(pulserasResponse.data)
-              ? pulserasResponse.data
-              : (pulserasResponse.data?.items ?? []);
-
-            setPulseras(updatedPulserasList);
-            setAvailablePulseras(availableResponse.data.availablePulseras || 0);
+            // Recargar contador de pulseras disponibles (no crítico)
+            try {
+              const availableResponse = await contratanteApi.getAvailablePulseras();
+              setAvailablePulseras(availableResponse.data.availablePulseras || 0);
+            } catch (_err) {
+              setAvailablePulseras(0);
+            }
 
             // Buscar la pulsera recién reclamada para mostrar botón de asignación
             const pulseraId =
               response.data.pulseraId || response.data.pulsera?.id;
-            const claimedPulsera = pulseraId
-              ? updatedPulserasList.find((p: any) => p.id === pulseraId || String(p.id) === String(pulseraId))
+            let claimedPulsera = pulseraId
+              ? updatedPulserasList.find((p: any) => String(p.id) === String(pulseraId))
               : updatedPulserasList.find((p: any) => p.status === 'CLAIMED' && !p.portador && !p.assigned);
+
+            // Fallback: si no encontramos en la lista, usamos los datos de la respuesta del claim
+            if (!claimedPulsera && pulseraId) {
+              claimedPulsera = {
+                id: pulseraId,
+                customId: response.data.customId || '',
+                status: 'CLAIMED',
+                portador: null,
+              };
+            }
 
             if (claimedPulsera) {
               setClaimedPulseraForAssignment(claimedPulsera);
