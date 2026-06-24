@@ -8,7 +8,7 @@ import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { Shield, Mail, Lock, Eye, EyeOff, ArrowLeft, Key, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { authApi } from '../../services/api';
+import { authApi, contratanteApi } from '../../services/api';
 
 interface LoginFormData {
   email: string;
@@ -36,11 +36,28 @@ export default function LoginPage() {
   const passwordForm = useForm<LoginFormData>();
   const otpForm = useForm<OtpFormData>();
 
+  // Reclamar QR pendiente después del login (antes de navegar al dashboard)
+  const claimPendingQr = async () => {
+    if (typeof window === 'undefined') return;
+    const pendingQr = localStorage.getItem('pendingClaimQr');
+    if (!pendingQr) return;
+    localStorage.removeItem('pendingClaimQr');
+    try {
+      await contratanteApi.claimQr(pendingQr);
+      // El dashboard detectará la pulsera CLAIMED via auto-recovery en fetchData
+      console.log('✅ QR reclamado en login page:', pendingQr);
+    } catch (err: any) {
+      // Si ya fue reclamado o hay error, el dashboard lo manejará igual
+      console.log('ℹ️ QR claim en login page:', err?.response?.data?.error || err?.message);
+    }
+  };
+
   // Login con contraseña
   const onPasswordSubmit = async (data: LoginFormData) => {
     setLoading(true);
     try {
       await login(data.email, data.password);
+      await claimPendingQr();
       toast.success('¡Bienvenido de vuelta!');
       router.push(returnUrl);
     } catch (error: any) {
@@ -73,6 +90,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await loginWithOtp(data.email, data.otp);
+      await claimPendingQr();
       toast.success('¡Acceso autorizado!');
       router.push(returnUrl);
     } catch (error: any) {
