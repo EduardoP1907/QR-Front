@@ -294,6 +294,11 @@ function DashboardContent() {
     const initializeQrClaim = async () => {
       let claimQr = searchParams.get("claimQr");
 
+      // Si el QR viene por URL, limpiar también el localStorage para evitar bucles
+      if (claimQr && typeof window !== "undefined") {
+        localStorage.removeItem("pendingClaimQr");
+      }
+
       // Check localStorage for pending QR claim after login
       if (!claimQr && typeof window !== "undefined") {
         const pendingQr = localStorage.getItem("pendingClaimQr");
@@ -395,8 +400,8 @@ function DashboardContent() {
               setClaimedPulseraForAssignment(claimedPulsera);
             }
 
-            // Remove claimQr from URL
-            router.replace("/dashboard");
+            // No llamamos router.replace aquí para evitar re-renders que borren el estado
+            // El claimedQrsRef.current previene re-claims aunque la URL tenga el param
           } catch (error: any) {
             console.error("Error claiming QR:", error);
             const errorMsg =
@@ -1844,6 +1849,18 @@ function DashboardContent() {
             </button>
           </div>
         </div>
+
+        {/* Pulsera efectiva para asignar: estado explícito o primera sin portador del listado */}
+        {(() => {
+          const pendienteDeEstado = claimedPulseraForAssignment;
+          const pendienteDeLista = pulseras.find((p: any) => !p.portador && !p.assigned);
+          const efectiva = pendienteDeEstado || pendienteDeLista || null;
+          if (efectiva && efectiva !== claimedPulseraForAssignment) {
+            // Sincronizar el estado si el listado tiene una pulsera pendiente y el estado no
+            setTimeout(() => setClaimedPulseraForAssignment(efectiva), 0);
+          }
+          return null;
+        })()}
 
         {/* Banner: Pulseras reclamadas sin portador */}
         {pulseras.filter(p => !p.portador && !p.assigned).length > 0 && (
