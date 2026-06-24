@@ -349,6 +349,11 @@ function DashboardContent() {
             const response = await contratanteApi.claimQr(claimQr);
             console.log("✅ [claim] Claim exitoso, respuesta:", response.data);
 
+            // Limpiar localStorage pendingClaimQr para evitar re-claims en navegaciones futuras
+            if (typeof window !== "undefined") {
+              localStorage.removeItem("pendingClaimQr");
+            }
+
             toast.success(
               "¡QR reclamado exitosamente! Ahora puedes asignar el Bluko Life a un portador.",
             );
