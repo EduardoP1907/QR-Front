@@ -239,13 +239,13 @@ function DashboardContent() {
           setAvailablePulseras(0);
         }
 
+        console.log("📋 [fetchData] Pulseras cargadas:", pulserasList.length, pulserasList.map((p: any) => ({ id: p.id, customId: p.customId, portador: !!p.portador, assigned: p.assigned, status: p.status })));
+
         // Recuperar automáticamente pulseras reclamadas sin portador asignado.
-        // Una pulsera solo aparece en la lista del contratante si fue reclamada
-        // (claimBy seteó contratante_id). Si no tiene portador, está pendiente de asignación.
-        // Funciona con o sin campo 'status' en la respuesta del backend.
         const pulseraClaimedPendiente = pulserasList.find(
           (p: any) => !p.portador && !p.assigned
         );
+        console.log("🔍 [fetchData] Pulsera pendiente de asignar:", pulseraClaimedPendiente ? `${pulseraClaimedPendiente.customId} (id:${pulseraClaimedPendiente.id})` : "NINGUNA");
         if (pulseraClaimedPendiente) {
           setClaimedPulseraForAssignment(pulseraClaimedPendiente);
           toast('Tienes un Bluko Life pendiente de asignar a un portador.', {
@@ -293,28 +293,22 @@ function DashboardContent() {
 
     const initializeQrClaim = async () => {
       let claimQr = searchParams.get("claimQr");
-
-      // Si el QR viene por URL, limpiar también el localStorage para evitar bucles
-      if (claimQr && typeof window !== "undefined") {
-        localStorage.removeItem("pendingClaimQr");
-      }
+      console.log("🔍 [claim] URL claimQr param:", claimQr);
 
       // Check localStorage for pending QR claim after login
       if (!claimQr && typeof window !== "undefined") {
         const pendingQr = localStorage.getItem("pendingClaimQr");
+        console.log("🔍 [claim] localStorage pendingClaimQr:", pendingQr);
         if (pendingQr) {
           claimQr = pendingQr;
           localStorage.removeItem("pendingClaimQr");
 
-          // Guardar en el backend también
           try {
             await contratanteApi.saveScannedQr(pendingQr);
-            console.log("💾 QR from localStorage saved to backend");
           } catch (error) {
             console.error("Error saving QR to backend:", error);
           }
 
-          // Update URL with the QR code
           router.replace(`/dashboard?claimQr=${pendingQr}`);
         }
       }
@@ -325,18 +319,16 @@ function DashboardContent() {
           const response = await contratanteApi.getScannedQr();
           if (response.data?.qrCode) {
             claimQr = response.data.qrCode;
-            console.log("📥 QR retrieved from backend:", claimQr);
-            // Update URL with the QR code
             router.replace(`/dashboard?claimQr=${claimQr}`);
           }
         } catch (error: any) {
-          // Si no hay QR guardado en el backend, es normal (404)
           if (error.response?.status !== 404) {
             console.error("Error getting scanned QR from backend:", error);
           }
         }
       }
 
+      console.log("🔍 [claim] Final claimQr resolved:", claimQr || "NONE");
       return claimQr;
     };
 
@@ -351,9 +343,11 @@ function DashboardContent() {
 
         const handleClaimQr = async () => {
           setClaimingQr(true);
+          console.log("🚀 [claim] Intentando reclamar QR:", claimQr);
 
           try {
             const response = await contratanteApi.claimQr(claimQr);
+            console.log("✅ [claim] Claim exitoso, respuesta:", response.data);
 
             toast.success(
               "¡QR reclamado exitosamente! Ahora puedes asignar el Bluko Life a un portador.",
@@ -396,12 +390,13 @@ function DashboardContent() {
               };
             }
 
+            console.log("🔍 [claim] pulseraId:", pulseraId, "| claimedPulsera:", claimedPulsera);
             if (claimedPulsera) {
+              console.log("✅ [claim] setClaimedPulseraForAssignment:", claimedPulsera.id, claimedPulsera.customId);
               setClaimedPulseraForAssignment(claimedPulsera);
+            } else {
+              console.warn("⚠️ [claim] claimedPulsera es null — el botón verde NO aparecerá");
             }
-
-            // No llamamos router.replace aquí para evitar re-renders que borren el estado
-            // El claimedQrsRef.current previene re-claims aunque la URL tenga el param
           } catch (error: any) {
             console.error("Error claiming QR:", error);
             const errorMsg =
