@@ -1845,6 +1845,38 @@ function DashboardContent() {
           </div>
         </div>
 
+        {/* Banner: Pulseras reclamadas sin portador */}
+        {pulseras.filter(p => !p.portador && !p.assigned).length > 0 && (
+          <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-4 mb-4 shadow-md">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="bg-amber-100 p-2 rounded-lg">
+                <QrCode className="w-5 h-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="font-bold text-amber-900">Bluko Life reclamado pendiente de asignar</p>
+                <p className="text-xs text-amber-700">Selecciona un portador abajo para asignarlo</p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              {pulseras.filter(p => !p.portador && !p.assigned).map(pulsera => (
+                <div key={pulsera.id} className="flex items-center justify-between bg-white rounded-lg px-4 py-2 border border-amber-200">
+                  <span className="font-mono font-bold text-gray-900 text-sm">{pulsera.customId || `ID: ${pulsera.id}`}</span>
+                  <button
+                    onClick={() => {
+                      setClaimedPulseraForAssignment(pulsera);
+                      toast('Ahora selecciona un portador y haz clic en "Asignar QR Reclamado"', { icon: '👇', duration: 5000 });
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold transition-colors"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    Preparar asignación
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Portadores Creados Section */}
         <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 mb-4">
           <div className="bg-gradient-to-r from-[#481468] to-[#3d1158] p-4">
