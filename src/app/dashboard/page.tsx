@@ -214,10 +214,9 @@ function DashboardContent() {
 
     const fetchData = async () => {
       try {
-        const [pulserasResponse, availableResponse, portadoresResponse] =
+        const [pulserasResponse, portadoresResponse] =
           await Promise.all([
             pulseraApi.getAll(),
-            contratanteApi.getAvailablePulseras(),
             contratanteApi.getPortadores(),
           ]);
 
@@ -226,23 +225,32 @@ function DashboardContent() {
           : (pulserasResponse.data?.items ?? []);
 
         setPulseras(pulserasList);
-        setAvailablePulseras(availableResponse.data.availablePulseras || 0);
         setPortadores(
           Array.isArray(portadoresResponse.data)
             ? portadoresResponse.data
             : (portadoresResponse.data?.items ?? []),
         );
 
-        // Recuperar automáticamente pulseras CLAIMED sin portador asignado
-        // (caso: usuario reclamó el QR pero no completó la asignación)
+        // getAvailablePulseras puede fallar para contratantes sin compras (cortesía)
+        try {
+          const availableResponse = await contratanteApi.getAvailablePulseras();
+          setAvailablePulseras(availableResponse.data.availablePulseras || 0);
+        } catch (_e) {
+          setAvailablePulseras(0);
+        }
+
+        // Recuperar automáticamente pulseras reclamadas sin portador asignado.
+        // Una pulsera solo aparece en la lista del contratante si fue reclamada
+        // (claimBy seteó contratante_id). Si no tiene portador, está pendiente de asignación.
+        // Funciona con o sin campo 'status' en la respuesta del backend.
         const pulseraClaimedPendiente = pulserasList.find(
-          (p: any) => p.status === 'CLAIMED' && !p.portador && !p.assigned
+          (p: any) => !p.portador && !p.assigned
         );
         if (pulseraClaimedPendiente) {
           setClaimedPulseraForAssignment(pulseraClaimedPendiente);
-          toast('Tienes un Bluko Life reclamado pendiente de asignar a un portador.', {
+          toast('Tienes un Bluko Life pendiente de asignar a un portador.', {
             icon: '🔗',
-            duration: 5000,
+            duration: 6000,
           });
         }
       } catch (err) {
@@ -371,7 +379,7 @@ function DashboardContent() {
               response.data.pulseraId || response.data.pulsera?.id;
             let claimedPulsera = pulseraId
               ? updatedPulserasList.find((p: any) => String(p.id) === String(pulseraId))
-              : updatedPulserasList.find((p: any) => p.status === 'CLAIMED' && !p.portador && !p.assigned);
+              : updatedPulserasList.find((p: any) => !p.portador && !p.assigned);
 
             // Fallback: si no encontramos en la lista, usamos los datos de la respuesta del claim
             if (!claimedPulsera && pulseraId) {
