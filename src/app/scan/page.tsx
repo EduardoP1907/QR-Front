@@ -507,7 +507,7 @@ function ScanPageContent() {
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 {user ? (
                   <Link
-                    href={`/dashboard?claimQr=${qrCode}`}
+                    href="/dashboard"
                     className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                   >
                     <User className="w-5 h-5" />
@@ -520,9 +520,9 @@ function ScanPageContent() {
                         if (typeof window !== 'undefined') {
                           localStorage.setItem('pendingClaimQr', qrCode);
                         }
-                        // Pasar el QR en el returnUrl para que el dashboard lo reciba directamente
-                        const returnUrl = encodeURIComponent(`/dashboard?claimQr=${qrCode}`);
-                        router.push(`/login?returnUrl=${returnUrl}`);
+                        // returnUrl solo apunta a /dashboard sin QR param
+                        // El QR viaja via localStorage para evitar re-hidratación de useSearchParams
+                        router.push('/login?returnUrl=/dashboard');
                       }}
                       className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                     >
@@ -533,8 +533,7 @@ function ScanPageContent() {
                         if (typeof window !== 'undefined') {
                           localStorage.setItem('pendingClaimQr', qrCode);
                         }
-                        const returnUrl = encodeURIComponent(`/dashboard?claimQr=${qrCode}`);
-                        router.push(`/register?returnUrl=${returnUrl}`);
+                        router.push('/register?returnUrl=/dashboard');
                       }}
                       className="inline-flex items-center gap-2 bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-colors"
                     >
@@ -614,7 +613,7 @@ function ScanPageContent() {
                 Ingresa a tu cuenta para completar la configuración.
               </p>
               <Link
-                href={`/dashboard?claimQr=${qrCode}`}
+                href="/dashboard"
                 className="inline-flex items-center gap-2 text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-colors"
                 style={{backgroundColor: '#481468'}}
               >
