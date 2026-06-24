@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import {
@@ -107,7 +107,6 @@ interface PortadorModalProps {
 type PortadorMode = "add" | "edit";
 function DashboardContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { user, logout } = useAuth();
 
   // Verificar rol del usuario
@@ -295,9 +294,10 @@ function DashboardContent() {
     }
 
     const initializeQrClaim = async () => {
-      // Fuente 1: URL param (viene del returnUrl al hacer login desde la página de scan)
-      let claimQr = searchParams.get("claimQr");
-      console.log("🔍 [claim] URL claimQr param:", claimQr);
+      // El QR llega SOLO por localStorage o backend cache — no por URL param
+      // (se eliminó useSearchParams para evitar re-hidratación de Next.js que causa page reload)
+      let claimQr: string | null = null;
+      console.log("🔍 [claim] iniciando initializeQrClaim...");
 
       // Fuente 2: localStorage (guardado por la página de scan antes de redirigir a login)
       if (!claimQr && typeof window !== "undefined") {
@@ -448,7 +448,7 @@ function DashboardContent() {
     };
 
     handleClaimInit();
-  }, [searchParams, claimingQr, router, assignForm, user]);
+  }, [claimingQr, router, assignForm, user]);
 
   // Cargar QR codes para todas las pulseras (incluyendo las asignadas a portadores)
   useEffect(() => {
