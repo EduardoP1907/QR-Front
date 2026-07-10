@@ -60,8 +60,8 @@ export const authApi = {
   registerPhase2: (email: string, password: string, confirmPassword: string) => 
     api.post(API_ENDPOINTS.auth.registerPhase2, { email, password, confirmPassword }),
     
-  registerPhase3: (email: string, firstName: string, paternalSurname: string, maternalSurname: string, rut: string) => 
-    api.post(API_ENDPOINTS.auth.registerPhase3, { email, firstName, paternalSurname, maternalSurname, rut }),
+  registerPhase3: (email: string, firstName: string, paternalSurname: string, maternalSurname: string, rut: string, documentType: string) =>
+    api.post(API_ENDPOINTS.auth.registerPhase3, { email, firstName, paternalSurname, maternalSurname, rut, documentType }),
     
   // Login
   login: (email: string, password: string) => 
@@ -115,6 +115,7 @@ export const pulseraApi = {
   assign: (id: string | number, assignData: {
     portadorEmail: string;
     portadorRut: string;
+    portadorDocumentType?: string;
     firstName: string;
     paternalSurname: string;
     maternalSurname?: string;
@@ -241,6 +242,7 @@ export const contratanteApi = {
   createPortador: (portadorData: {
     email: string;
     rut: string;
+    documentType?: string;
     firstName: string;
     paternalSurname: string;
     maternalSurname?: string;

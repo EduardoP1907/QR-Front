@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { authApi } from '../../services/api';
 import { validateRut, formatRut } from '../../utils/rutValidator';
+import { validateDni, formatDni } from '../../utils/dniValidator';
 
 // Tipos para cada fase
 interface Phase1Form {
@@ -47,7 +48,10 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
+  const [documentCountry, setDocumentCountry] = useState<'CL' | 'PE'>('CL');
   const router = useRouter();
+
+  const documentType = documentCountry === 'CL' ? 'RUT' : 'DNI';
 
   // Forms para cada fase
   const phase1Form = useForm<Phase1Form>();
@@ -112,7 +116,8 @@ export default function RegisterPage() {
         data.firstName,
         data.paternalSurname,
         data.maternalSurname || '',
-        data.rut
+        data.rut,
+        documentType
       );
       toast.success('¡Registro completado exitosamente!');
       router.push('/login?registered=true');
@@ -123,8 +128,13 @@ export default function RegisterPage() {
     }
   };
 
-  // Validador de RUT en tiempo real
+  // Validador de RUT/DNI en tiempo real, según país seleccionado
   const validateRutField = (value: string) => {
+    if (documentCountry === 'PE') {
+      if (!value) return 'DNI es requerido';
+      if (!validateDni(value)) return 'DNI inválido: debe tener 8 dígitos';
+      return true;
+    }
     if (!value) return 'RUT es requerido';
     if (!validateRut(value)) return 'RUT inválido';
     return true;
@@ -247,7 +257,7 @@ export default function RegisterPage() {
                     <CheckCircle className="w-5 h-5 text-green-500" />
                   )}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-stretch">
                   <input
                     {...phase2Form.register('otp', {
                       required: 'OTP es requerido',
@@ -258,7 +268,7 @@ export default function RegisterPage() {
                     })}
                     type="text"
                     maxLength={6}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-[#481468] text-black"
+                    className="flex-1 min-w-0 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-[#481468] text-black"
                     placeholder="123456"
                     onChange={(e) => {
                       const value = e.target.value;
@@ -278,7 +288,7 @@ export default function RegisterPage() {
                       }
                     }}
                     disabled={loading}
-                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                    className="flex-shrink-0 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
                   >
                     Verificar
                   </button>
@@ -440,23 +450,44 @@ export default function RegisterPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    RUT *
+                    País *
+                  </label>
+                  <select
+                    value={documentCountry}
+                    onChange={(e) => {
+                      setDocumentCountry(e.target.value as 'CL' | 'PE');
+                      phase3Form.setValue('rut', '');
+                      phase3Form.clearErrors('rut');
+                    }}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-[#481468] text-black"
+                  >
+                    <option value="CL">Chile</option>
+                    <option value="PE">Perú</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {documentCountry === 'PE' ? 'DNI *' : 'RUT *'}
                   </label>
                   <input
                     {...phase3Form.register('rut', {
-                      required: 'RUT es requerido',
+                      required: documentCountry === 'PE' ? 'DNI es requerido' : 'RUT es requerido',
                       validate: validateRutField,
                     })}
                     type="text"
+                    inputMode={documentCountry === 'PE' ? 'numeric' : 'text'}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-[#481468] text-black"
-                    placeholder="12.345.678-9"
+                    placeholder={documentCountry === 'PE' ? '12345678' : '12.345.678-9'}
                     onChange={(e) => {
                       let value = e.target.value;
-                      // Auto-formatear mientras el usuario escribe
-                      if (value.length >= 2) {
+                      if (documentCountry === 'PE') {
+                        value = formatDni(value);
+                      } else if (value.length >= 2) {
+                        // Auto-formatear mientras el usuario escribe
                         value = formatRut(value);
-                        e.target.value = value;
                       }
+                      e.target.value = value;
                     }}
                   />
                   {phase3Form.formState.errors.rut && (
@@ -465,7 +496,7 @@ export default function RegisterPage() {
                     </p>
                   )}
                   <p className="text-gray-500 text-xs mt-1">
-                    Formato: 12.345.678-9
+                    Formato: {documentCountry === 'PE' ? '12345678' : '12.345.678-9'}
                   </p>
                 </div>
               </div>

@@ -42,6 +42,7 @@ import {
   validateRutWithMessage,
   cleanRut,
 } from "../../utils/rutValidator";
+import { formatDni, validateDniWithMessage } from "../../utils/dniValidator";
 
 interface PulseraFormData {
   // Datos de la pulsera
@@ -51,6 +52,7 @@ interface PulseraFormData {
   // Datos del portador
   portadorEmail: string;
   portadorRut: string;
+  portadorDocumentType?: string;
   firstName: string;
   paternalSurname: string;
   maternalSurname: string;
@@ -81,6 +83,7 @@ interface AssignFormData {
   // Identificación
   portadorEmail: string;
   portadorRut: string;
+  portadorDocumentType?: string;
   firstName: string;
   paternalSurname: string;
   maternalSurname?: string;
@@ -126,6 +129,10 @@ function DashboardContent() {
     }
   }, [user, router, logout]);
   const [portadorMode, setPortadorMode] = useState<PortadorMode>("add");
+  // País/tipo de documento para el formulario de crear pulsera + portador (FormFields)
+  const [documentCountry, setDocumentCountry] = useState<"CL" | "PE">("CL");
+  // País/tipo de documento para los modales de agregar/editar portador y asignar pulsera (assignForm)
+  const [assignDocumentCountry, setAssignDocumentCountry] = useState<"CL" | "PE">("CL");
   const [pulseras, setPulseras] = useState<Pulsera[]>([]);
   const [loading, setLoading] = useState(true);
   const [availablePulseras, setAvailablePulseras] = useState(0);
@@ -580,6 +587,7 @@ function DashboardContent() {
       const assignData = {
         portadorEmail: data.portadorEmail,
         portadorRut: data.portadorRut,
+        portadorDocumentType: documentCountry === "PE" ? "DNI" : "RUT",
         firstName: data.firstName,
         paternalSurname: data.paternalSurname,
         maternalSurname: data.maternalSurname,
@@ -629,6 +637,7 @@ function DashboardContent() {
   const handleAssign = (pulsera: Pulsera) => {
     setAssigningPulsera(pulsera);
     setShowAssignModal(true);
+    setAssignDocumentCountry("CL");
     assignForm.reset();
     setPrincipiosActivosDetalle([]);
     setPatologiasDetalle([]);
@@ -658,6 +667,7 @@ function DashboardContent() {
   const handleCreateUser = () => {
     setPortadorMode("add");
     setEditingUser(null);
+    setAssignDocumentCountry("CL");
     assignForm.reset();
     setPatologiasDetalle([]);
     setPrincipiosActivosDetalle([]);
@@ -733,6 +743,7 @@ function DashboardContent() {
       const portadorData = {
         email: data.portadorEmail,
         rut: data.portadorRut,
+        documentType: assignDocumentCountry === "PE" ? "DNI" : "RUT",
         firstName: data.firstName,
         paternalSurname: data.paternalSurname,
         maternalSurname: data.maternalSurname,
@@ -797,6 +808,7 @@ function DashboardContent() {
   const handleEditUser = (portador: any) => {
     setPortadorMode("edit");
     setEditingUser(portador);
+    setAssignDocumentCountry(portador.documentType === "DNI" ? "PE" : "CL");
 
     assignForm.reset({
       portadorEmail: portador.email,
@@ -1034,6 +1046,7 @@ function DashboardContent() {
       if (portador) {
         data.portadorEmail = portador.email;
         data.portadorRut = portador.rut;
+        data.portadorDocumentType = portador.documentType || "RUT";
         data.firstName = portador.firstName;
         data.paternalSurname = portador.paternalSurname;
         data.maternalSurname = portador.maternalSurname;
@@ -1043,6 +1056,7 @@ function DashboardContent() {
     const assignData = {
       portadorEmail: data.portadorEmail,
       portadorRut: data.portadorRut,
+      portadorDocumentType: data.portadorDocumentType || (assignDocumentCountry === "PE" ? "DNI" : "RUT"),
       firstName: data.firstName,
       paternalSurname: data.paternalSurname,
       maternalSurname: data.maternalSurname,
@@ -1380,15 +1394,47 @@ function DashboardContent() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              RUT del Portador *
+              País del Portador *
+            </label>
+            <select
+              value={documentCountry}
+              onChange={(e) => {
+                setDocumentCountry(e.target.value as "CL" | "PE");
+                form.setValue("portadorRut", "");
+                form.clearErrors("portadorRut");
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
+            >
+              <option value="CL">Chile</option>
+              <option value="PE">Perú</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {documentCountry === "PE" ? "DNI del Portador *" : "RUT del Portador *"}
             </label>
             <input
               {...form.register("portadorRut", {
-                required: "El RUT es requerido",
+                required: documentCountry === "PE" ? "El DNI es requerido" : "El RUT es requerido",
+                validate: (value: string) => {
+                  const validation = documentCountry === "PE"
+                    ? validateDniWithMessage(value)
+                    : validateRutWithMessage(value);
+                  return validation.isValid || validation.message;
+                },
               })}
               type="text"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
-              placeholder="12.345.678-9"
+              placeholder={documentCountry === "PE" ? "12345678" : "12.345.678-9"}
+              maxLength={documentCountry === "PE" ? 8 : 12}
+              onChange={(e) => {
+                const formatted = documentCountry === "PE"
+                  ? formatDni(e.target.value)
+                  : formatRutSimple(e.target.value);
+                e.target.value = formatted;
+                form.setValue("portadorRut", formatted);
+                form.trigger("portadorRut");
+              }}
             />
             {form.formState.errors.portadorRut && (
               <p className="text-red-500 text-xs mt-1">
@@ -2379,26 +2425,49 @@ function DashboardContent() {
                       )}
                     </div>
 
+                    {portadorMode === "add" && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          País del Portador *
+                        </label>
+                        <select
+                          value={assignDocumentCountry}
+                          onChange={(e) => {
+                            setAssignDocumentCountry(e.target.value as "CL" | "PE");
+                            assignForm.setValue("portadorRut", "");
+                            assignForm.clearErrors("portadorRut");
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
+                        >
+                          <option value="CL">Chile</option>
+                          <option value="PE">Perú</option>
+                        </select>
+                      </div>
+                    )}
                     <div>
                       <label className={`block text-sm font-medium mb-1 ${portadorMode === "edit" ? "text-gray-500" : "text-gray-700"}`}>
-                        RUT del Portador *
+                        {assignDocumentCountry === "PE" ? "DNI del Portador *" : "RUT del Portador *"}
                       </label>
                       <input
                         {...assignForm.register("portadorRut", {
-                          required: portadorMode === "add" ? "El RUT es requerido" : false,
+                          required: portadorMode === "add" ? (assignDocumentCountry === "PE" ? "El DNI es requerido" : "El RUT es requerido") : false,
                           validate: portadorMode === "add" ? (value) => {
-                            const validation = validateRutWithMessage(value);
+                            const validation = assignDocumentCountry === "PE"
+                              ? validateDniWithMessage(value)
+                              : validateRutWithMessage(value);
                             return validation.isValid || validation.message;
                           } : undefined,
                         })}
                         type="text"
                         disabled={portadorMode === "edit"}
                         className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black ${portadorMode === "edit" ? "bg-gray-100 cursor-not-allowed" : ""}`}
-                        placeholder="20.283.752-3"
-                        maxLength={12}
+                        placeholder={assignDocumentCountry === "PE" ? "12345678" : "20.283.752-3"}
+                        maxLength={assignDocumentCountry === "PE" ? 8 : 12}
                         onChange={(e) => {
                           if (portadorMode === "add") {
-                            const formatted = formatRutSimple(e.target.value);
+                            const formatted = assignDocumentCountry === "PE"
+                              ? formatDni(e.target.value)
+                              : formatRutSimple(e.target.value);
                             e.target.value = formatted;
                             assignForm.setValue("portadorRut", formatted);
                             assignForm.trigger("portadorRut");
@@ -2407,7 +2476,11 @@ function DashboardContent() {
                       />
                       {portadorMode === "edit" ? (
                         <p className="text-xs text-gray-500 mt-1">
-                          El RUT no se puede modificar
+                          {assignDocumentCountry === "PE" ? "El DNI no se puede modificar" : "El RUT no se puede modificar"}
+                        </p>
+                      ) : assignDocumentCountry === "PE" ? (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Ingresa los 8 dígitos del DNI.
                         </p>
                       ) : (
                         <p className="text-xs text-gray-500 mt-1">
@@ -3133,6 +3206,9 @@ function DashboardContent() {
                               portador.email,
                             );
                             assignForm.setValue("portadorRut", portador.rut);
+                            setAssignDocumentCountry(
+                              portador.documentType === "DNI" ? "PE" : "CL",
+                            );
                             assignForm.setValue(
                               "firstName",
                               portador.firstName,
@@ -3148,6 +3224,7 @@ function DashboardContent() {
                           }
                         } else {
                           assignForm.reset();
+                          setAssignDocumentCountry("CL");
                         }
                       }}
                       className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
@@ -3197,25 +3274,48 @@ function DashboardContent() {
                       )}
                     </div>
 
+                    {!selectedPortadorId && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          País del Portador *
+                        </label>
+                        <select
+                          value={assignDocumentCountry}
+                          onChange={(e) => {
+                            setAssignDocumentCountry(e.target.value as "CL" | "PE");
+                            assignForm.setValue("portadorRut", "");
+                            assignForm.clearErrors("portadorRut");
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black"
+                        >
+                          <option value="CL">Chile</option>
+                          <option value="PE">Perú</option>
+                        </select>
+                      </div>
+                    )}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        RUT del Portador *
+                        {assignDocumentCountry === "PE" ? "DNI del Portador *" : "RUT del Portador *"}
                       </label>
                       <input
                         {...assignForm.register("portadorRut", {
-                          required: "El RUT es requerido",
+                          required: assignDocumentCountry === "PE" ? "El DNI es requerido" : "El RUT es requerido",
                           validate: (value) => {
-                            const validation = validateRutWithMessage(value);
+                            const validation = assignDocumentCountry === "PE"
+                              ? validateDniWithMessage(value)
+                              : validateRutWithMessage(value);
                             return validation.isValid || validation.message;
                           },
                         })}
                         type="text"
                         disabled={!!selectedPortadorId}
                         className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black ${selectedPortadorId ? "bg-gray-100 cursor-not-allowed" : ""}`}
-                        placeholder="20.283.752-3"
-                        maxLength={12}
+                        placeholder={assignDocumentCountry === "PE" ? "12345678" : "20.283.752-3"}
+                        maxLength={assignDocumentCountry === "PE" ? 8 : 12}
                         onChange={(e) => {
-                          const formatted = formatRutSimple(e.target.value);
+                          const formatted = assignDocumentCountry === "PE"
+                            ? formatDni(e.target.value)
+                            : formatRutSimple(e.target.value);
                           e.target.value = formatted;
                           assignForm.setValue("portadorRut", formatted);
                           assignForm.trigger("portadorRut");
@@ -3228,8 +3328,9 @@ function DashboardContent() {
                       )}
                       {!selectedPortadorId && (
                         <p className="text-xs text-gray-500 mt-1">
-                          💡 Ingresa números y dígito verificador (ej:
-                          202837523). Se formateará automáticamente.
+                          {assignDocumentCountry === "PE"
+                            ? "💡 Ingresa los 8 dígitos del DNI."
+                            : "💡 Ingresa números y dígito verificador (ej: 202837523). Se formateará automáticamente."}
                         </p>
                       )}
                     </div>
