@@ -25,6 +25,7 @@ import { useAuth } from "../../context/AuthContext";
 import { profileApi } from "../../services/api";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import { regiones as regionesData, getComunasByRegion, getRegionByNombre } from "../../data/chile-dpa";
+import { formatDni, validateDniWithMessage } from "../../utils/dniValidator";
 
 interface ProfileData {
   id: number;
@@ -68,6 +69,7 @@ interface ProfileFormData {
   firstName: string;
   paternalSurname: string;
   maternalSurname: string;
+  rut: string;
 }
 
 interface DireccionFormData {
@@ -139,6 +141,8 @@ function ProfileContent() {
     register,
     handleSubmit,
     reset,
+    setValue,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm<ProfileFormData>();
 
@@ -181,6 +185,7 @@ function ProfileContent() {
         firstName: profileResponse.data.firstName || "",
         paternalSurname: profileResponse.data.paternalSurname || "",
         maternalSurname: profileResponse.data.maternalSurname || "",
+        rut: profileResponse.data.rut || "",
       });
 
       // Resetear el formulario de dirección
@@ -208,6 +213,8 @@ function ProfileContent() {
         firstName: data.firstName,
         paternalSurname: data.paternalSurname,
         maternalSurname: data.maternalSurname || undefined,
+        // El DNI peruano no tiene dígito verificador, por lo que se permite corregirlo al editar
+        ...(profile?.documentType === "DNI" ? { rut: data.rut } : {}),
       });
 
       setProfile((prev) => (prev ? { ...prev, ...response.data } : null));
@@ -507,6 +514,41 @@ function ProfileContent() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
                         />
                       </div>
+
+                      {profile.documentType === "DNI" && (
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            DNI *
+                          </label>
+                          <input
+                            {...register("rut", {
+                              required: "El DNI es requerido",
+                              validate: (value) => {
+                                const validation = validateDniWithMessage(value);
+                                return validation.isValid || validation.message;
+                              },
+                            })}
+                            type="text"
+                            maxLength={8}
+                            placeholder="12345678"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-black"
+                            onChange={(e) => {
+                              const formatted = formatDni(e.target.value);
+                              e.target.value = formatted;
+                              setValue("rut", formatted);
+                              trigger("rut");
+                            }}
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            El DNI no tiene dígito verificador: puedes corregirlo si fue ingresado con un error.
+                          </p>
+                          {errors.rut && (
+                            <p className="text-red-500 text-sm mt-1">
+                              {errors.rut.message}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex justify-end">

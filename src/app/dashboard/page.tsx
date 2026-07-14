@@ -991,6 +991,8 @@ function DashboardContent() {
         firstName: data.firstName,
         paternalSurname: data.paternalSurname,
         maternalSurname: data.maternalSurname,
+        // El DNI peruano no tiene dígito verificador, por lo que se permite corregirlo al editar
+        ...(assignDocumentCountry === "PE" ? { rut: data.portadorRut } : {}),
         grupoSanguineo: data.grupoSanguineo || "",
         peso: data.peso ? Number(data.peso) : null,
         estatura: data.estatura ? Number(data.estatura) : null,
@@ -1045,8 +1047,12 @@ function DashboardContent() {
       );
       if (portador) {
         data.portadorEmail = portador.email;
-        data.portadorRut = portador.rut;
         data.portadorDocumentType = portador.documentType || "RUT";
+        // El RUT chileno no se puede editar, pero el DNI peruano sí (no tiene dígito
+        // verificador), por lo que respetamos el valor editado en el formulario.
+        if (portador.documentType !== "DNI") {
+          data.portadorRut = portador.rut;
+        }
         data.firstName = portador.firstName;
         data.paternalSurname = portador.paternalSurname;
         data.maternalSurname = portador.maternalSurname;
@@ -2445,13 +2451,13 @@ function DashboardContent() {
                       </div>
                     )}
                     <div>
-                      <label className={`block text-sm font-medium mb-1 ${portadorMode === "edit" ? "text-gray-500" : "text-gray-700"}`}>
+                      <label className={`block text-sm font-medium mb-1 ${portadorMode === "edit" && assignDocumentCountry !== "PE" ? "text-gray-500" : "text-gray-700"}`}>
                         {assignDocumentCountry === "PE" ? "DNI del Portador *" : "RUT del Portador *"}
                       </label>
                       <input
                         {...assignForm.register("portadorRut", {
-                          required: portadorMode === "add" ? (assignDocumentCountry === "PE" ? "El DNI es requerido" : "El RUT es requerido") : false,
-                          validate: portadorMode === "add" ? (value) => {
+                          required: (portadorMode === "add" || assignDocumentCountry === "PE") ? (assignDocumentCountry === "PE" ? "El DNI es requerido" : "El RUT es requerido") : false,
+                          validate: (portadorMode === "add" || assignDocumentCountry === "PE") ? (value) => {
                             const validation = assignDocumentCountry === "PE"
                               ? validateDniWithMessage(value)
                               : validateRutWithMessage(value);
@@ -2459,12 +2465,12 @@ function DashboardContent() {
                           } : undefined,
                         })}
                         type="text"
-                        disabled={portadorMode === "edit"}
-                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black ${portadorMode === "edit" ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                        disabled={portadorMode === "edit" && assignDocumentCountry !== "PE"}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-opacity-75 text-black ${portadorMode === "edit" && assignDocumentCountry !== "PE" ? "bg-gray-100 cursor-not-allowed" : ""}`}
                         placeholder={assignDocumentCountry === "PE" ? "12345678" : "20.283.752-3"}
                         maxLength={assignDocumentCountry === "PE" ? 8 : 12}
                         onChange={(e) => {
-                          if (portadorMode === "add") {
+                          if (portadorMode === "add" || assignDocumentCountry === "PE") {
                             const formatted = assignDocumentCountry === "PE"
                               ? formatDni(e.target.value)
                               : formatRutSimple(e.target.value);
@@ -2476,7 +2482,9 @@ function DashboardContent() {
                       />
                       {portadorMode === "edit" ? (
                         <p className="text-xs text-gray-500 mt-1">
-                          {assignDocumentCountry === "PE" ? "El DNI no se puede modificar" : "El RUT no se puede modificar"}
+                          {assignDocumentCountry === "PE"
+                            ? "El DNI no tiene dígito verificador: puedes corregirlo si fue ingresado con un error."
+                            : "El RUT no se puede modificar"}
                         </p>
                       ) : assignDocumentCountry === "PE" ? (
                         <p className="text-xs text-gray-500 mt-1">

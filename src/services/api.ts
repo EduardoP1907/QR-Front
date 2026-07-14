@@ -280,6 +280,7 @@ export const contratanteApi = {
     firstName: string;
     paternalSurname: string;
     maternalSurname?: string;
+    rut?: string;
     medicalInfo?: string;
     medicamentos?: string;
     enfermedadIds?: number[];
@@ -358,6 +359,7 @@ export const profileApi = {
     firstName: string;
     paternalSurname: string;
     maternalSurname?: string;
+    rut?: string;
   }) =>
     api.put(API_ENDPOINTS.contratantes.profile.update, profileData),
 
