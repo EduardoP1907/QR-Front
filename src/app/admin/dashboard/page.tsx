@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
-import {Shield,LogOut,QrCode,Download,X,Check,TrendingUp,Package,Truck,CheckCircle,AlertCircle,ArrowLeft,ChevronDown,ChevronRight,User,Users,Mail,CreditCard,Search,RefreshCw,Pause,Play,Trash2,Eye,Tag,Plus,Edit,Calendar,Percent,Lock,Gift} from 'lucide-react';
+import {Shield,LogOut,QrCode,Download,X,Check,TrendingUp,Package,Truck,CheckCircle,AlertCircle,ArrowLeft,ChevronDown,ChevronRight,User,Users,Mail,CreditCard,Search,RefreshCw,Pause,Play,Trash2,Eye,Tag,Plus,Edit,Calendar,Percent,Lock,Unlock,Gift} from 'lucide-react';
 import { adminApi } from '@/services/api';
 
 interface Stats {
@@ -728,6 +728,19 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleActivateContratanteSubscription = async (id: number, nombre: string) => {
+    if (!confirm(`¿Reactivar suscripción de ${nombre}?`)) return;
+    try {
+      await adminApi.activateContratanteSubscription(id);
+      toast.success(`Suscripción de ${nombre} reactivada`);
+      await loadAllContratantes();
+      loadData();
+    } catch (error: any) {
+      console.error('Error reactivando suscripción:', error);
+      toast.error('Error al reactivar suscripción');
+    }
+  };
+
   const handleDeleteContratante = async (id: number, nombre: string) => {
     if (!confirm(`¿ELIMINAR al contratante ${nombre}? Se eliminarán también sus pulseras y portadores.`)) return;
     if (!confirm(`CONFIRMACIÓN FINAL: ¿Eliminar ${nombre} permanentemente? Esta acción no se puede deshacer.`)) return;
@@ -800,6 +813,26 @@ export default function AdminDashboardPage() {
     } catch (error: any) {
       console.error('Error bloqueando pulsera:', error);
       toast.error('Error al bloquear la pulsera');
+    }
+  };
+
+  const handleUnblockPulsera = async (pulseraId: number, customId: string) => {
+    if (!confirm(`¿Desbloquear la pulsera ${customId}?\n\nSe reactivará y su suscripción quedará activa por 30 días.`)) {
+      return;
+    }
+    try {
+      await adminApi.activatePulsera(pulseraId);
+      toast.success(`Pulsera ${customId} desbloqueada`);
+      if (expandedContratante) {
+        const newDetails = new Map(contratanteDetails);
+        newDetails.delete(expandedContratante);
+        setContratanteDetails(newDetails);
+        await loadContratanteDetail(expandedContratante);
+      }
+      loadData();
+    } catch (error: any) {
+      console.error('Error desbloqueando pulsera:', error);
+      toast.error('Error al desbloquear la pulsera');
     }
   };
 
@@ -1751,7 +1784,7 @@ export default function AdminDashboardPage() {
                   placeholder="Buscar por ID o código QR..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-transparent w-full md:w-80"
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-transparent w-full md:w-80 text-black"
                 />
               </div>
             </div>
@@ -1864,7 +1897,7 @@ export default function AdminDashboardPage() {
                   placeholder="Buscar por ID o código QR..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-transparent w-full md:w-80"
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#481468] focus:border-transparent w-full md:w-80 text-black"
                 />
               </div>
             </div>
@@ -2504,14 +2537,25 @@ export default function AdminDashboardPage() {
                                   )}
                                   {expandedContratante === contratante.id ? 'Ocultar' : 'Ver Portadores'}
                                 </button>
-                                <button
-                                  onClick={() => handleDeactivateContratanteSubscription(contratante.id, `${contratante.firstName} ${contratante.paternalSurname}`)}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 font-semibold transition-colors"
-                                  title="Desactivar suscripción del contratante"
-                                >
-                                  <Pause className="w-3.5 h-3.5" />
-                                  Bloquear
-                                </button>
+                                {contratante.subscriptionActive ? (
+                                  <button
+                                    onClick={() => handleDeactivateContratanteSubscription(contratante.id, `${contratante.firstName} ${contratante.paternalSurname}`)}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 font-semibold transition-colors"
+                                    title="Desactivar suscripción del contratante"
+                                  >
+                                    <Pause className="w-3.5 h-3.5" />
+                                    Bloquear
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => handleActivateContratanteSubscription(contratante.id, `${contratante.firstName} ${contratante.paternalSurname}`)}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-green-100 text-green-700 rounded-lg hover:bg-green-200 font-semibold transition-colors"
+                                    title="Reactivar suscripción del contratante"
+                                  >
+                                    <Play className="w-3.5 h-3.5" />
+                                    Desbloquear
+                                  </button>
+                                )}
                                 <button
                                   onClick={() => handleDeleteContratante(contratante.id, `${contratante.firstName} ${contratante.paternalSurname}`)}
                                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-semibold transition-colors"
@@ -2604,15 +2648,25 @@ export default function AdminDashboardPage() {
                                                             {pulsera.active ? 'Activa' : 'Bloqueada'}
                                                           </span>
                                                         </div>
-                                                        <button
-                                                          onClick={() => handleBlockPulsera(pulsera.id, pulsera.customId)}
-                                                          disabled={!pulsera.active}
-                                                          className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                                          title={pulsera.active ? 'Bloquear QR (robo / extravío)' : 'Ya bloqueada'}
-                                                        >
-                                                          <Lock className="w-3 h-3" />
-                                                          Bloquear QR
-                                                        </button>
+                                                        {pulsera.active ? (
+                                                          <button
+                                                            onClick={() => handleBlockPulsera(pulsera.id, pulsera.customId)}
+                                                            className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-semibold transition-colors"
+                                                            title="Bloquear QR (robo / extravío)"
+                                                          >
+                                                            <Lock className="w-3 h-3" />
+                                                            Bloquear QR
+                                                          </button>
+                                                        ) : (
+                                                          <button
+                                                            onClick={() => handleUnblockPulsera(pulsera.id, pulsera.customId)}
+                                                            className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 text-xs bg-green-100 text-green-700 rounded-lg hover:bg-green-200 font-semibold transition-colors"
+                                                            title="Desbloquear QR"
+                                                          >
+                                                            <Unlock className="w-3 h-3" />
+                                                            Desbloquear QR
+                                                          </button>
+                                                        )}
                                                       </div>
                                                     ))}
                                                   </div>

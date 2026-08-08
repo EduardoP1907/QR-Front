@@ -868,15 +868,25 @@ function ScanPageContent() {
           </div>
         </div>
 
-        {/* Botón de emergencias - Ambulancias 131 */}
-        <a
-          href="tel:131"
-          className="flex items-center justify-center gap-3 w-full bg-[#d80000] hover:bg-red-800 text-white py-4 px-6 rounded-xl mt-4 shadow-lg transition-all active:scale-95"
-        >
-          <Phone className="w-6 h-6" />
-          <span className="font-bold text-lg">LLAMAR AMBULANCIA</span>
-          <span className="text-2xl font-bold ml-auto">131</span>
-        </a>
+        {/* Botones de emergencia - Ambulancias por país */}
+        <div className="grid grid-cols-2 gap-2 mt-4">
+          <a
+            href="tel:131"
+            className="flex flex-col items-center justify-center gap-1 bg-[#d80000] hover:bg-red-800 text-white py-4 px-2 rounded-xl shadow-lg transition-all active:scale-95"
+          >
+            <Phone className="w-5 h-5" />
+            <span className="font-bold text-xs text-center leading-tight">AMBULANCIA CHILE</span>
+            <span className="text-2xl font-bold">131</span>
+          </a>
+          <a
+            href="tel:116"
+            className="flex flex-col items-center justify-center gap-1 bg-[#d80000] hover:bg-red-800 text-white py-4 px-2 rounded-xl shadow-lg transition-all active:scale-95"
+          >
+            <Phone className="w-5 h-5" />
+            <span className="font-bold text-xs text-center leading-tight">AMBULANCIA PERÚ</span>
+            <span className="text-2xl font-bold">116</span>
+          </a>
+        </div>
 
         {/* QR Code Info */}
         <div className="mt-4 text-center">

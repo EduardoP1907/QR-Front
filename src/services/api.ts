@@ -396,6 +396,9 @@ export const adminApi = {
   deactivateContratanteSubscription: (id: number) =>
     api.post(`/admin/contratantes/${id}/deactivate-subscription`),
 
+  activateContratanteSubscription: (id: number) =>
+    api.post(`/admin/contratantes/${id}/activate-subscription`),
+
   getAllPortadores: () =>
     api.get('/admin/portadores'),
 
